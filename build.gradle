@@ -2,6 +2,11 @@ plugins {
 	id 'java'
 	id 'org.springframework.boot' version '4.0.2'
 	id 'io.spring.dependency-management' version '1.1.7'
+	id 'org.asciidoctor.jvm.convert' version '4.0.2'
+}
+
+ext {
+	snippetsDir = file("build/generated-snippets")
 }
 
 group = 'com.example'
@@ -29,16 +34,31 @@ dependencies {
 	implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
 	implementation 'org.springframework.boot:spring-boot-starter-security'
 
-	runtimeOnly 'com.h2database:h2'
 	runtimeOnly 'com.mysql:mysql-connector-j'
 
 	compileOnly 'org.projectlombok:lombok'
 	annotationProcessor 'org.projectlombok:lombok'
 
+	// ✅ 기본 테스트
 	testImplementation 'org.springframework.boot:spring-boot-starter-test'
-	testImplementation 'org.springframework.security:spring-security-test'
+
+	// ✅ Boot 4에서 MockMvc 테스트 지원(필수)
+	testImplementation 'org.springframework.boot:spring-boot-starter-webmvc-test'  // ⭐ 추가 :contentReference[oaicite:1]{index=1}
+
+	// ✅ Boot 4에서 Security 테스트 지원(권장)
+	testImplementation 'org.springframework.boot:spring-boot-starter-security-test' // ⭐ 권장 :contentReference[oaicite:2]{index=2}
+
+	// ✅ REST Docs(MockMvc)
+	testImplementation 'org.springframework.restdocs:spring-restdocs-mockmvc'
+
 }
 
 tasks.named('test') {
+	outputs.dir snippetsDir
 	useJUnitPlatform()
+}
+
+tasks.named('asciidoctor') {
+	inputs.dir snippetsDir
+	dependsOn test
 }
