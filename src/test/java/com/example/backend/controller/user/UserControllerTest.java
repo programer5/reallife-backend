@@ -78,4 +78,78 @@ class UserControllerTest {
                         )
                 ));
     }
+
+    @Test
+    void 회원가입_API_실패_검증오류_400(RestDocumentationContextProvider restDocumentation) throws Exception {
+
+        this.mockMvc = MockMvcBuilders.webAppContextSetup(context)
+                .apply(documentationConfiguration(restDocumentation))
+                .build();
+
+        // email 누락 -> 400
+        var req = new java.util.HashMap<String, Object>();
+        req.put("password", "password1234");
+        req.put("name", "테스트유저");
+
+        String body = objectMapper.writeValueAsString(req);
+
+        mockMvc.perform(post("/api/users")
+                        .contentType(APPLICATION_JSON)
+                        .content(body))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.code").value("VALIDATION_ERROR"))
+                .andExpect(jsonPath("$.message").exists())
+                .andExpect(jsonPath("$.timestamp").exists())
+                .andExpect(jsonPath("$.errors").isArray())
+                .andDo(document("users-create-400-validation",
+                        responseFields(
+                                fieldWithPath("code").description("에러 코드"),
+                                fieldWithPath("message").description("에러 메시지"),
+                                fieldWithPath("timestamp").description("에러 발생 시각"),
+                                fieldWithPath("errors").description("필드 오류 목록"),
+                                fieldWithPath("errors[].field").description("오류가 발생한 필드명"),
+                                fieldWithPath("errors[].reason").description("오류 사유")
+                        )
+                ));
+    }
+
+    @Test
+    void 회원가입_API_실패_이메일중복_409(RestDocumentationContextProvider restDocumentation) throws Exception {
+
+        this.mockMvc = MockMvcBuilders.webAppContextSetup(context)
+                .apply(documentationConfiguration(restDocumentation))
+                .build();
+
+        String email = "dup@test.com";
+
+        var req = new java.util.HashMap<String, Object>();
+        req.put("email", email);
+        req.put("password", "password1234");
+        req.put("name", "테스트유저");
+
+        String body = objectMapper.writeValueAsString(req);
+
+        // 1번은 성공
+        mockMvc.perform(post("/api/users")
+                        .contentType(APPLICATION_JSON)
+                        .content(body))
+                .andExpect(status().isOk());
+
+        // 2번은 중복으로 409
+        mockMvc.perform(post("/api/users")
+                        .contentType(APPLICATION_JSON)
+                        .content(body))
+                .andExpect(status().isConflict())
+                .andExpect(jsonPath("$.code").value("DUPLICATE_EMAIL"))
+                .andExpect(jsonPath("$.message").exists())
+                .andExpect(jsonPath("$.timestamp").exists())
+                .andDo(document("users-create-409-duplicate-email",
+                        responseFields(
+                                fieldWithPath("code").description("에러 코드"),
+                                fieldWithPath("message").description("에러 메시지"),
+                                fieldWithPath("timestamp").description("에러 발생 시각"),
+                                fieldWithPath("errors").description("필드 오류 목록(없으면 빈 배열)")
+                        )
+                ));
+    }
 }
