@@ -1,11 +1,31 @@
 = Backend API
-:toc:
+:doctype: book
+:toc: left
 :toclevels: 2
-:sectnums:
+:sectanchors:
+:sectlinks:
 
-== User
+:stylesdir: styles
+:stylesheet: custom.css
+:linkcss:
+
+== Users
 
 === 회원가입
 
+[sidebar]
+.설명
+****
+- 이메일/비밀번호/이름으로 회원가입합니다.
+- 비밀번호는 서버에서 BCrypt로 암호화되어 저장됩니다.
+****
+
+==== Request
+
 include::{snippets}/users-create/http-request.adoc[]
+include::{snippets}/users-create/request-fields.adoc[]
+
+==== Response
+
 include::{snippets}/users-create/http-response.adoc[]
+include::{snippets}/users-create/response-fields.adoc[]

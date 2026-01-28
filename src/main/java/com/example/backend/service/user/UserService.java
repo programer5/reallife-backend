@@ -3,6 +3,7 @@ package com.example.backend.service.user;
 import com.example.backend.domain.user.User;
 import com.example.backend.repository.user.UserRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 @Service
@@ -10,9 +11,16 @@ import org.springframework.stereotype.Service;
 public class UserService {
 
     private final UserRepository userRepository;
+    private final PasswordEncoder passwordEncoder;
 
-    public User register(String email, String password, String name) {
-        User user = new User(email, password, name);
-        return userRepository.save(user);
+    public User register(String email, String rawPassword, String name) {
+
+        if (userRepository.findByEmail(email).isPresent()) {
+            throw new IllegalArgumentException("이미 사용 중인 이메일입니다.");
+        }
+
+        String encodedPassword = passwordEncoder.encode(rawPassword);
+        User user = new User(email, encodedPassword, name);
+        return userRepository.saveAndFlush(user);
     }
 }
