@@ -22,6 +22,11 @@
 <li><a href="#_회원가입">회원가입</a></li>
 </ul>
 </li>
+<li><a href="#_auth">Auth</a>
+<ul class="sectlevel2">
+<li><a href="#_내_정보_조회_apime">내 정보 조회 (/api/me)</a></li>
+</ul>
+</li>
 </ul>
 </div>
 </div>
@@ -55,7 +60,7 @@ Content-Type: application/json
 Content-Length: 113
 Host: localhost:8080
 
-{"password":"password1234","name":"테스트유저","email":"test+68b9391d-dfdb-42d1-ac2e-5b45027abb40@test.com"}</code></pre>
+{"password":"password1234","name":"테스트유저","email":"test+129b7865-ec1e-4641-9417-a0a7ae556664@test.com"}</code></pre>
 </div>
 </div>
 <table class="tableblock frame-all grid-all stretch">
@@ -98,7 +103,7 @@ Host: localhost:8080
 Content-Type: application/json
 Content-Length: 173
 
-{"id":"7470f658-01be-4976-8576-9c52449ddd66","email":"test+68b9391d-dfdb-42d1-ac2e-5b45027abb40@test.com","name":"테스트유저","createdAt":"2026-01-28T14:45:22.6800375"}</code></pre>
+{"id":"7126f7c8-f3e4-4f1e-866e-bc20b1a71250","email":"test+129b7865-ec1e-4641-9417-a0a7ae556664@test.com","name":"테스트유저","createdAt":"2026-01-29T13:15:55.9296528"}</code></pre>
 </div>
 </div>
 <table class="tableblock frame-all grid-all stretch">
@@ -148,7 +153,7 @@ Content-Length: 173
 Content-Type: application/json
 Content-Length: 179
 
-{"code":"VALIDATION_ERROR","message":"입력값이 올바르지 않습니다.","timestamp":"2026-01-28T14:45:22.9238985","errors":[{"field":"email","reason":"must not be blank"}]}</code></pre>
+{"code":"VALIDATION_ERROR","message":"입력값이 올바르지 않습니다.","timestamp":"2026-01-29T13:15:56.0125948","errors":[{"field":"email","reason":"must not be blank"}]}</code></pre>
 </div>
 </div>
 <table class="tableblock frame-all grid-all stretch">
@@ -206,7 +211,7 @@ Content-Length: 179
 Content-Type: application/json
 Content-Length: 133
 
-{"code":"DUPLICATE_EMAIL","message":"이미 사용 중인 이메일입니다.","timestamp":"2026-01-28T14:45:23.0718105","errors":[]}</code></pre>
+{"code":"DUPLICATE_EMAIL","message":"이미 사용 중인 이메일입니다.","timestamp":"2026-01-29T13:15:56.1535254","errors":[]}</code></pre>
 </div>
 </div>
 <table class="tableblock frame-all grid-all stretch">
@@ -250,11 +255,103 @@ Content-Length: 133
 </div>
 </div>
 </div>
+<div class="sect1">
+<h2 id="_auth"><a class="anchor" href="#_auth"></a><a class="link" href="#_auth">Auth</a></h2>
+<div class="sectionbody">
+<div class="sect2">
+<h3 id="_내_정보_조회_apime"><a class="anchor" href="#_내_정보_조회_apime"></a><a class="link" href="#_내_정보_조회_apime">내 정보 조회 (/api/me)</a></h3>
+<div class="sect3">
+<h4 id="_200_ok"><a class="anchor" href="#_200_ok"></a><a class="link" href="#_200_ok">200 OK</a></h4>
+<div class="listingblock">
+<div class="content">
+<pre class="highlight nowrap"><code class="language-http" data-lang="http">GET /api/me HTTP/1.1
+Authorization: Bearer eyJhbGciOiJIUzM4NCJ9.eyJzdWIiOiJkMDllZTg3YS01MDQ3LTQ2NmQtYjRiNS0zNjM3YzlmOTM0NGQiLCJlbWFpbCI6Im1lKzgxNWU2NmQ4LTFjYWUtNDFiYi1iOTE1LWRiNzdmMzcxZGVhYUB0ZXN0LmNvbSIsImlhdCI6MTc2OTY2MDE1NCwiZXhwIjoxNzY5NjYzNzU0fQ.rE2ZmMp5u9_28uCZl0QZkYPJ5lBZClkRPUZeLgNFgHQWgiSFtgkaEg-83DrLvg_d
+Host: localhost:8080</code></pre>
+</div>
+</div>
+<table class="tableblock frame-all grid-all stretch">
+<colgroup>
+<col style="width: 50%;">
+<col style="width: 50%;">
+</colgroup>
+<thead>
+<tr>
+<th class="tableblock halign-left valign-top">Name</th>
+<th class="tableblock halign-left valign-top">Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>Authorization</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Bearer {accessToken}</p></td>
+</tr>
+</tbody>
+</table>
+<div class="listingblock">
+<div class="content">
+<pre class="highlight nowrap"><code class="language-http" data-lang="http">HTTP/1.1 200 OK
+Content-Type: application/json
+X-Content-Type-Options: nosniff
+X-XSS-Protection: 0
+Cache-Control: no-cache, no-store, max-age=0, must-revalidate
+Pragma: no-cache
+Expires: 0
+X-Frame-Options: DENY
+Content-Length: 60
+
+{"email":"me+815e66d8-1cae-41bb-b915-db77f371deaa@test.com"}</code></pre>
+</div>
+</div>
+<table class="tableblock frame-all grid-all stretch">
+<colgroup>
+<col style="width: 33.3333%;">
+<col style="width: 33.3333%;">
+<col style="width: 33.3334%;">
+</colgroup>
+<thead>
+<tr>
+<th class="tableblock halign-left valign-top">Path</th>
+<th class="tableblock halign-left valign-top">Type</th>
+<th class="tableblock halign-left valign-top">Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>email</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>String</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">현재 인증된 사용자 이메일</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="sect3">
+<h4 id="_401_unauthorized_토큰_없음"><a class="anchor" href="#_401_unauthorized_토큰_없음"></a><a class="link" href="#_401_unauthorized_토큰_없음">401 Unauthorized (토큰 없음)</a></h4>
+<div class="listingblock">
+<div class="content">
+<pre class="highlight nowrap"><code class="language-http" data-lang="http">GET /api/me HTTP/1.1
+Host: localhost:8080</code></pre>
+</div>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlight nowrap"><code class="language-http" data-lang="http">HTTP/1.1 401 Unauthorized
+X-Content-Type-Options: nosniff
+X-XSS-Protection: 0
+Cache-Control: no-cache, no-store, max-age=0, must-revalidate
+Pragma: no-cache
+Expires: 0
+X-Frame-Options: DENY</code></pre>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
 </div>
 <div id="footer">
 <div id="footer-text">
 Version 0.0.1-SNAPSHOT<br>
-Last updated 2026-01-28 14:44:43 +0900
+Last updated 2026-01-29 12:19:37 +0900
 </div>
 </div>
 </body>
