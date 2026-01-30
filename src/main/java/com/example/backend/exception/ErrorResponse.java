@@ -7,7 +7,8 @@ public record ErrorResponse(
         String code,
         String message,
         LocalDateTime timestamp,
-        List<FieldError> errors
+        String path,
+        List<FieldError> fieldErrors
 ) {
     public record FieldError(String field, String reason) {}
 }

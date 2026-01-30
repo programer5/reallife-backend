@@ -1,6 +1,8 @@
 package com.example.backend.service.follow;
 
 import com.example.backend.domain.follow.Follow;
+import com.example.backend.exception.BusinessException;
+import com.example.backend.exception.ErrorCode;
 import com.example.backend.repository.follow.FollowRepository;
 import com.example.backend.repository.user.UserRepository;
 import lombok.RequiredArgsConstructor;
@@ -19,10 +21,10 @@ public class FollowService {
     @Transactional
     public void follow(String email, UUID targetUserId) {
         var me = userRepository.findByEmail(email)
-                .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다."));
+                .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
 
         if (me.getId().equals(targetUserId)) {
-            throw new IllegalArgumentException("자기 자신을 팔로우할 수 없습니다.");
+            throw new BusinessException(ErrorCode.CANNOT_FOLLOW_SELF);
         }
 
         // target 존재 확인
@@ -39,7 +41,7 @@ public class FollowService {
     @Transactional
     public void unfollow(String email, UUID targetUserId) {
         var me = userRepository.findByEmail(email)
-                .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다."));
+                .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
 
         followRepository.findByFollowerIdAndFollowingId(me.getId(), targetUserId)
                 .ifPresent(followRepository::delete); // 멱등 처리

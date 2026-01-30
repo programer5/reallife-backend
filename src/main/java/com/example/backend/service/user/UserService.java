@@ -1,7 +1,8 @@
 package com.example.backend.service.user;
 
 import com.example.backend.domain.user.User;
-import com.example.backend.exception.DuplicateEmailException;
+import com.example.backend.exception.BusinessException;
+import com.example.backend.exception.ErrorCode;
 import com.example.backend.repository.user.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -17,7 +18,7 @@ public class UserService {
     public User register(String email, String rawPassword, String name) {
 
         if (userRepository.findByEmail(email).isPresent()) {
-            throw new DuplicateEmailException();
+            throw new BusinessException(ErrorCode.DUPLICATE_EMAIL);
         }
 
         String encodedPassword = passwordEncoder.encode(rawPassword);

@@ -4,6 +4,8 @@ import com.example.backend.controller.post.dto.PostCreateRequest;
 import com.example.backend.controller.post.dto.PostCreateResponse;
 import com.example.backend.controller.post.dto.PostFeedResponse;
 import com.example.backend.domain.post.Post;
+import com.example.backend.exception.BusinessException;
+import com.example.backend.exception.ErrorCode;
 import com.example.backend.repository.follow.FollowRepository;
 import com.example.backend.repository.post.PostRepository;
 import com.example.backend.repository.user.UserRepository;
@@ -29,7 +31,7 @@ public class PostService {
     @Transactional
     public PostCreateResponse createPost(String email, PostCreateRequest request) {
         var user = userRepository.findByEmail(email)
-                .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다."));
+                .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
 
         UUID authorId = user.getId();
         String safeContent = ContentSanitizer.minimal(request.content());
@@ -55,7 +57,7 @@ public class PostService {
     @Transactional(readOnly = true)
     public PostCreateResponse getPost(UUID postId) {
         Post post = postRepository.findById(postId)
-                .orElseThrow(() -> new IllegalArgumentException("게시글을 찾을 수 없습니다."));
+                .orElseThrow(() -> new BusinessException(ErrorCode.POST_NOT_FOUND));
 
         return new PostCreateResponse(
                 post.getId(),
@@ -72,7 +74,7 @@ public class PostService {
         int pageSize = Math.min(Math.max(size, 1), 50);
 
         var me = userRepository.findByEmail(email)
-                .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다."));
+                .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
 
         // 나 + 내가 팔로우한 사람들
         var followingIds = followRepository.findAllByFollowerId(me.getId())
@@ -128,10 +130,10 @@ public class PostService {
     @Transactional
     public void deletePost(String email, UUID postId) {
         var user = userRepository.findByEmail(email)
-                .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다."));
+                .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
 
         var post = postRepository.findByIdAndAuthorIdAndDeletedFalse(postId, user.getId())
-                .orElseThrow(() -> new IllegalArgumentException("삭제 권한이 없거나 게시글이 존재하지 않습니다."));
+                .orElseThrow(() -> new BusinessException(ErrorCode.POST_NOT_OWNED));
 
         post.delete();
     }

@@ -1,6 +1,8 @@
 package com.example.backend.service.like;
 
 import com.example.backend.domain.like.PostLike;
+import com.example.backend.exception.BusinessException;
+import com.example.backend.exception.ErrorCode;
 import com.example.backend.repository.like.PostLikeRepository;
 import com.example.backend.repository.post.PostRepository;
 import com.example.backend.repository.user.UserRepository;
@@ -23,10 +25,10 @@ public class PostLikeService {
     @Transactional
     public void like(String email, UUID postId) {
         var user = userRepository.findByEmail(email)
-                .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다."));
+                .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
 
         var post = postRepository.findById(postId)
-                .orElseThrow(() -> new IllegalArgumentException("게시글을 찾을 수 없습니다."));
+                .orElseThrow(() -> new BusinessException(ErrorCode.POST_NOT_FOUND));
 
         // 멱등 처리: 이미 좋아요면 그냥 성공
         if (postLikeRepository.existsByPostIdAndUserId(postId, user.getId())) {
@@ -43,10 +45,10 @@ public class PostLikeService {
     @Transactional
     public void unlike(String email, UUID postId) {
         var user = userRepository.findByEmail(email)
-                .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다."));
+                .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
 
         var post = postRepository.findById(postId)
-                .orElseThrow(() -> new IllegalArgumentException("게시글을 찾을 수 없습니다."));
+                .orElseThrow(() -> new BusinessException(ErrorCode.POST_NOT_FOUND));
 
         postLikeRepository.findByPostIdAndUserId(postId, user.getId())
                 .ifPresent(like -> {

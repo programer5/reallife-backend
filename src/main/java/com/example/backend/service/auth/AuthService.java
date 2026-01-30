@@ -1,6 +1,8 @@
 package com.example.backend.service.auth;
 
 import com.example.backend.domain.user.User;
+import com.example.backend.exception.BusinessException;
+import com.example.backend.exception.ErrorCode;
 import com.example.backend.repository.user.UserRepository;
 import com.example.backend.security.JwtTokenProvider;
 import lombok.RequiredArgsConstructor;
@@ -17,10 +19,10 @@ public class AuthService {
 
     public String login(String email, String rawPassword) {
         User user = userRepository.findByEmail(email)
-                .orElseThrow(() -> new IllegalArgumentException("이메일 또는 비밀번호가 올바르지 않습니다."));
+                .orElseThrow(() -> new BusinessException(ErrorCode.DUPLICATE_EMAIL));
 
         if (!passwordEncoder.matches(rawPassword, user.getPassword())) {
-            throw new IllegalArgumentException("이메일 또는 비밀번호가 올바르지 않습니다.");
+            throw new BusinessException(ErrorCode.UNAUTHORIZED);
         }
 
         return jwtTokenProvider.createAccessToken(user.getId().toString(), user.getEmail());

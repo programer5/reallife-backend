@@ -1,5 +1,6 @@
 package com.example.backend.exception;
 
+import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
@@ -12,42 +13,61 @@ import java.util.List;
 @RestControllerAdvice
 public class GlobalExceptionHandler {
 
-    @ExceptionHandler(MethodArgumentNotValidException.class)
-    public ResponseEntity<ErrorResponse> handleValidation(MethodArgumentNotValidException e) {
-        ErrorCode code = ErrorCode.VALIDATION_ERROR;
+    @ExceptionHandler(BusinessException.class)
+    public ResponseEntity<ErrorResponse> handleBusiness(BusinessException e, HttpServletRequest req) {
+        ErrorCode ec = e.getErrorCode();
 
-        List<ErrorResponse.FieldError> errors = e.getBindingResult()
-                .getFieldErrors()
-                .stream()
-                .map(this::toFieldError)
-                .toList();
-
-        ErrorResponse body = new ErrorResponse(
-                code.name(),
-                code.message(),
-                LocalDateTime.now(),
-                errors
+        return ResponseEntity.status(ec.status()).body(
+                new ErrorResponse(ec.code(), e.getMessage(), LocalDateTime.now(), req.getRequestURI(), null)
         );
 
-        return ResponseEntity.status(code.status()).body(body);
     }
 
-    @ExceptionHandler(DuplicateEmailException.class)
-    public ResponseEntity<ErrorResponse> handleDuplicateEmail(DuplicateEmailException e) {
-        ErrorCode code = ErrorCode.DUPLICATE_EMAIL;
+    @ExceptionHandler(MethodArgumentNotValidException.class)
+    public ResponseEntity<ErrorResponse> handleValidation(MethodArgumentNotValidException e, HttpServletRequest req) {
+        ErrorCode ec = ErrorCode.INVALID_REQUEST;
 
-        ErrorResponse body = new ErrorResponse(
-                code.name(),
-                code.message(),
-                LocalDateTime.now(),
-                List.of()
+        List<ErrorResponse.FieldError> fieldErrors = e.getBindingResult().getFieldErrors().stream()
+                .map(fe -> new ErrorResponse.FieldError(fe.getField(), fe.getDefaultMessage()))
+                .toList();
+
+        return ResponseEntity.status(ec.status()).body(
+                new ErrorResponse(
+                        ec.code(),
+                        ec.message(),
+                        LocalDateTime.now(),
+                        req.getRequestURI(),
+                        fieldErrors
+                )
+        );
+    }
+
+    @ExceptionHandler(Exception.class)
+    public ResponseEntity<ErrorResponse> handleUnknown(Exception e, HttpServletRequest req) {
+        ErrorCode ec = ErrorCode.INTERNAL_ERROR;
+
+        return ResponseEntity.status(ec.status()).body(
+                new ErrorResponse(ec.code(), e.getMessage(), LocalDateTime.now(), req.getRequestURI(), null)
         );
 
-        return ResponseEntity.status(code.status()).body(body);
+    }
+
+    @ExceptionHandler(IllegalArgumentException.class)
+    public ResponseEntity<ErrorResponse> handleIllegalArgument(IllegalArgumentException e, HttpServletRequest req) {
+        ErrorCode ec = ErrorCode.INVALID_REQUEST;
+
+        return ResponseEntity.status(ec.status()).body(
+                new ErrorResponse(
+                        ec.code(),
+                        e.getMessage() != null ? e.getMessage() : ec.message(),
+                        LocalDateTime.now(),
+                        req.getRequestURI(),
+                        null
+                )
+        );
     }
 
     private ErrorResponse.FieldError toFieldError(FieldError fe) {
-        String reason = (fe.getDefaultMessage() == null) ? "invalid" : fe.getDefaultMessage();
-        return new ErrorResponse.FieldError(fe.getField(), reason);
+        return new ErrorResponse.FieldError(fe.getField(), fe.getDefaultMessage());
     }
 }
