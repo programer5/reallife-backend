@@ -2,10 +2,9 @@ package com.example.backend.service.post;
 
 import com.example.backend.controller.post.dto.PostCreateRequest;
 import com.example.backend.controller.post.dto.PostCreateResponse;
-import com.example.backend.controller.post.dto.PostFeedItem;
 import com.example.backend.controller.post.dto.PostFeedResponse;
 import com.example.backend.domain.post.Post;
-import com.example.backend.domain.post.PostVisibility;
+import com.example.backend.repository.follow.FollowRepository;
 import com.example.backend.repository.post.PostRepository;
 import com.example.backend.repository.user.UserRepository;
 import com.example.backend.security.ContentSanitizer;
@@ -25,6 +24,7 @@ public class PostService {
 
     private final PostRepository postRepository;
     private final UserRepository userRepository;
+    private final FollowRepository followRepository;
 
     @Transactional
     public PostCreateResponse createPost(String email, PostCreateRequest request) {
@@ -68,20 +68,29 @@ public class PostService {
     }
 
     @Transactional(readOnly = true)
-    public PostFeedResponse getFeed(String cursor, int size) {
+    public PostFeedResponse getFeed(String email, String cursor, int size) {
         int pageSize = Math.min(Math.max(size, 1), 50);
 
-        List<Post> posts;
+        var me = userRepository.findByEmail(email)
+                .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다."));
 
+        // 나 + 내가 팔로우한 사람들
+        var followingIds = followRepository.findAllByFollowerId(me.getId())
+                .stream().map(f -> f.getFollowingId()).toList();
+
+        java.util.Set<UUID> authorIds = new java.util.HashSet<>(followingIds);
+        authorIds.add(me.getId());
+
+        List<com.example.backend.domain.post.Post> posts;
         if (cursor == null || cursor.isBlank()) {
-            posts = postRepository.findFeedFirstPage(PostVisibility.ALL, pageSize);
+            posts = postRepository.findFollowingFeedFirstPage(authorIds, pageSize);
         } else {
             Cursor c = Cursor.decode(cursor);
-            posts = postRepository.findFeedNextPage(PostVisibility.ALL, c.createdAt(), c.id(), pageSize);
+            posts = postRepository.findFollowingFeedNextPage(authorIds, c.createdAt(), c.id(), pageSize);
         }
 
-        List<PostFeedItem> items = posts.stream().map(p ->
-                new PostFeedItem(
+        var items = posts.stream().map(p ->
+                new com.example.backend.controller.post.dto.PostFeedItem(
                         p.getId(),
                         p.getAuthorId(),
                         p.getContent(),
@@ -98,7 +107,7 @@ public class PostService {
 
         if (!hasNext) nextCursor = null;
 
-        return new PostFeedResponse(items, nextCursor, hasNext);
+        return new com.example.backend.controller.post.dto.PostFeedResponse(items, nextCursor, hasNext);
     }
 
     private record Cursor(LocalDateTime createdAt, UUID id) {
@@ -116,6 +125,16 @@ public class PostService {
         }
     }
 
+    @Transactional
+    public void deletePost(String email, UUID postId) {
+        var user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다."));
+
+        var post = postRepository.findByIdAndAuthorIdAndDeletedFalse(postId, user.getId())
+                .orElseThrow(() -> new IllegalArgumentException("삭제 권한이 없거나 게시글이 존재하지 않습니다."));
+
+        post.delete();
+    }
 
 
 }

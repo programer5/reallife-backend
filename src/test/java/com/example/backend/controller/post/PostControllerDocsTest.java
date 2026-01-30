@@ -203,5 +203,48 @@ class PostControllerDocsTest {
                 ));
     }
 
+    @Test
+    void 게시글_삭제_성공_204(RestDocumentationContextProvider restDocumentation) throws Exception {
+        MockMvc mockMvc = MockMvcBuilders.webAppContextSetup(context)
+                .apply(springSecurity())
+                .apply(documentationConfiguration(restDocumentation))
+                .build();
+
+        String email = "del+" + UUID.randomUUID() + "@test.com";
+        User user = userRepository.saveAndFlush(new User(email, "encoded", "삭제유저"));
+        String token = jwtTokenProvider.createAccessToken(user.getId().toString(), user.getEmail());
+
+        // 게시글 하나 생성
+        var req = new java.util.HashMap<String, Object>();
+        req.put("content", "삭제될 게시글");
+        req.put("imageUrls", List.of("https://example.com/images/del.jpg"));
+        req.put("visibility", PostVisibility.ALL.name());
+
+        String createResult = mockMvc.perform(post("/api/posts")
+                        .header(HttpHeaders.AUTHORIZATION, "Bearer " + token)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(req)))
+                .andExpect(status().isCreated())
+                .andReturn()
+                .getResponse()
+                .getContentAsString();
+
+        String postId = objectMapper.readTree(createResult).get("postId").asText();
+
+        // 삭제
+        mockMvc.perform(org.springframework.test.web.servlet.request.MockMvcRequestBuilders
+                        .delete("/api/posts/{postId}", postId)
+                        .header(HttpHeaders.AUTHORIZATION, "Bearer " + token))
+                .andExpect(status().isNoContent())
+                .andDo(document("posts-delete",
+                        requestHeaders(
+                                headerWithName(HttpHeaders.AUTHORIZATION).description("Bearer {accessToken}")
+                        ),
+                        pathParameters(
+                                parameterWithName("postId").description("삭제할 게시글 ID")
+                        )
+                ));
+    }
+
 
 }

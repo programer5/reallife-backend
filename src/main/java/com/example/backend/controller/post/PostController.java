@@ -7,6 +7,7 @@ import com.example.backend.service.post.PostService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
@@ -36,9 +37,17 @@ public class PostController {
     @GetMapping
     public PostFeedResponse feed(
             @RequestParam(required = false) String cursor,
-            @RequestParam(defaultValue = "20") int size
+            @RequestParam(defaultValue = "20") int size,
+            Authentication authentication
     ) {
-        return postService.getFeed(cursor, size);
+        return postService.getFeed(authentication.getName(), cursor, size);
+    }
+
+    @DeleteMapping("/{postId}")
+    public ResponseEntity<Void> delete(@PathVariable UUID postId, Authentication authentication) {
+        String email = authentication.getName();
+        postService.deletePost(email, postId);
+        return ResponseEntity.noContent().build(); // 204
     }
 
 

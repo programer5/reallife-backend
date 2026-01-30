@@ -60,4 +60,9 @@ public class Post extends BaseEntity {
     public void addImage(String imageUrl, int sortOrder) {
         this.images.add(PostImage.create(this, imageUrl, sortOrder));
     }
+
+    public void delete() {
+        this.deleted = true;
+    }
+
 }
