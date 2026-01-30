@@ -1,0 +1,27 @@
+package com.example.backend.controller.post;
+
+import com.example.backend.controller.post.dto.PostCreateRequest;
+import com.example.backend.controller.post.dto.PostCreateResponse;
+import com.example.backend.service.post.PostService;
+import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
+import org.springframework.security.core.Authentication;
+import org.springframework.web.bind.annotation.*;
+
+@RestController
+@RequiredArgsConstructor
+@RequestMapping("/api/posts")
+public class PostController {
+
+    private final PostService postService;
+
+    @PostMapping
+    @ResponseStatus(HttpStatus.CREATED)
+    public PostCreateResponse create(@Valid @RequestBody PostCreateRequest request,
+                                     Authentication authentication) {
+        // JwtAuthenticationFilter에서 principal을 email로 넣고 있으므로 getName() == email
+        String email = authentication.getName();
+        return postService.createPost(email, request);
+    }
+}

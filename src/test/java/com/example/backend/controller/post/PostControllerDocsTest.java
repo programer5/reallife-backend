@@ -1,0 +1,94 @@
+package com.example.backend.controller.post;
+
+import com.example.backend.domain.post.PostVisibility;
+import com.example.backend.domain.user.User;
+import com.example.backend.repository.user.UserRepository;
+import com.example.backend.security.JwtTokenProvider;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
+import org.springframework.restdocs.RestDocumentationContextProvider;
+import org.springframework.restdocs.RestDocumentationExtension;
+import org.springframework.test.context.junit.jupiter.SpringExtension;
+import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.test.web.servlet.setup.MockMvcBuilders;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.context.WebApplicationContext;
+import tools.jackson.databind.ObjectMapper;
+
+import java.util.List;
+import java.util.UUID;
+
+import static org.springframework.restdocs.headers.HeaderDocumentation.headerWithName;
+import static org.springframework.restdocs.headers.HeaderDocumentation.requestHeaders;
+import static org.springframework.restdocs.mockmvc.MockMvcRestDocumentation.document;
+import static org.springframework.restdocs.mockmvc.MockMvcRestDocumentation.documentationConfiguration;
+import static org.springframework.restdocs.payload.PayloadDocumentation.*;
+import static org.springframework.security.test.web.servlet.setup.SecurityMockMvcConfigurers.springSecurity;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+
+@SpringBootTest
+@ExtendWith({RestDocumentationExtension.class, SpringExtension.class})
+@Transactional
+class PostControllerDocsTest {
+
+    @Autowired private WebApplicationContext context;
+    @Autowired private UserRepository userRepository;
+    @Autowired private JwtTokenProvider jwtTokenProvider;
+    @Autowired private ObjectMapper objectMapper;
+
+    @Test
+    void 게시글_생성_성공_201(RestDocumentationContextProvider restDocumentation) throws Exception {
+        MockMvc mockMvc = MockMvcBuilders.webAppContextSetup(context)
+                .apply(springSecurity())
+                .apply(documentationConfiguration(restDocumentation))
+                .build();
+
+        String email = "post+" + UUID.randomUUID() + "@test.com";
+        User user = userRepository.saveAndFlush(new User(email, "encoded", "게시글유저"));
+
+        String token = jwtTokenProvider.createAccessToken(user.getId().toString(), user.getEmail());
+
+        var req = new java.util.HashMap<String, Object>();
+        req.put("content", "오늘은 진짜 리얼한 하루였다.");
+        req.put("imageUrls", List.of(
+                "https://example.com/images/1.jpg",
+                "https://example.com/images/2.jpg"
+        ));
+        req.put("visibility", PostVisibility.ALL.name());
+
+        mockMvc.perform(post("/api/posts")
+                        .header(HttpHeaders.AUTHORIZATION, "Bearer " + token)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(req)))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.postId").exists())
+                .andExpect(jsonPath("$.authorId").value(user.getId().toString()))
+                .andExpect(jsonPath("$.content").value("오늘은 진짜 리얼한 하루였다."))
+                .andExpect(jsonPath("$.imageUrls").isArray())
+                .andExpect(jsonPath("$.visibility").value("ALL"))
+                .andDo(document("posts-create",
+                        requestHeaders(
+                                headerWithName(HttpHeaders.AUTHORIZATION).description("Bearer {accessToken}")
+                        ),
+                        requestFields(
+                                fieldWithPath("content").description("게시글 본문"),
+                                fieldWithPath("imageUrls").description("이미지 URL 목록(선택)").optional(),
+                                fieldWithPath("visibility").description("공개 범위 (ALL/FOLLOWERS/PRIVATE)")
+                        ),
+                        responseFields(
+                                fieldWithPath("postId").description("게시글 ID"),
+                                fieldWithPath("authorId").description("작성자 ID"),
+                                fieldWithPath("content").description("게시글 본문"),
+                                fieldWithPath("imageUrls").description("이미지 URL 목록"),
+                                fieldWithPath("visibility").description("공개 범위"),
+                                fieldWithPath("createdAt").description("생성 시각")
+                        )
+                ));
+    }
+}
