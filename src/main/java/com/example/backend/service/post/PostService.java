@@ -8,6 +8,7 @@ import com.example.backend.domain.post.Post;
 import com.example.backend.domain.post.PostVisibility;
 import com.example.backend.repository.post.PostRepository;
 import com.example.backend.repository.user.UserRepository;
+import com.example.backend.security.ContentSanitizer;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -31,7 +32,8 @@ public class PostService {
                 .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다."));
 
         UUID authorId = user.getId();
-        Post post = Post.create(authorId, request.content(), request.visibility());
+        String safeContent = ContentSanitizer.minimal(request.content());
+        Post post = Post.create(authorId, safeContent, request.visibility());
 
         List<String> urls = request.imageUrls() == null ? Collections.emptyList() : request.imageUrls();
         for (int i = 0; i < urls.size(); i++) {

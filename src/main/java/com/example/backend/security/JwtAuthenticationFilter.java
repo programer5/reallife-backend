@@ -44,8 +44,9 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
                 SecurityContextHolder.getContext().setAuthentication(auth);
             } catch (Exception e) {
-                // 토큰이 잘못되면 인증을 세팅하지 않고 그냥 진행 -> 최종적으로 401/403
                 SecurityContextHolder.clearContext();
+                response.sendError(401);
+                return;
             }
         }
 
