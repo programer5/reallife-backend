@@ -27,6 +27,8 @@ import static org.springframework.restdocs.headers.HeaderDocumentation.requestHe
 import static org.springframework.restdocs.mockmvc.MockMvcRestDocumentation.document;
 import static org.springframework.restdocs.mockmvc.MockMvcRestDocumentation.documentationConfiguration;
 import static org.springframework.restdocs.payload.PayloadDocumentation.*;
+import static org.springframework.restdocs.request.RequestDocumentation.parameterWithName;
+import static org.springframework.restdocs.request.RequestDocumentation.pathParameters;
 import static org.springframework.security.test.web.servlet.setup.SecurityMockMvcConfigurers.springSecurity;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
@@ -91,4 +93,58 @@ class PostControllerDocsTest {
                         )
                 ));
     }
+
+    @Test
+    void 게시글_상세조회_성공_200(RestDocumentationContextProvider restDocumentation) throws Exception {
+        MockMvc mockMvc = MockMvcBuilders.webAppContextSetup(context)
+                .apply(springSecurity())
+                .apply(documentationConfiguration(restDocumentation))
+                .build();
+
+        String email = "detail+" + UUID.randomUUID() + "@test.com";
+        User user = userRepository.saveAndFlush(new User(email, "encoded", "상세유저"));
+        String token = jwtTokenProvider.createAccessToken(user.getId().toString(), user.getEmail());
+
+        // 게시글 생성(서비스/레포 사용해도 되지만, 빠르게는 create API를 호출해도 됨)
+        var req = new java.util.HashMap<String, Object>();
+        req.put("content", "상세 조회용 게시글");
+        req.put("imageUrls", List.of("https://example.com/images/a.jpg"));
+        req.put("visibility", PostVisibility.ALL.name());
+
+        String createResult = mockMvc.perform(post("/api/posts")
+                        .header(HttpHeaders.AUTHORIZATION, "Bearer " + token)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(req)))
+                .andExpect(status().isCreated())
+                .andReturn()
+                .getResponse()
+                .getContentAsString();
+
+        // 응답에서 postId 추출
+        String postId = objectMapper.readTree(createResult).get("postId").asText();
+
+        mockMvc.perform(org.springframework.test.web.servlet.request.MockMvcRequestBuilders
+                        .get("/api/posts/{postId}", postId)
+                        .header(HttpHeaders.AUTHORIZATION, "Bearer " + token))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.postId").value(postId))
+                .andExpect(jsonPath("$.content").value("상세 조회용 게시글"))
+                .andDo(document("posts-get",
+                        requestHeaders(
+                                headerWithName(HttpHeaders.AUTHORIZATION).description("Bearer {accessToken}")
+                        ),
+                        pathParameters(
+                                parameterWithName("postId").description("게시글 ID")
+                        ),
+                        responseFields(
+                                fieldWithPath("postId").description("게시글 ID"),
+                                fieldWithPath("authorId").description("작성자 ID"),
+                                fieldWithPath("content").description("게시글 본문"),
+                                fieldWithPath("imageUrls").description("이미지 URL 목록"),
+                                fieldWithPath("visibility").description("공개 범위"),
+                                fieldWithPath("createdAt").description("생성 시각")
+                        )
+                ));
+    }
+
 }

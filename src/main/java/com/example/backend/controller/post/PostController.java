@@ -9,6 +9,8 @@ import org.springframework.http.HttpStatus;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.UUID;
+
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/api/posts")
@@ -24,4 +26,10 @@ public class PostController {
         String email = authentication.getName();
         return postService.createPost(email, request);
     }
+
+    @GetMapping("/{postId}")
+    public PostCreateResponse get(@PathVariable UUID postId) {
+        return postService.getPost(postId);
+    }
+
 }

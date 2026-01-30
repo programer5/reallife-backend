@@ -15,6 +15,7 @@ import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
+@Transactional(readOnly = true)
 public class PostService {
 
     private final PostRepository postRepository;
@@ -44,4 +45,20 @@ public class PostService {
                 saved.getCreatedAt()
         );
     }
+
+    @Transactional(readOnly = true)
+    public PostCreateResponse getPost(UUID postId) {
+        Post post = postRepository.findById(postId)
+                .orElseThrow(() -> new IllegalArgumentException("게시글을 찾을 수 없습니다."));
+
+        return new PostCreateResponse(
+                post.getId(),
+                post.getAuthorId(),
+                post.getContent(),
+                post.getImages().stream().map(img -> img.getImageUrl()).toList(),
+                post.getVisibility(),
+                post.getCreatedAt()
+        );
+    }
+
 }
