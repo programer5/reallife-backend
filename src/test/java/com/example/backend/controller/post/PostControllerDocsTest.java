@@ -147,38 +147,51 @@ class PostControllerDocsTest {
     }
 
     @Test
-    void 피드_조회_성공_200(RestDocumentationContextProvider restDocumentation) throws Exception {
+    void 피드_조회_성공_200_팔로우기반(RestDocumentationContextProvider restDocumentation) throws Exception {
         MockMvc mockMvc = MockMvcBuilders.webAppContextSetup(context)
                 .apply(springSecurity())
                 .apply(documentationConfiguration(restDocumentation))
                 .build();
 
-        String email = "feed+" + UUID.randomUUID() + "@test.com";
-        User user = userRepository.saveAndFlush(new User(email, "encoded", "피드유저"));
-        String token = jwtTokenProvider.createAccessToken(user.getId().toString(), user.getEmail());
+        // 나(피드 보는 사람)
+        String myEmail = "feedme+" + UUID.randomUUID() + "@test.com";
+        User me = userRepository.saveAndFlush(new User(myEmail, "encoded", "피드유저"));
+        String myToken = jwtTokenProvider.createAccessToken(me.getId().toString(), me.getEmail());
 
-        // 게시글 3개 생성
+        // 내가 팔로우할 대상(타겟)
+        String targetEmail = "feedtarget+" + UUID.randomUUID() + "@test.com";
+        User target = userRepository.saveAndFlush(new User(targetEmail, "encoded", "타겟유저"));
+        String targetToken = jwtTokenProvider.createAccessToken(target.getId().toString(), target.getEmail());
+
+        // 1) 내가 타겟을 팔로우
+        mockMvc.perform(org.springframework.test.web.servlet.request.MockMvcRequestBuilders
+                        .post("/api/follows/{targetUserId}", target.getId())
+                        .header(HttpHeaders.AUTHORIZATION, "Bearer " + myToken))
+                .andExpect(status().isNoContent());
+
+        // 2) 타겟이 게시글 3개 작성
         for (int i = 1; i <= 3; i++) {
             var req = new java.util.HashMap<String, Object>();
-            req.put("content", "피드용 게시글 " + i);
-            req.put("imageUrls", List.of("https://example.com/images/" + i + ".jpg"));
+            req.put("content", "타겟의 리얼 게시글 " + i);
+            req.put("imageUrls", List.of("https://example.com/images/target-" + i + ".jpg"));
             req.put("visibility", PostVisibility.ALL.name());
 
             mockMvc.perform(post("/api/posts")
-                            .header(HttpHeaders.AUTHORIZATION, "Bearer " + token)
+                            .header(HttpHeaders.AUTHORIZATION, "Bearer " + targetToken)
                             .contentType(MediaType.APPLICATION_JSON)
                             .content(objectMapper.writeValueAsString(req)))
                     .andExpect(status().isCreated());
         }
 
-        // size=2로 피드 조회
+        // 3) 내가 피드 조회 (size=2) -> 팔로우한 타겟 글이 최신순으로 내려와야 함
         mockMvc.perform(org.springframework.test.web.servlet.request.MockMvcRequestBuilders
                         .get("/api/posts")
                         .param("size", "2")
-                        .header(HttpHeaders.AUTHORIZATION, "Bearer " + token))
+                        .header(HttpHeaders.AUTHORIZATION, "Bearer " + myToken))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.items").isArray())
                 .andExpect(jsonPath("$.items.length()").value(2))
+                .andExpect(jsonPath("$.items[0].authorId").value(target.getId().toString()))
                 .andExpect(jsonPath("$.hasNext").value(true))
                 .andExpect(jsonPath("$.nextCursor").exists())
                 .andDo(document("posts-feed",
@@ -192,7 +205,7 @@ class PostControllerDocsTest {
                         responseFields(
                                 fieldWithPath("items").description("피드 게시글 목록(최신순)"),
                                 fieldWithPath("items[].postId").description("게시글 ID"),
-                                fieldWithPath("items[].authorId").description("작성자 ID"),
+                                fieldWithPath("items[].authorId").description("작성자 ID (나 + 내가 팔로우한 사용자)"),
                                 fieldWithPath("items[].content").description("게시글 본문"),
                                 fieldWithPath("items[].imageUrls").description("이미지 URL 목록"),
                                 fieldWithPath("items[].visibility").description("공개 범위"),
