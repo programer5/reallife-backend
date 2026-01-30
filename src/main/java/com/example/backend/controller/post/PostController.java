@@ -2,6 +2,7 @@ package com.example.backend.controller.post;
 
 import com.example.backend.controller.post.dto.PostCreateRequest;
 import com.example.backend.controller.post.dto.PostCreateResponse;
+import com.example.backend.controller.post.dto.PostFeedResponse;
 import com.example.backend.service.post.PostService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -31,5 +32,14 @@ public class PostController {
     public PostCreateResponse get(@PathVariable UUID postId) {
         return postService.getPost(postId);
     }
+
+    @GetMapping
+    public PostFeedResponse feed(
+            @RequestParam(required = false) String cursor,
+            @RequestParam(defaultValue = "20") int size
+    ) {
+        return postService.getFeed(cursor, size);
+    }
+
 
 }

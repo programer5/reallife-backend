@@ -41,12 +41,16 @@ public class Post extends BaseEntity {
     @OrderBy("sortOrder ASC")
     private final List<PostImage> images = new ArrayList<>();
 
+    @Column(nullable = false)
+    private boolean deleted;
+
     private Post(UUID authorId, String content, PostVisibility visibility) {
         this.authorId = authorId;
         this.content = content;
         this.visibility = visibility;
         this.likeCount = 0;
         this.commentCount = 0;
+        this.deleted = false;
     }
 
     public static Post create(UUID authorId, String content, PostVisibility visibility) {
