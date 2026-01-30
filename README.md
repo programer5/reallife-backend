@@ -192,7 +192,7 @@ Docker / Docker Compose (MySQL 포함)
 CI/CD (GitHub Actions: test → docs → build)
 운영 로그 / 모니터링
 
-Phase 5 — Advanced (우대사항 반영)
+Phase 5 — Advanced
 
 이벤트 기반 아키텍처 (회원가입/로그인/게시글 생성 이벤트)
 Redis 적용
