@@ -1,8 +1,10 @@
 package com.example.backend.controller.user.dto;
 
-public record UserCreateResponse(
+public record MeResponse(
         String id,
         String email,
         String handle,
-        String name
+        String name,
+        long followerCount,
+        String tier
 ) {}

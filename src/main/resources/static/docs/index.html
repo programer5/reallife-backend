@@ -77,10 +77,10 @@
 <div class="content">
 <pre class="highlight nowrap"><code class="language-http" data-lang="http">POST /api/users HTTP/1.1
 Content-Type: application/json
-Content-Length: 115
+Content-Length: 140
 Host: localhost:8080
 
-{"password":"password1234","name":"테스트유저","email":"signup+8f3d5688-214c-444a-8272-0d74885d8df9@test.com"}</code></pre>
+{"password":"password1234","name":"테스트유저","handle":"user_761501e4","email":"signup+fc79dc6f-bcad-44d7-bd65-a9553351b3bc@test.com"}</code></pre>
 </div>
 </div>
 <table class="tableblock frame-all grid-all stretch">
@@ -100,7 +100,12 @@ Host: localhost:8080
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><code>email</code></p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><code>String</code></p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">가입 이메일</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">가입 이메일(로그인에 사용)</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>handle</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>String</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">사용자 아이디(handle, 노출용 고유값)</p></td>
 </tr>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><code>password</code></p></td>
@@ -121,9 +126,9 @@ Host: localhost:8080
 <div class="content">
 <pre class="highlight nowrap"><code class="language-http" data-lang="http">HTTP/1.1 200 OK
 Content-Type: application/json
-Content-Length: 175
+Content-Length: 158
 
-{"id":"e764680d-f310-4407-9a6b-903e06681779","email":"signup+8f3d5688-214c-444a-8272-0d74885d8df9@test.com","name":"테스트유저","createdAt":"2026-01-30T20:06:49.3079925"}</code></pre>
+{"id":"7f9f07b2-e982-4d03-b7f2-422d72b18a43","email":"signup+fc79dc6f-bcad-44d7-bd65-a9553351b3bc@test.com","handle":"user_761501e4","name":"테스트유저"}</code></pre>
 </div>
 </div>
 <table class="tableblock frame-all grid-all stretch">
@@ -151,14 +156,14 @@ Content-Length: 175
 <td class="tableblock halign-left valign-top"><p class="tableblock">가입 이메일</p></td>
 </tr>
 <tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>handle</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>String</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">사용자 아이디(handle)</p></td>
+</tr>
+<tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><code>name</code></p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><code>String</code></p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">이름</p></td>
-</tr>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><code>createdAt</code></p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><code>String</code></p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">생성일시</p></td>
 </tr>
 </tbody>
 </table>
@@ -171,9 +176,9 @@ Content-Length: 175
 <div class="content">
 <pre class="highlight nowrap"><code class="language-http" data-lang="http">HTTP/1.1 400 Bad Request
 Content-Type: application/json
-Content-Length: 391
+Content-Length: 208
 
-{"code":"COMMON_INVALID_REQUEST","message":"요청이 올바르지 않습니다.","timestamp":"2026-01-30T20:06:49.4069363","path":"/api/users","fieldErrors":[{"field":"email","reason":"must be a well-formed email address"},{"field":"password","reason":"size must be between 8 and 64"},{"field":"name","reason":"size must be between 2 and 50"},{"field":"name","reason":"must not be blank"}]}</code></pre>
+{"code":"COMMON_INVALID_REQUEST","message":"요청이 올바르지 않습니다.","timestamp":"2026-02-01T20:20:42.1252626","path":"/api/users","fieldErrors":[{"field":"handle","reason":"must not be blank"}]}</code></pre>
 </div>
 </div>
 <table class="tableblock frame-all grid-all stretch">
@@ -213,12 +218,12 @@ Content-Length: 391
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><code>fieldErrors</code></p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><code>Array</code></p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">필드 검증 오류 목록 (검증 오류일 때만 존재)</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">필드 검증 오류 목록</p></td>
 </tr>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><code>fieldErrors[].field</code></p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><code>String</code></p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">오류가 발생한 필드명</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">오류 필드</p></td>
 </tr>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><code>fieldErrors[].reason</code></p></td>
@@ -236,7 +241,7 @@ Content-Length: 391
 Content-Type: application/json
 Content-Length: 161
 
-{"code":"USER_DUPLICATE_EMAIL","message":"이미 가입된 이메일입니다.","timestamp":"2026-01-30T20:06:49.5488566","path":"/api/users","fieldErrors":null}</code></pre>
+{"code":"USER_DUPLICATE_EMAIL","message":"이미 가입된 이메일입니다.","timestamp":"2026-02-01T20:20:42.2451937","path":"/api/users","fieldErrors":null}</code></pre>
 </div>
 </div>
 <table class="tableblock frame-all grid-all stretch">
@@ -295,7 +300,7 @@ Content-Length: 161
 <div class="listingblock">
 <div class="content">
 <pre class="highlight nowrap"><code class="language-http" data-lang="http">GET /api/me HTTP/1.1
-Authorization: Bearer eyJhbGciOiJIUzM4NCJ9.eyJzdWIiOiJmYjExM2RkMC1lY2JlLTQ2MmUtYjI1ZS0xZDY0YmQwYjM2Y2UiLCJlbWFpbCI6Im1lK2RjNmI3MTA2LWUxMDItNGM0Ny1iOGZmLTA2NWM5ZTUwNWU4N0B0ZXN0LmNvbSIsImlhdCI6MTc2OTc3MTIwOSwiZXhwIjoxNzY5Nzc0ODA5fQ.A6aHtA0HSgVk9YJMdLFPmn6aHgsxFofSe5CMp2rImcf-FrwBK88XuV3M-CZo85VI
+Authorization: Bearer eyJhbGciOiJIUzM4NCJ9.eyJzdWIiOiI0YTY0ZjNjMS1kMzI0LTQ5N2YtYTE0Yi1hNGFhNDcyMTcyMDQiLCJlbWFpbCI6Im1lKzBlYTZhMGM0LTEyZjAtNGU4MC04MTgyLTU2ZjFkZGVhYzBiMEB0ZXN0LmNvbSIsImlhdCI6MTc2OTk0NDg0MSwiZXhwIjoxNzY5OTQ4NDQxfQ.JEnweaLF6a-7SzIy24GnMW-997OWB3zzzLVMuWwH9Wjqg3P4cLU620cwGCfrhMz8
 Host: localhost:8080</code></pre>
 </div>
 </div>
@@ -327,9 +332,9 @@ Cache-Control: no-cache, no-store, max-age=0, must-revalidate
 Pragma: no-cache
 Expires: 0
 X-Frame-Options: DENY
-Content-Length: 60
+Content-Length: 183
 
-{"email":"me+dc6b7106-e102-4c47-b8ff-065c9e505e87@test.com"}</code></pre>
+{"id":"4a64f3c1-d324-497f-a14b-a4aa47217204","email":"me+0ea6a0c4-12f0-4e80-8182-56f1ddeac0b0@test.com","handle":"seed_329a57cc","name":"시드유저","followerCount":0,"tier":"NONE"}</code></pre>
 </div>
 </div>
 <table class="tableblock frame-all grid-all stretch">
@@ -384,7 +389,7 @@ Expires: 0
 X-Frame-Options: DENY
 Content-Length: 145
 
-{"code":"AUTH_UNAUTHORIZED","message":"인증이 필요합니다.","timestamp":[2026,1,30,20,6,49,105110000],"path":"/api/me","fieldErrors":null}</code></pre>
+{"code":"AUTH_UNAUTHORIZED","message":"인증이 필요합니다.","timestamp":[2026,2,1,20,20,41,770464100],"path":"/api/me","fieldErrors":null}</code></pre>
 </div>
 </div>
 </div>
@@ -402,11 +407,11 @@ Content-Length: 145
 <div class="content">
 <pre class="highlight nowrap"><code class="language-http" data-lang="http">POST /api/posts HTTP/1.1
 Content-Type: application/json
-Authorization: Bearer eyJhbGciOiJIUzM4NCJ9.eyJzdWIiOiJjNjE3MGE4MS0zNjE5LTQ2ZGQtYjU5NS0zODBiYzdhZjYwNDQiLCJlbWFpbCI6InBvc3QrNjg3MzZhMzgtNzY1Mi00NjUzLWE1ZjMtNGE0OWRjNTJlMzJmQHRlc3QuY29tIiwiaWF0IjoxNzY5NzcxMjA4LCJleHAiOjE3Njk3NzQ4MDh9.1DyB6bD0YesJGuXQnz2PVsvCyNiV4tni-lTTxza2ujhEyvfwqOtq7QqgenxqTztc
-Content-Length: 108
+Authorization: Bearer eyJhbGciOiJIUzM4NCJ9.eyJzdWIiOiJmMDA1ZGJlMy1kNmE0LTRiYjktYTM1NC0zODFhZjg3MzYzZmEiLCJlbWFpbCI6InBvc3QrNzNmM2FlZWZAdC5jb20iLCJpYXQiOjE3Njk5NDQ4NDEsImV4cCI6MTc2OTk0ODQ0MX0.e6-KR-o5lUpXXsywQ3sd_9XIW6-juLl_p1_7yO_aZtrecrrvKNh4yNdtd4FBO-JS
+Content-Length: 125
 Host: localhost:8080
 
-{"visibility":"ALL","imageUrls":["https://example.com/images/real.jpg"],"content":"오늘의 리얼한 삶"}</code></pre>
+{"visibility":"FOLLOWERS","imageUrls":["https://example.com/image1.jpg"],"content":"팔로워에게만 공유합니다 🙂"}</code></pre>
 </div>
 </div>
 <table class="tableblock frame-all grid-all stretch">
@@ -471,9 +476,9 @@ Cache-Control: no-cache, no-store, max-age=0, must-revalidate
 Pragma: no-cache
 Expires: 0
 X-Frame-Options: DENY
-Content-Length: 248
+Content-Length: 265
 
-{"postId":"05b77cd3-d98f-4221-9237-95f5fecc0509","authorId":"c6170a81-3619-46dd-b595-380bc7af6044","content":"오늘의 리얼한 삶","imageUrls":["https://example.com/images/real.jpg"],"visibility":"ALL","createdAt":"2026-01-30T20:06:48.4155049"}</code></pre>
+{"postId":"7e0e116a-8c2e-4209-9ece-e46624ddee01","authorId":"f005dbe3-d6a4-4bb9-a354-381af87363fa","content":"팔로워에게만 공유합니다 🙂","imageUrls":["https://example.com/image1.jpg"],"visibility":"FOLLOWERS","createdAt":"2026-02-01T20:20:41.2927395"}</code></pre>
 </div>
 </div>
 <table class="tableblock frame-all grid-all stretch">
@@ -493,12 +498,32 @@ Content-Length: 248
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><code>postId</code></p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><code>String</code></p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">생성된 게시글 ID(postId)</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">생성된 게시글 ID(UUID)</p></td>
 </tr>
 <tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><code>id</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>authorId</code></p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><code>String</code></p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">생성된 게시글 ID(id)</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">작성자 ID(UUID)</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>content</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>String</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">게시글 본문</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>imageUrls</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>Array</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">이미지 URL 목록</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>visibility</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>String</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">공개 범위</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>createdAt</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>String</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">생성 시각(ISO-8601)</p></td>
 </tr>
 </tbody>
 </table>
@@ -510,8 +535,8 @@ Content-Length: 248
 <h4 id="_request_3"><a class="anchor" href="#_request_3"></a><a class="link" href="#_request_3">Request</a></h4>
 <div class="listingblock">
 <div class="content">
-<pre class="highlight nowrap"><code class="language-http" data-lang="http">GET /api/posts/664e2083-ec02-4d00-95a9-a625c917635e HTTP/1.1
-Authorization: Bearer eyJhbGciOiJIUzM4NCJ9.eyJzdWIiOiIxYTgxNjhlYS03NjgzLTRlNGQtODljNS0xNDJmMTg0NTg3YjIiLCJlbWFpbCI6ImRldGFpbCtmMTFkMWE4MS0xZGFlLTQ1YTAtOWVlMS01MmE4YmE3YjA0MzdAdGVzdC5jb20iLCJpYXQiOjE3Njk3NzEyMDgsImV4cCI6MTc2OTc3NDgwOH0.oQc0NNE7m1PseuOqZ_LSPqdMy92sHuTYek48hSQNBjvScxB_h-zrRrrNkRIYt1Qi
+<pre class="highlight nowrap"><code class="language-http" data-lang="http">GET /api/posts/383d070a-21c8-44b9-8229-326e6d87748e HTTP/1.1
+Authorization: Bearer eyJhbGciOiJIUzM4NCJ9.eyJzdWIiOiI0ZWVkYThmZi04NjRkLTQ3N2EtYmNjMi1hMTI0YWY0ODlkYWQiLCJlbWFpbCI6ImRldGFpbCtmMWQ5Y2Q1OUB0LmNvbSIsImlhdCI6MTc2OTk0NDg0MSwiZXhwIjoxNzY5OTQ4NDQxfQ.ntz7eumqKcdchJSTpo-LxUdlIKz5OuflvSgiigogpGUbbg-_p1X6upqgaJdf4qwk
 Host: localhost:8080</code></pre>
 </div>
 </div>
@@ -533,25 +558,9 @@ Host: localhost:8080</code></pre>
 </tr>
 </tbody>
 </table>
-<table class="tableblock frame-all grid-all stretch">
-<caption class="title">Table 1. /api/posts/{postId}</caption>
-<colgroup>
-<col style="width: 50%;">
-<col style="width: 50%;">
-</colgroup>
-<thead>
-<tr>
-<th class="tableblock halign-left valign-top">Parameter</th>
-<th class="tableblock halign-left valign-top">Description</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><code>postId</code></p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">조회할 게시글 ID</p></td>
-</tr>
-</tbody>
-</table>
+<div class="paragraph">
+<p>Unresolved directive in index.adoc - include::C:\workspace\backend\build\generated-snippets/posts-get/path-parameters.adoc[]</p>
+</div>
 </div>
 <div class="sect3">
 <h4 id="_response_3"><a class="anchor" href="#_response_3"></a><a class="link" href="#_response_3">Response</a></h4>
@@ -565,9 +574,9 @@ Cache-Control: no-cache, no-store, max-age=0, must-revalidate
 Pragma: no-cache
 Expires: 0
 X-Frame-Options: DENY
-Content-Length: 249
+Content-Length: 248
 
-{"postId":"664e2083-ec02-4d00-95a9-a625c917635e","authorId":"1a8168ea-7683-4e4d-89c5-142f184587b2","content":"상세 조회용 게시글","imageUrls":["https://example.com/images/p1.jpg"],"visibility":"ALL","createdAt":"2026-01-30T20:06:48.9501998"}</code></pre>
+{"postId":"383d070a-21c8-44b9-8229-326e6d87748e","authorId":"4eeda8ff-864d-477a-bcc2-a124af489dad","content":"상세조회 테스트","imageUrls":["https://example.com/image1.jpg"],"visibility":"FOLLOWERS","createdAt":"2026-02-01T20:20:41.4546459"}</code></pre>
 </div>
 </div>
 <table class="tableblock frame-all grid-all stretch">
@@ -587,22 +596,17 @@ Content-Length: 249
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><code>postId</code></p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><code>String</code></p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">게시글 ID(postId)</p></td>
-</tr>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><code>id</code></p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><code>String</code></p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">게시글 ID(id)</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">게시글 ID(UUID)</p></td>
 </tr>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><code>authorId</code></p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><code>String</code></p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">작성자 ID</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">작성자 ID(UUID)</p></td>
 </tr>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><code>content</code></p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><code>String</code></p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">본문</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">게시글 본문</p></td>
 </tr>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><code>imageUrls</code></p></td>
@@ -615,14 +619,9 @@ Content-Length: 249
 <td class="tableblock halign-left valign-top"><p class="tableblock">공개 범위</p></td>
 </tr>
 <tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><code>likeCount</code></p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><code>Number</code></p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">좋아요 수</p></td>
-</tr>
-<tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><code>createdAt</code></p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><code>String</code></p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">생성 시각</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">생성 시각(ISO-8601)</p></td>
 </tr>
 </tbody>
 </table>
@@ -632,132 +631,18 @@ Content-Length: 249
 <h3 id="_피드_조회_최신순"><a class="anchor" href="#_피드_조회_최신순"></a><a class="link" href="#_피드_조회_최신순">피드 조회 (최신순)</a></h3>
 <div class="sect3">
 <h4 id="_request_4"><a class="anchor" href="#_request_4"></a><a class="link" href="#_request_4">Request</a></h4>
-<div class="listingblock">
-<div class="content">
-<pre class="highlight nowrap"><code class="language-http" data-lang="http">GET /api/posts?size=2 HTTP/1.1
-Authorization: Bearer eyJhbGciOiJIUzM4NCJ9.eyJzdWIiOiIwNTljOGE5My0wYmI3LTRkODUtYjFmZS02ZTViYjE2MWNlYTciLCJlbWFpbCI6ImZlZWRtZSs2N2RlNzU0OC1hZTU1LTRkMzgtOWJiYS0zOTc3MzlkMjE1YzJAdGVzdC5jb20iLCJpYXQiOjE3Njk3NzEyMDgsImV4cCI6MTc2OTc3NDgwOH0.vxLBX0KtJC9k8Be69TJ4nbtHJDqkXAB5lvVJ6b0P_YUOwwXmxXbNfOUOZpxZZ4ye
-Host: localhost:8080</code></pre>
+<div class="paragraph">
+<p>Unresolved directive in index.adoc - include::C:\workspace\backend\build\generated-snippets/posts-feed/http-request.adoc[]
+Unresolved directive in index.adoc - include::C:\workspace\backend\build\generated-snippets/posts-feed/request-headers.adoc[]
+Unresolved directive in index.adoc - include::C:\workspace\backend\build\generated-snippets/posts-feed/query-parameters.adoc[]</p>
 </div>
-</div>
-<table class="tableblock frame-all grid-all stretch">
-<colgroup>
-<col style="width: 50%;">
-<col style="width: 50%;">
-</colgroup>
-<thead>
-<tr>
-<th class="tableblock halign-left valign-top">Name</th>
-<th class="tableblock halign-left valign-top">Description</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><code>Authorization</code></p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Bearer {accessToken}</p></td>
-</tr>
-</tbody>
-</table>
-<table class="tableblock frame-all grid-all stretch">
-<colgroup>
-<col style="width: 50%;">
-<col style="width: 50%;">
-</colgroup>
-<thead>
-<tr>
-<th class="tableblock halign-left valign-top">Parameter</th>
-<th class="tableblock halign-left valign-top">Description</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><code>cursor</code></p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">다음 페이지 커서(nextCursor 값을 그대로 전달)</p></td>
-</tr>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><code>size</code></p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">페이지 크기(기본 20, 최대 50)</p></td>
-</tr>
-</tbody>
-</table>
 </div>
 <div class="sect3">
 <h4 id="_response_4"><a class="anchor" href="#_response_4"></a><a class="link" href="#_response_4">Response</a></h4>
-<div class="listingblock">
-<div class="content">
-<pre class="highlight nowrap"><code class="language-http" data-lang="http">HTTP/1.1 200 OK
-Content-Type: application/json
-X-Content-Type-Options: nosniff
-X-XSS-Protection: 0
-Cache-Control: no-cache, no-store, max-age=0, must-revalidate
-Pragma: no-cache
-Expires: 0
-X-Frame-Options: DENY
-Content-Length: 608
-
-{"items":[{"postId":"2fa8a226-77b8-4013-9878-e706b81c8017","authorId":"8aad084e-b53a-4767-90f9-39b6710b9ab4","content":"타겟의 리얼 게시글 3","imageUrls":["https://example.com/images/p1.jpg"],"visibility":"ALL","createdAt":"2026-01-30T20:06:48.5804098"},{"postId":"98c2e3c9-cc07-4ddd-9b87-9d6cf8404568","authorId":"8aad084e-b53a-4767-90f9-39b6710b9ab4","content":"타겟의 리얼 게시글 2","imageUrls":["https://example.com/images/p1.jpg"],"visibility":"ALL","createdAt":"2026-01-30T20:06:48.571415"}],"nextCursor":"2026-01-30T20:06:48.571415|98c2e3c9-cc07-4ddd-9b87-9d6cf8404568","hasNext":true}</code></pre>
+<div class="paragraph">
+<p>Unresolved directive in index.adoc - include::C:\workspace\backend\build\generated-snippets/posts-feed/http-response.adoc[]
+Unresolved directive in index.adoc - include::C:\workspace\backend\build\generated-snippets/posts-feed/response-fields.adoc[]</p>
 </div>
-</div>
-<table class="tableblock frame-all grid-all stretch">
-<colgroup>
-<col style="width: 33.3333%;">
-<col style="width: 33.3333%;">
-<col style="width: 33.3334%;">
-</colgroup>
-<thead>
-<tr>
-<th class="tableblock halign-left valign-top">Path</th>
-<th class="tableblock halign-left valign-top">Type</th>
-<th class="tableblock halign-left valign-top">Description</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><code>items</code></p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><code>Array</code></p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">피드 게시글 목록(최신순)</p></td>
-</tr>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><code>items[].postId</code></p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><code>String</code></p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">게시글 ID</p></td>
-</tr>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><code>items[].authorId</code></p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><code>String</code></p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">작성자 ID(나 + 팔로우한 사용자)</p></td>
-</tr>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><code>items[].content</code></p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><code>String</code></p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">본문</p></td>
-</tr>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><code>items[].imageUrls</code></p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><code>Array</code></p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">이미지 URL 목록</p></td>
-</tr>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><code>items[].visibility</code></p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><code>String</code></p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">공개 범위</p></td>
-</tr>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><code>items[].createdAt</code></p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><code>String</code></p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">생성 시각</p></td>
-</tr>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><code>nextCursor</code></p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><code>String</code></p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">다음 페이지 커서(없으면 null)</p></td>
-</tr>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><code>hasNext</code></p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><code>Boolean</code></p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">다음 페이지 존재 여부</p></td>
-</tr>
-</tbody>
-</table>
 </div>
 </div>
 <div class="sect2">
@@ -766,8 +651,8 @@ Content-Length: 608
 <h4 id="_request_5"><a class="anchor" href="#_request_5"></a><a class="link" href="#_request_5">Request</a></h4>
 <div class="listingblock">
 <div class="content">
-<pre class="highlight nowrap"><code class="language-http" data-lang="http">DELETE /api/posts/02af3732-33b8-4f60-93c7-b8e8179fe07e HTTP/1.1
-Authorization: Bearer eyJhbGciOiJIUzM4NCJ9.eyJzdWIiOiJjZWEwYTNhNC1lOTVmLTRlNGUtYjFkZS02YzgxNzAwNDNkMDEiLCJlbWFpbCI6ImRlbCs0OWM4NDlhZS0wZmFhLTRjZmQtYTRiYi1mMGU0OTliZWVjNmJAdGVzdC5jb20iLCJpYXQiOjE3Njk3NzEyMDgsImV4cCI6MTc2OTc3NDgwOH0.fzGxiiqUGfGHobkyIEddzLQLvSPo6TBYT2i3fnrKFcqC41-aIh6hfMrNjE5xbHEf
+<pre class="highlight nowrap"><code class="language-http" data-lang="http">DELETE /api/posts/b87394d9-59fc-45b8-bad0-9f0ea9ed14f3 HTTP/1.1
+Authorization: Bearer eyJhbGciOiJIUzM4NCJ9.eyJzdWIiOiJmNDBiNWNkMC0yN2RkLTQ3OTYtYjcxNC02NGQ3NTZmMGRhOWUiLCJlbWFpbCI6ImRlbCtiOGJhMzhjYkB0LmNvbSIsImlhdCI6MTc2OTk0NDg0MSwiZXhwIjoxNzY5OTQ4NDQxfQ.RABNdPSQw5_gt89pZejJeI6SHMRfv6ISRmzb_dWdwcM8vuclBX8wiEK7gW4i3744
 Host: localhost:8080</code></pre>
 </div>
 </div>
@@ -789,25 +674,9 @@ Host: localhost:8080</code></pre>
 </tr>
 </tbody>
 </table>
-<table class="tableblock frame-all grid-all stretch">
-<caption class="title">Table 2. /api/posts/{postId}</caption>
-<colgroup>
-<col style="width: 50%;">
-<col style="width: 50%;">
-</colgroup>
-<thead>
-<tr>
-<th class="tableblock halign-left valign-top">Parameter</th>
-<th class="tableblock halign-left valign-top">Description</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><code>postId</code></p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">삭제할 게시글 ID</p></td>
-</tr>
-</tbody>
-</table>
+<div class="paragraph">
+<p>Unresolved directive in index.adoc - include::C:\workspace\backend\build\generated-snippets/posts-delete/path-parameters.adoc[]</p>
+</div>
 </div>
 <div class="sect3">
 <h4 id="_response_5"><a class="anchor" href="#_response_5"></a><a class="link" href="#_response_5">Response</a></h4>
@@ -831,119 +700,20 @@ X-Frame-Options: DENY</code></pre>
 <div class="sectionbody">
 <div class="sect2">
 <h3 id="_팔로우"><a class="anchor" href="#_팔로우"></a><a class="link" href="#_팔로우">팔로우</a></h3>
-<div class="listingblock">
-<div class="content">
-<pre class="highlight nowrap"><code class="language-http" data-lang="http">POST /api/follows/ba86d60d-f1cf-41da-a997-5c4aa18b58d2 HTTP/1.1
-Authorization: Bearer eyJhbGciOiJIUzM4NCJ9.eyJzdWIiOiIyNWY2ZTI3OC1jNThjLTQ2YzktOTE4Ny05ODRmMmRiNDgyMDAiLCJlbWFpbCI6ImZvbGxvdys5NDMyM2FhNy02NGRhLTQ4M2EtOWYxYy1kZDMyNzBlZjUwOTRAdGVzdC5jb20iLCJpYXQiOjE3Njk3NzEyMDcsImV4cCI6MTc2OTc3NDgwN30.i536VivpcMVB_R5Ad-Fyz8Xu7QxJYe_rXVYxnSttDdt8GCG-ZFoHd4bwPbeImqYV
-Host: localhost:8080
-Content-Type: application/x-www-form-urlencoded</code></pre>
-</div>
-</div>
-<table class="tableblock frame-all grid-all stretch">
-<colgroup>
-<col style="width: 50%;">
-<col style="width: 50%;">
-</colgroup>
-<thead>
-<tr>
-<th class="tableblock halign-left valign-top">Name</th>
-<th class="tableblock halign-left valign-top">Description</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><code>Authorization</code></p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Bearer {accessToken}</p></td>
-</tr>
-</tbody>
-</table>
-<table class="tableblock frame-all grid-all stretch">
-<caption class="title">Table 3. /api/follows/{targetUserId}</caption>
-<colgroup>
-<col style="width: 50%;">
-<col style="width: 50%;">
-</colgroup>
-<thead>
-<tr>
-<th class="tableblock halign-left valign-top">Parameter</th>
-<th class="tableblock halign-left valign-top">Description</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><code>targetUserId</code></p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">팔로우할 사용자 ID</p></td>
-</tr>
-</tbody>
-</table>
-<div class="listingblock">
-<div class="content">
-<pre class="highlight nowrap"><code class="language-http" data-lang="http">HTTP/1.1 204 No Content
-X-Content-Type-Options: nosniff
-X-XSS-Protection: 0
-Cache-Control: no-cache, no-store, max-age=0, must-revalidate
-Pragma: no-cache
-Expires: 0
-X-Frame-Options: DENY</code></pre>
-</div>
+<div class="paragraph">
+<p>Unresolved directive in index.adoc - include::C:\workspace\backend\build\generated-snippets/follows-create/http-request.adoc[]
+Unresolved directive in index.adoc - include::C:\workspace\backend\build\generated-snippets/follows-create/request-headers.adoc[]
+Unresolved directive in index.adoc - include::C:\workspace\backend\build\generated-snippets/follows-create/path-parameters.adoc[]
+Unresolved directive in index.adoc - include::C:\workspace\backend\build\generated-snippets/follows-create/http-response.adoc[]</p>
 </div>
 </div>
 <div class="sect2">
 <h3 id="_언팔로우"><a class="anchor" href="#_언팔로우"></a><a class="link" href="#_언팔로우">언팔로우</a></h3>
-<div class="listingblock">
-<div class="content">
-<pre class="highlight nowrap"><code class="language-http" data-lang="http">DELETE /api/follows/26d2a2c5-a01b-4ef5-bf9a-0c9e0936ad85 HTTP/1.1
-Authorization: Bearer eyJhbGciOiJIUzM4NCJ9.eyJzdWIiOiIxNGJjNTRlMS1kZmEzLTRlMzItYWNlNS0zMDQ1MjAxMWFlNWYiLCJlbWFpbCI6InVuZm9sbG93KzE5Zjk4NDcxLTIyOWYtNGZiNi05NGRlLTI1YzQ0ODAyODU0Y0B0ZXN0LmNvbSIsImlhdCI6MTc2OTc3MTIwNywiZXhwIjoxNzY5Nzc0ODA3fQ.9rEUcmL1yjcdGonu8L0nt136OO9Lvz3TKxAE0UsXJe4bn_z-P9U8MPoJn2iYu9Ff
-Host: localhost:8080</code></pre>
-</div>
-</div>
-<table class="tableblock frame-all grid-all stretch">
-<colgroup>
-<col style="width: 50%;">
-<col style="width: 50%;">
-</colgroup>
-<thead>
-<tr>
-<th class="tableblock halign-left valign-top">Name</th>
-<th class="tableblock halign-left valign-top">Description</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><code>Authorization</code></p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Bearer {accessToken}</p></td>
-</tr>
-</tbody>
-</table>
-<table class="tableblock frame-all grid-all stretch">
-<caption class="title">Table 4. /api/follows/{targetUserId}</caption>
-<colgroup>
-<col style="width: 50%;">
-<col style="width: 50%;">
-</colgroup>
-<thead>
-<tr>
-<th class="tableblock halign-left valign-top">Parameter</th>
-<th class="tableblock halign-left valign-top">Description</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><code>targetUserId</code></p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">언팔로우할 사용자 ID</p></td>
-</tr>
-</tbody>
-</table>
-<div class="listingblock">
-<div class="content">
-<pre class="highlight nowrap"><code class="language-http" data-lang="http">HTTP/1.1 204 No Content
-X-Content-Type-Options: nosniff
-X-XSS-Protection: 0
-Cache-Control: no-cache, no-store, max-age=0, must-revalidate
-Pragma: no-cache
-Expires: 0
-X-Frame-Options: DENY</code></pre>
-</div>
+<div class="paragraph">
+<p>Unresolved directive in index.adoc - include::C:\workspace\backend\build\generated-snippets/follows-delete/http-request.adoc[]
+Unresolved directive in index.adoc - include::C:\workspace\backend\build\generated-snippets/follows-delete/request-headers.adoc[]
+Unresolved directive in index.adoc - include::C:\workspace\backend\build\generated-snippets/follows-delete/path-parameters.adoc[]
+Unresolved directive in index.adoc - include::C:\workspace\backend\build\generated-snippets/follows-delete/http-response.adoc[]</p>
 </div>
 </div>
 </div>
@@ -953,119 +723,20 @@ X-Frame-Options: DENY</code></pre>
 <div class="sectionbody">
 <div class="sect2">
 <h3 id="_좋아요"><a class="anchor" href="#_좋아요"></a><a class="link" href="#_좋아요">좋아요</a></h3>
-<div class="listingblock">
-<div class="content">
-<pre class="highlight nowrap"><code class="language-http" data-lang="http">POST /api/posts/735414c0-d2e2-48ef-8b09-027003ae9187/likes HTTP/1.1
-Authorization: Bearer eyJhbGciOiJIUzM4NCJ9.eyJzdWIiOiJlZjBjMTI2ZC03NWRiLTQyZGEtYWI5ZS1iNTY5YWRiZWM2M2IiLCJlbWFpbCI6Imxpa2UrYTc4NmU5NTctMzRiZC00ZjM3LWI3M2QtYTM3NTc3YjU3ZmZkQHRlc3QuY29tIiwiaWF0IjoxNzY5NzcxMjA4LCJleHAiOjE3Njk3NzQ4MDh9.KDuZTh-pu5EAbHJdfdD9J0iflbv5YRQM_SVlGJc4TI271g9s9RjvahymQ3N7fx8r
-Host: localhost:8080
-Content-Type: application/x-www-form-urlencoded</code></pre>
-</div>
-</div>
-<table class="tableblock frame-all grid-all stretch">
-<colgroup>
-<col style="width: 50%;">
-<col style="width: 50%;">
-</colgroup>
-<thead>
-<tr>
-<th class="tableblock halign-left valign-top">Name</th>
-<th class="tableblock halign-left valign-top">Description</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><code>Authorization</code></p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Bearer {accessToken}</p></td>
-</tr>
-</tbody>
-</table>
-<table class="tableblock frame-all grid-all stretch">
-<caption class="title">Table 5. /api/posts/{postId}/likes</caption>
-<colgroup>
-<col style="width: 50%;">
-<col style="width: 50%;">
-</colgroup>
-<thead>
-<tr>
-<th class="tableblock halign-left valign-top">Parameter</th>
-<th class="tableblock halign-left valign-top">Description</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><code>postId</code></p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">좋아요할 게시글 ID</p></td>
-</tr>
-</tbody>
-</table>
-<div class="listingblock">
-<div class="content">
-<pre class="highlight nowrap"><code class="language-http" data-lang="http">HTTP/1.1 204 No Content
-X-Content-Type-Options: nosniff
-X-XSS-Protection: 0
-Cache-Control: no-cache, no-store, max-age=0, must-revalidate
-Pragma: no-cache
-Expires: 0
-X-Frame-Options: DENY</code></pre>
-</div>
+<div class="paragraph">
+<p>Unresolved directive in index.adoc - include::C:\workspace\backend\build\generated-snippets/post-likes-create/http-request.adoc[]
+Unresolved directive in index.adoc - include::C:\workspace\backend\build\generated-snippets/post-likes-create/request-headers.adoc[]
+Unresolved directive in index.adoc - include::C:\workspace\backend\build\generated-snippets/post-likes-create/path-parameters.adoc[]
+Unresolved directive in index.adoc - include::C:\workspace\backend\build\generated-snippets/post-likes-create/http-response.adoc[]</p>
 </div>
 </div>
 <div class="sect2">
 <h3 id="_좋아요_취소"><a class="anchor" href="#_좋아요_취소"></a><a class="link" href="#_좋아요_취소">좋아요 취소</a></h3>
-<div class="listingblock">
-<div class="content">
-<pre class="highlight nowrap"><code class="language-http" data-lang="http">DELETE /api/posts/b9e0f067-c5cd-492c-81b2-011d1a01ca8d/likes HTTP/1.1
-Authorization: Bearer eyJhbGciOiJIUzM4NCJ9.eyJzdWIiOiI2NDI3M2Y3OS1lYTllLTQ4MWEtOGMxMC0yZGViNTMwODcxODAiLCJlbWFpbCI6InVubGlrZStmNjczZmIwZi1lMDQ3LTQyZTEtOTM5MC1jMmYxZTYwYmQ3MDJAdGVzdC5jb20iLCJpYXQiOjE3Njk3NzEyMDgsImV4cCI6MTc2OTc3NDgwOH0.9NndneS-TFgc-7FLdTsDV-RiWxmbllR8EonTT8dG0TX4IneZ304k7dZvblBWeQcb
-Host: localhost:8080</code></pre>
-</div>
-</div>
-<table class="tableblock frame-all grid-all stretch">
-<colgroup>
-<col style="width: 50%;">
-<col style="width: 50%;">
-</colgroup>
-<thead>
-<tr>
-<th class="tableblock halign-left valign-top">Name</th>
-<th class="tableblock halign-left valign-top">Description</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><code>Authorization</code></p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Bearer {accessToken}</p></td>
-</tr>
-</tbody>
-</table>
-<table class="tableblock frame-all grid-all stretch">
-<caption class="title">Table 6. /api/posts/{postId}/likes</caption>
-<colgroup>
-<col style="width: 50%;">
-<col style="width: 50%;">
-</colgroup>
-<thead>
-<tr>
-<th class="tableblock halign-left valign-top">Parameter</th>
-<th class="tableblock halign-left valign-top">Description</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><code>postId</code></p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">좋아요 취소할 게시글 ID</p></td>
-</tr>
-</tbody>
-</table>
-<div class="listingblock">
-<div class="content">
-<pre class="highlight nowrap"><code class="language-http" data-lang="http">HTTP/1.1 204 No Content
-X-Content-Type-Options: nosniff
-X-XSS-Protection: 0
-Cache-Control: no-cache, no-store, max-age=0, must-revalidate
-Pragma: no-cache
-Expires: 0
-X-Frame-Options: DENY</code></pre>
-</div>
+<div class="paragraph">
+<p>Unresolved directive in index.adoc - include::C:\workspace\backend\build\generated-snippets/post-likes-delete/http-request.adoc[]
+Unresolved directive in index.adoc - include::C:\workspace\backend\build\generated-snippets/post-likes-delete/request-headers.adoc[]
+Unresolved directive in index.adoc - include::C:\workspace\backend\build\generated-snippets/post-likes-delete/path-parameters.adoc[]
+Unresolved directive in index.adoc - include::C:\workspace\backend\build\generated-snippets/post-likes-delete/http-response.adoc[]</p>
 </div>
 </div>
 </div>

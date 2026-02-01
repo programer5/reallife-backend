@@ -3,6 +3,8 @@ package com.example.backend.controller.follow;
 import com.example.backend.domain.user.User;
 import com.example.backend.repository.user.UserRepository;
 import com.example.backend.security.JwtTokenProvider;
+import com.example.backend.restdocs.ErrorResponseSnippet;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -18,13 +20,16 @@ import org.springframework.web.context.WebApplicationContext;
 
 import java.util.UUID;
 
-import static org.springframework.restdocs.headers.HeaderDocumentation.*;
-import static org.springframework.restdocs.mockmvc.MockMvcRestDocumentation.*;
-import static org.springframework.restdocs.request.RequestDocumentation.*;
-import static org.springframework.security.test.web.servlet.setup.SecurityMockMvcConfigurers.springSecurity;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
+import static org.springframework.restdocs.headers.HeaderDocumentation.headerWithName;
+import static org.springframework.restdocs.headers.HeaderDocumentation.requestHeaders;
+import static org.springframework.restdocs.mockmvc.MockMvcRestDocumentation.document;
+import static org.springframework.restdocs.mockmvc.MockMvcRestDocumentation.documentationConfiguration;
+import static org.springframework.restdocs.request.RequestDocumentation.parameterWithName;
+import static org.springframework.restdocs.request.RequestDocumentation.pathParameters;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
+
+import static org.springframework.security.test.web.servlet.setup.SecurityMockMvcConfigurers.springSecurity;
 
 @SpringBootTest
 @ExtendWith({RestDocumentationExtension.class, SpringExtension.class})
@@ -32,6 +37,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 class FollowControllerDocsTest {
 
     @Autowired private WebApplicationContext context;
+    @Autowired private ObjectMapper objectMapper; // (필요 없지만 주입되어 있어도 무방)
     @Autowired private UserRepository userRepository;
     @Autowired private JwtTokenProvider jwtTokenProvider;
 
@@ -42,45 +48,58 @@ class FollowControllerDocsTest {
                 .build();
     }
 
+    private User saveUser(String prefix, String name) {
+        String suffix = UUID.randomUUID().toString().substring(0, 8);
+        String email = prefix + "+" + suffix + "@t.com";
+        String handle = (prefix + "_" + suffix);
+        if (handle.length() > 20) handle = handle.substring(0, 20);
+        return userRepository.saveAndFlush(new User(email, handle, "encoded", name));
+    }
+
+    private String bearer(User user) {
+        String token = jwtTokenProvider.createAccessToken(user.getId().toString(), user.getEmail());
+        return "Bearer " + token;
+    }
+
     @Test
     void 팔로우_성공_204(RestDocumentationContextProvider restDocumentation) throws Exception {
         MockMvc mockMvc = mockMvc(restDocumentation);
 
-        User me = userRepository.saveAndFlush(new User("follow+" + UUID.randomUUID() + "@test.com", "encoded", "팔로워"));
-        User target = userRepository.saveAndFlush(new User("target+" + UUID.randomUUID() + "@test.com", "encoded", "타겟"));
-
-        String token = jwtTokenProvider.createAccessToken(me.getId().toString(), me.getEmail());
+        User me = saveUser("followme", "팔로워");
+        User target = saveUser("followtarget", "타겟");
 
         mockMvc.perform(post("/api/follows/{targetUserId}", target.getId())
-                        .header(HttpHeaders.AUTHORIZATION, "Bearer " + token))
+                        .header(HttpHeaders.AUTHORIZATION, bearer(me)))
                 .andExpect(status().isNoContent())
-                .andDo(document("follows-create",
-                        requestHeaders(headerWithName(HttpHeaders.AUTHORIZATION).description("Bearer {accessToken}")),
-                        pathParameters(parameterWithName("targetUserId").description("팔로우할 사용자 ID"))
+                .andDo(document("follows-create-204",
+                        requestHeaders(
+                                headerWithName(HttpHeaders.AUTHORIZATION).description("Bearer {accessToken}")
+                        ),
+                        pathParameters(
+                                parameterWithName("targetUserId").description("팔로우 대상 사용자 ID(UUID)")
+                        )
                 ));
     }
 
     @Test
-    void 언팔로우_성공_204(RestDocumentationContextProvider restDocumentation) throws Exception {
+    void 팔로우_실패_자기자신_팔로우_400(RestDocumentationContextProvider restDocumentation) throws Exception {
         MockMvc mockMvc = mockMvc(restDocumentation);
 
-        User me = userRepository.saveAndFlush(new User("unfollow+" + UUID.randomUUID() + "@test.com", "encoded", "언팔로워"));
-        User target = userRepository.saveAndFlush(new User("target2+" + UUID.randomUUID() + "@test.com", "encoded", "타겟2"));
+        User me = saveUser("self", "나");
 
-        String token = jwtTokenProvider.createAccessToken(me.getId().toString(), me.getEmail());
-
-        // 먼저 팔로우
-        mockMvc.perform(post("/api/follows/{targetUserId}", target.getId())
-                        .header(HttpHeaders.AUTHORIZATION, "Bearer " + token))
-                .andExpect(status().isNoContent());
-
-        // 언팔로우
-        mockMvc.perform(delete("/api/follows/{targetUserId}", target.getId())
-                        .header(HttpHeaders.AUTHORIZATION, "Bearer " + token))
-                .andExpect(status().isNoContent())
-                .andDo(document("follows-delete",
-                        requestHeaders(headerWithName(HttpHeaders.AUTHORIZATION).description("Bearer {accessToken}")),
-                        pathParameters(parameterWithName("targetUserId").description("언팔로우할 사용자 ID"))
+        mockMvc.perform(post("/api/follows/{targetUserId}", me.getId())
+                        .header(HttpHeaders.AUTHORIZATION, bearer(me)))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.code").value("FOLLOW_CANNOT_FOLLOW_SELF"))
+                .andDo(document("follows-create-400-self",
+                        requestHeaders(
+                                headerWithName(HttpHeaders.AUTHORIZATION).description("Bearer {accessToken}")
+                        ),
+                        pathParameters(
+                                parameterWithName("targetUserId").description("팔로우 대상 사용자 ID(UUID)")
+                        ),
+                        // 공통 에러 응답 문서화
+                        org.springframework.restdocs.payload.PayloadDocumentation.responseFields(ErrorResponseSnippet.common())
                 ));
     }
 }

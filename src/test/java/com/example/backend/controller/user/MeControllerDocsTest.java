@@ -60,7 +60,12 @@ class MeControllerDocsTest {
         MockMvc mockMvc = mockMvc(restDocumentation);
 
         String email = "me+" + UUID.randomUUID() + "@test.com";
-        User user = userRepository.saveAndFlush(new User(email, "encoded", "시드유저"));
+        User user = userRepository.saveAndFlush(new User(
+                email,
+                "seed_" + UUID.randomUUID().toString().substring(0, 8),
+                "encoded",
+                "시드유저"
+        ));
 
         String token = jwtTokenProvider.createAccessToken(user.getId().toString(), user.getEmail());
 

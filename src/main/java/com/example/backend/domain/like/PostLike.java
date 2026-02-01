@@ -4,6 +4,7 @@ import com.example.backend.domain.BaseEntity;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import org.hibernate.annotations.UuidGenerator;
 
 import java.util.UUID;
 
@@ -26,6 +27,8 @@ public class PostLike extends BaseEntity {
 
     @Id
     @GeneratedValue
+    @UuidGenerator
+    @Column(name = "id", updatable = false, nullable = false)
     private UUID id;
 
     @Column(name = "post_id", nullable = false)

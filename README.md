@@ -172,7 +172,16 @@ JWT 기반 인증
 에러 응답 표준화
 REST Docs 문서 자동화 + /docs 서빙 + 스타일링
 
+Phase 1.5 — Identity Upgrade
+
+handle(username) 도입 + 중복체크 API
+회원가입 시 handle 받기(or 설정 API 추가)
+프로필 조회 응답에 handle 포함
+팔로워 등급(tier) 계산 로직 추가 + 응답에 포함
+OAuth2 로그인(구글부터) + JWT 발급 연결
+
 Phase 2 — SNS 기능 (진행/확장)
+
 게시글(사진/텍스트) CRUD
 댓글(Comment) CRUD
 좋아요 / 팔로우
@@ -205,6 +214,7 @@ LLM 활용(선택)
 자동 콘텐츠 분류 / 신고 처리 보조 / 운영 FAQ 보조
 
 Phase 6 — Product Expansion
+
 실제 사용자 공개 베타
 Android 앱 출시 (Google Play)
 iOS 앱 출시 (Apple App Store)

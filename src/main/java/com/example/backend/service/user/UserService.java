@@ -7,6 +7,7 @@ import com.example.backend.repository.user.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @RequiredArgsConstructor
@@ -15,14 +16,23 @@ public class UserService {
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
 
-    public User register(String email, String rawPassword, String name) {
+    @Transactional
+    public User register(String email, String handle, String rawPassword, String name) {
 
-        if (userRepository.findByEmail(email).isPresent()) {
+        if (userRepository.existsByEmail(email)) {
             throw new BusinessException(ErrorCode.DUPLICATE_EMAIL);
         }
+        if (userRepository.existsByHandle(handle)) {
+            throw new BusinessException(ErrorCode.DUPLICATE_HANDLE);
+        }
 
-        String encodedPassword = passwordEncoder.encode(rawPassword);
-        User user = new User(email, encodedPassword, name);
-        return userRepository.saveAndFlush(user);
+        String encoded = passwordEncoder.encode(rawPassword);
+
+        User user = new User(email, handle, encoded, name);
+        return userRepository.save(user);
+    }
+
+    public boolean existsHandle(String handle) {
+        return userRepository.existsByHandle(handle);
     }
 }

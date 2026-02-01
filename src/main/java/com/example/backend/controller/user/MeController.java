@@ -1,21 +1,43 @@
 package com.example.backend.controller.user;
 
-import org.springframework.http.HttpStatus;
+import com.example.backend.controller.user.dto.MeResponse;
+import com.example.backend.domain.user.FollowerTier;
+import com.example.backend.domain.user.User;
+import com.example.backend.exception.BusinessException;
+import com.example.backend.exception.ErrorCode;
+import com.example.backend.repository.user.UserRepository;
+import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RestController;
-import org.springframework.web.server.ResponseStatusException;
-
-import java.util.Map;
 
 @RestController
+@RequiredArgsConstructor
 public class MeController {
 
+    private final UserRepository userRepository;
+
     @GetMapping("/api/me")
-    public Map<String, Object> me(Authentication authentication) {
+    public MeResponse me(Authentication authentication) {
         if (authentication == null) {
-            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED);
+            throw new BusinessException(ErrorCode.UNAUTHORIZED);
         }
-        return Map.of("email", authentication.getName());
+
+        // JwtAuthenticationFilter에서 principal을 email로 넣었음
+        String email = authentication.getName();
+
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
+
+        FollowerTier tier = FollowerTier.of(user.getFollowerCount());
+
+        return new MeResponse(
+                user.getId().toString(),
+                user.getEmail(),
+                user.getHandle(),
+                user.getName(),
+                user.getFollowerCount(),
+                tier.name()
+        );
     }
 }
