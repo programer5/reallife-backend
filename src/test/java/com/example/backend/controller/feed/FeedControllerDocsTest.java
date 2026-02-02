@@ -1,8 +1,8 @@
-package com.example.backend.controller.user;
+package com.example.backend.controller.feed;
 
 import com.example.backend.controller.DocsTestSupport;
-import com.example.backend.restdocs.ErrorResponseSnippet;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import com.example.backend.domain.follow.Follow;
+import com.example.backend.repository.follow.FollowRepository;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -20,9 +20,8 @@ import static org.springframework.restdocs.headers.HeaderDocumentation.headerWit
 import static org.springframework.restdocs.headers.HeaderDocumentation.requestHeaders;
 import static org.springframework.restdocs.mockmvc.MockMvcRestDocumentation.document;
 import static org.springframework.restdocs.mockmvc.MockMvcRestDocumentation.documentationConfiguration;
-import static org.springframework.restdocs.payload.PayloadDocumentation.fieldWithPath;
-import static org.springframework.restdocs.payload.PayloadDocumentation.responseFields;
 import static org.springframework.restdocs.payload.JsonFieldType.*;
+import static org.springframework.restdocs.payload.PayloadDocumentation.*;
 import static org.springframework.security.test.web.servlet.setup.SecurityMockMvcConfigurers.springSecurity;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
@@ -30,11 +29,11 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @SpringBootTest
 @ExtendWith({RestDocumentationExtension.class, SpringExtension.class})
 @Transactional
-class MeControllerDocsTest {
+class FeedControllerDocsTest {
 
     @Autowired WebApplicationContext context;
-    @Autowired ObjectMapper objectMapper;
     @Autowired DocsTestSupport docs;
+    @Autowired FollowRepository followRepository;
 
     private MockMvc mockMvc(RestDocumentationContextProvider restDocumentation) {
         return MockMvcBuilders.webAppContextSetup(context)
@@ -44,40 +43,40 @@ class MeControllerDocsTest {
     }
 
     @Test
-    void 내정보_조회_실패_토큰없음_401(RestDocumentationContextProvider restDocumentation) throws Exception {
-        mockMvc(restDocumentation)
-                .perform(get("/api/me"))
-                .andExpect(status().isUnauthorized())
-                .andDo(org.springframework.test.web.servlet.result.MockMvcResultHandlers.print())
-                .andDo(document("me-401-unauthorized",
-                        responseFields(ErrorResponseSnippet.common())
-                ));
-    }
-
-    @Test
-    void 내정보_조회_성공_토큰있음_200(RestDocumentationContextProvider restDocumentation) throws Exception {
-        var me = docs.saveUser("me", "시드유저");
+    void 피드_조회_성공_200(RestDocumentationContextProvider restDocumentation) throws Exception {
+        var me = docs.saveUser("feedme", "피드유저");
         String token = docs.issueTokenFor(me);
 
+        var target = docs.saveUser("feedtarget", "타겟유저");
+
+        // me가 target을 팔로우
+        followRepository.saveAndFlush(Follow.create(me.getId(), target.getId()));
+
+        // target 글 1개
+        docs.savePost(target.getId(), "팔로잉 글");
+
         mockMvc(restDocumentation)
-                .perform(get("/api/me")
+                .perform(get("/api/feed")
                         .header(HttpHeaders.AUTHORIZATION, DocsTestSupport.auth(token)))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.id").exists())       // ✅ id 존재
-                .andExpect(jsonPath("$.email").exists())
-                .andExpect(jsonPath("$.handle").exists())
                 .andDo(org.springframework.test.web.servlet.result.MockMvcResultHandlers.print())
-                .andDo(document("me-200-ok",
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.items").isArray())
+                .andDo(document("feed-get",
                         requestHeaders(
                                 headerWithName(HttpHeaders.AUTHORIZATION).description("Bearer {accessToken}")
                         ),
                         responseFields(
-                                fieldWithPath("id").type(STRING).description("내 사용자 ID(UUID)"),
-                                fieldWithPath("email").type(STRING).description("내 이메일"),
-                                fieldWithPath("handle").type(STRING).description("내 아이디(핸들)"),
-                                fieldWithPath("name").type(STRING).description("내 이름"),
-                                fieldWithPath("followerCount").type(NUMBER).description("팔로워 수"),
-                                fieldWithPath("tier").type(STRING).description("팔로워 티어")
+                                fieldWithPath("items").type(ARRAY).description("피드 아이템 목록"),
+                                fieldWithPath("items[].postId").type(STRING).description("게시글 ID"),
+                                fieldWithPath("items[].authorId").type(STRING).description("작성자 ID"),
+                                fieldWithPath("items[].authorHandle").type(STRING).description("작성자 핸들"),
+                                fieldWithPath("items[].authorName").type(STRING).description("작성자 이름"),
+                                fieldWithPath("items[].content").type(STRING).description("내용"),
+                                fieldWithPath("items[].imageUrls").type(ARRAY).description("이미지 URL 목록"),
+                                fieldWithPath("items[].visibility").type(STRING).description("공개범위"),
+                                fieldWithPath("items[].createdAt").type(STRING).description("생성시각"),
+                                fieldWithPath("nextCursor").optional().description("다음 페이지 커서(없으면 null)"),
+                                fieldWithPath("hasNext").type(BOOLEAN).description("다음 페이지 존재 여부")
                         )
                 ));
     }

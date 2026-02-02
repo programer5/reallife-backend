@@ -58,6 +58,7 @@ class UserControllerTest {
                 .andExpect(status().isOk()) // 프로젝트 기준(200)
                 .andExpect(jsonPath("$.email").value(email))
                 .andExpect(jsonPath("$.handle").value(handle))
+                .andDo(org.springframework.test.web.servlet.result.MockMvcResultHandlers.print())
                 .andDo(document("users-create",
                         requestFields(
                                 fieldWithPath("email").type(STRING).description("가입 이메일(로그인에 사용)"),
@@ -93,6 +94,7 @@ class UserControllerTest {
                 .andExpect(jsonPath("$.code").value("COMMON_INVALID_REQUEST"))
                 .andExpect(jsonPath("$.path").value("/api/users"))
                 .andExpect(jsonPath("$.fieldErrors[0].field").value("handle"))
+                .andDo(org.springframework.test.web.servlet.result.MockMvcResultHandlers.print())
                 .andDo(document("users-create-400-validation",
                         relaxedResponseFields(
                                 fieldWithPath("code").type(STRING).description("에러 코드"),
@@ -138,6 +140,7 @@ class UserControllerTest {
                         .content(objectMapper.writeValueAsString(req2)))
                 .andExpect(status().isConflict())
                 .andExpect(jsonPath("$.code").value("USER_DUPLICATE_EMAIL"))
+                .andDo(org.springframework.test.web.servlet.result.MockMvcResultHandlers.print())
                 .andDo(document("users-create-409-duplicate-email",
                         responseFields(ErrorResponseSnippet.common())
                 ));
@@ -171,6 +174,7 @@ class UserControllerTest {
                         .content(objectMapper.writeValueAsString(req2)))
                 .andExpect(status().isConflict())
                 .andExpect(jsonPath("$.code").value("USER_DUPLICATE_HANDLE"))
+                .andDo(org.springframework.test.web.servlet.result.MockMvcResultHandlers.print())
                 .andDo(document("users-create-409-duplicate-handle",
                         responseFields(ErrorResponseSnippet.common())
                 ));

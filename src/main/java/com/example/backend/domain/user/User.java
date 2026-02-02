@@ -31,7 +31,7 @@ public class User extends BaseEntity {
     private String email;
 
     // ✅ 인스타 아이디(핸들) — 고유, 노출용
-    @Column(nullable = false, length = 20)
+    @Column(nullable = false, length = 30, unique = true)
     private String handle;
 
     @Column(nullable = false, length = 60)

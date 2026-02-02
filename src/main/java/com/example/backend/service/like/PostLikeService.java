@@ -23,38 +23,40 @@ public class PostLikeService {
     private final ApplicationEventPublisher eventPublisher;
 
     @Transactional
-    public void like(String email, UUID postId) {
-        var user = userRepository.findByEmail(email)
+    public void like(UUID meId, UUID postId) {
+
+        // ✅ me 존재 확인(원하면 생략 가능)
+        userRepository.findById(meId)
                 .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
 
         var post = postRepository.findById(postId)
                 .orElseThrow(() -> new BusinessException(ErrorCode.POST_NOT_FOUND));
 
-        // 멱등 처리: 이미 좋아요면 그냥 성공
-        if (postLikeRepository.existsByPostIdAndUserId(postId, user.getId())) {
+        // ✅ 멱등 처리: 이미 좋아요면 그냥 성공
+        if (postLikeRepository.existsByPostIdAndUserId(postId, meId)) {
             return;
         }
 
-        postLikeRepository.save(PostLike.create(postId, user.getId()));
+        postLikeRepository.save(PostLike.create(postId, meId));
         post.increaseLikeCount();
 
-        // 이벤트 기반 확장 포인트(지금은 이벤트만 발행)
-        eventPublisher.publishEvent(new PostLikedEvent(postId, user.getId()));
+        eventPublisher.publishEvent(new PostLikedEvent(postId, meId));
     }
 
     @Transactional
-    public void unlike(String email, UUID postId) {
-        var user = userRepository.findByEmail(email)
+    public void unlike(UUID meId, UUID postId) {
+
+        userRepository.findById(meId)
                 .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
 
         var post = postRepository.findById(postId)
                 .orElseThrow(() -> new BusinessException(ErrorCode.POST_NOT_FOUND));
 
-        postLikeRepository.findByPostIdAndUserId(postId, user.getId())
+        postLikeRepository.findByPostIdAndUserId(postId, meId)
                 .ifPresent(like -> {
                     postLikeRepository.delete(like);
                     post.decreaseLikeCount();
-                    eventPublisher.publishEvent(new PostUnlikedEvent(postId, user.getId()));
+                    eventPublisher.publishEvent(new PostUnlikedEvent(postId, meId));
                 });
     }
 

@@ -17,13 +17,15 @@ public class PostLikeController {
 
     @PostMapping
     public ResponseEntity<Void> like(@PathVariable UUID postId, Authentication authentication) {
-        postLikeService.like(authentication.getName(), postId);
+        UUID meId = UUID.fromString(authentication.getName());
+        postLikeService.like(meId, postId);
         return ResponseEntity.noContent().build(); // 204
     }
 
     @DeleteMapping
     public ResponseEntity<Void> unlike(@PathVariable UUID postId, Authentication authentication) {
-        postLikeService.unlike(authentication.getName(), postId);
+        UUID meId = UUID.fromString(authentication.getName());
+        postLikeService.unlike(meId, postId);
         return ResponseEntity.noContent().build(); // 204
     }
 }

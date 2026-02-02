@@ -9,5 +9,4 @@ import java.util.UUID;
 public interface PostRepository extends JpaRepository<Post, UUID>, PostQueryRepository {
 
     Optional<Post> findByIdAndAuthorIdAndDeletedFalse(UUID id, UUID authorId);
-
 }

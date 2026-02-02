@@ -61,13 +61,14 @@ class PostControllerDocsTest {
         req.put("visibility", "FOLLOWERS"); // ✅ 실제 응답과 동일하게
 
         mockMvc.perform(post("/api/posts")
-                        .header(DocsTestSupport.headerName(), token)
+                        .header(DocsTestSupport.headerName(), DocsTestSupport.auth(token))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(req)))
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.postId").exists())
                 .andExpect(jsonPath("$.authorId").exists())
                 .andExpect(jsonPath("$.visibility").value("FOLLOWERS"))
+                .andDo(org.springframework.test.web.servlet.result.MockMvcResultHandlers.print())
                 .andDo(document("posts-create",
                         requestHeaders(
                                 headerWithName(DocsTestSupport.headerName()).description("Bearer {accessToken}")
@@ -104,7 +105,7 @@ class PostControllerDocsTest {
         createReq.put("visibility", "FOLLOWERS");
 
         MvcResult created = mockMvc.perform(post("/api/posts")
-                        .header(DocsTestSupport.headerName(), token)
+                        .header(DocsTestSupport.headerName(), DocsTestSupport.auth(token))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(createReq)))
                 .andExpect(status().isCreated())
@@ -115,8 +116,9 @@ class PostControllerDocsTest {
 
         // 2) 상세조회
         mockMvc.perform(get("/api/posts/{postId}", postId)
-                .header(DocsTestSupport.headerName(), token))
+                .header(DocsTestSupport.headerName(), DocsTestSupport.auth(token)))
                 .andExpect(status().isOk())
+                .andDo(org.springframework.test.web.servlet.result.MockMvcResultHandlers.print())
                 .andDo(document("posts-get",
                         requestHeaders(
                                 headerWithName(DocsTestSupport.headerName()).description("Bearer {accessToken}")
@@ -148,7 +150,7 @@ class PostControllerDocsTest {
 
         String postId = objectMapper.readTree(
                 mockMvc.perform(post("/api/posts")
-                                .header(DocsTestSupport.headerName(), token)
+                                .header(DocsTestSupport.headerName(), DocsTestSupport.auth(token))
                                 .contentType(MediaType.APPLICATION_JSON)
                                 .content(objectMapper.writeValueAsString(createReq)))
                         .andExpect(status().isCreated())
@@ -159,8 +161,9 @@ class PostControllerDocsTest {
 
         // 삭제
         mockMvc.perform(delete("/api/posts/{postId}", postId)
-                .header(DocsTestSupport.headerName(), token))
+                .header(DocsTestSupport.headerName(), DocsTestSupport.auth(token)))
                 .andExpect(status().isNoContent())
+                .andDo(org.springframework.test.web.servlet.result.MockMvcResultHandlers.print())
                 .andDo(document("posts-delete",
                         requestHeaders(
                                 headerWithName(DocsTestSupport.headerName()).description("Bearer {accessToken}")

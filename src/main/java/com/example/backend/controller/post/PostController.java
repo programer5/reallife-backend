@@ -2,7 +2,6 @@ package com.example.backend.controller.post;
 
 import com.example.backend.controller.post.dto.PostCreateRequest;
 import com.example.backend.controller.post.dto.PostCreateResponse;
-import com.example.backend.controller.post.dto.PostFeedResponse;
 import com.example.backend.service.post.PostService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -24,9 +23,8 @@ public class PostController {
     @ResponseStatus(HttpStatus.CREATED)
     public PostCreateResponse create(@Valid @RequestBody PostCreateRequest request,
                                      Authentication authentication) {
-        // JwtAuthenticationFilter에서 principal을 email로 넣고 있으므로 getName() == email
-        String email = authentication.getName();
-        return postService.createPost(email, request);
+        UUID meId = UUID.fromString(authentication.getName()); // ✅ principal=userId
+        return postService.createPost(meId, request);
     }
 
     @GetMapping("/{postId}")
@@ -34,21 +32,10 @@ public class PostController {
         return postService.getPost(postId);
     }
 
-    @GetMapping
-    public PostFeedResponse feed(
-            @RequestParam(required = false) String cursor,
-            @RequestParam(defaultValue = "20") int size,
-            Authentication authentication
-    ) {
-        return postService.getFeed(authentication.getName(), cursor, size);
-    }
-
     @DeleteMapping("/{postId}")
     public ResponseEntity<Void> delete(@PathVariable UUID postId, Authentication authentication) {
-        String email = authentication.getName();
-        postService.deletePost(email, postId);
+        UUID meId = UUID.fromString(authentication.getName());
+        postService.deletePost(meId, postId);
         return ResponseEntity.noContent().build(); // 204
     }
-
-
 }

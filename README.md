@@ -31,14 +31,13 @@ JWT 인증, 테스트 기반 문서화(REST Docs), 실제 배포까지 고려한
 - Java 17
 - Spring Boot 4.0.2
 - Spring Security (Stateless)
-- Spring Data JPA
+- Spring Data JPA (Hibernate)
 - JWT (Access Token)
 - Spring REST Docs (MockMvc)
 - QueryDSL
 
 ### Database
 - MySQL
-- MySQL Workbench
 
 ### Frontend
 - Vue.js (별도 프로젝트)
@@ -104,12 +103,12 @@ src
 └─ main
    ├─ java
    │  └─ com.example.backend
-   │     ├─ config           # Security, JPA, Bean 설정
-   │     ├─ controller       # REST API (users, auth, posts, follows, likes, docs)
+   │     ├─ config           # Security, JPA, Bean 설정 (QuerydslConfig 포함)
+   │     ├─ controller       # REST API (users, auth, posts, follows, likes, feed)
    │     ├─ domain           # Entity, BaseEntity
-   │     ├─ repository       # JPA Repository
+   │     ├─ repository       # JPA Repository (+ QueryDSL Custom Repository)
    │     ├─ service          # 비즈니스 로직
-   │     ├─ security         # JWT (TokenProvider, Filter, Properties)
+   │     ├─ security         # JWT (TokenProvider, Filter, ErrorHandler)
    │     └─ exception        # ErrorCode, ErrorResponse, GlobalExceptionHandler
    └─ resources
       ├─ application.yml     # ⚠️ 민감정보 커밋 금지
@@ -161,61 +160,71 @@ jwt:
 
 ---
 
+## 🧪 Test
+
+```bash
+./gradlew test
+```
+
+---
+
 ## ✅ Roadmap
 
 ```text
 Phase 1 — Core Backend (완료)
-
-JWT 기반 인증
-회원가입 / 로그인
-보호 API (/api/me)
-에러 응답 표준화
-REST Docs 문서 자동화 + /docs 서빙 + 스타일링
+- JWT 기반 인증
+- 회원가입 / 로그인
+- 보호 API (/api/me)
+- 에러 응답 표준화
+- REST Docs 문서 자동화 + /docs 서빙 + 스타일링
 
 Phase 1.5 — Identity Upgrade
-
-handle(username) 도입 + 중복체크 API
-회원가입 시 handle 받기(or 설정 API 추가)
-프로필 조회 응답에 handle 포함
-팔로워 등급(tier) 계산 로직 추가 + 응답에 포함
-OAuth2 로그인(구글부터) + JWT 발급 연결
+- handle(username) 도입 + 중복체크 API
+- 회원가입 시 handle 받기(or 설정 API 추가)
+- 프로필 조회 응답에 handle 포함
+- 팔로워 등급(tier) 계산 로직 추가 + 응답에 포함
+- OAuth2 로그인(구글부터) + JWT 발급 연결
 
 Phase 2 — SNS 기능 (진행/확장)
+- 게시글(사진/텍스트) CRUD
+- 댓글(Comment) CRUD
+- 좋아요 / 팔로우
+- 피드 조회 (팔로우 기반 + 최신순 + Cursor)
 
-게시글(사진/텍스트) CRUD
-댓글(Comment) CRUD
-좋아요 / 팔로우
-피드 조회 (팔로우 기반 + 최신순 + Cursor)
+Phase 2.5 — 운영/품질 기반 (추가)
+- 공통 로깅(요청/응답/에러) + TraceId(MDC)
+- 감사 로그(Audit): 누가/언제/무엇을 (post/like/follow/message)
+- 운영 관점 에러 모니터링(추후 Sentry 등)
+
+Phase 2.6 — Messaging (추가)
+- DM Thread(대화방) 모델
+- 메시지 전송/조회 REST API
+- 이벤트 발행(MessageSentEvent) → 알림/푸시로 확장 포인트
 
 Phase 3 — Frontend
-
-Vue 연동
-로그인 / 회원가입 UI
-피드 / 게시글 화면
-토큰 기반 인증 처리 (Axios 인터셉터)
+- Vue 연동
+- 로그인 / 회원가입 UI
+- 피드 / 게시글 화면
+- 토큰 기반 인증 처리 (Axios 인터셉터)
 
 Phase 4 — DevOps / 운영
-
-Docker / Docker Compose (MySQL 포함)
-무료 서버 배포
-CI/CD (GitHub Actions: test → docs → build)
-운영 로그 / 모니터링
+- Docker / Docker Compose (MySQL 포함)
+- 무료 서버 배포
+- CI/CD (GitHub Actions: test → docs → build)
+- 운영 로그 / 모니터링
 
 Phase 5 — Advanced
-
-이벤트 기반 아키텍처 (회원가입/로그인/게시글 생성 이벤트)
-Redis 적용
-Refresh Token 저장 / 토큰 블랙리스트
-캐시(피드, 인기 게시글) / Rate Limit(로그인/회원가입)
-Kafka 기반 이벤트 스트리밍 (도메인 이벤트 토픽)
-Airflow 기반 배치 파이프라인 (통계/리포트 스케줄링)
-Spark / Flink 기반 스트리밍/배치 확장 (Kafka 연계)
-LLM 활용(선택)
-자동 콘텐츠 분류 / 신고 처리 보조 / 운영 FAQ 보조
+- 이벤트 기반 아키텍처 (회원가입/로그인/게시글 생성 이벤트)
+- Redis 적용
+- Refresh Token 저장 / 토큰 블랙리스트
+- 캐시(피드, 인기 게시글) / Rate Limit(로그인/회원가입)
+- Kafka 기반 이벤트 스트리밍 (도메인 이벤트 토픽)
+- Airflow 기반 배치 파이프라인 (통계/리포트 스케줄링)
+- Spark / Flink 기반 스트리밍/배치 확장 (Kafka 연계)
+- LLM 활용(선택): 자동 콘텐츠 분류 / 신고 처리 보조 / 운영 FAQ 보조
 
 Phase 6 — Product Expansion
-
-실제 사용자 공개 베타
-Android 앱 출시 (Google Play)
-iOS 앱 출시 (Apple App Store)
-개인정보 보호 / 약관 정비
+- 실제 사용자 공개 베타
+- Android 앱 출시 (Google Play)
+- iOS 앱 출시 (Apple App Store)
+- 개인정보 보호 / 약관 정비
