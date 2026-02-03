@@ -37,4 +37,8 @@ public abstract class BaseEntity {
     public LocalDateTime getCreatedAt() { return createdAt; }
     public LocalDateTime getUpdateAt() { return updateAt; }
     public boolean isDeleted() { return deleted; }
+
+    protected void markDeleted() {
+        this.deleted = true;
+    }
 }
