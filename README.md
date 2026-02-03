@@ -191,15 +191,16 @@ Phase 2 — SNS 기능 (진행/확장)
 - 좋아요 / 팔로우
 - 피드 조회 (팔로우 기반 + 최신순 + Cursor)
 
-Phase 2.5 — 운영/품질 기반 (추가)
-- 공통 로깅(요청/응답/에러) + TraceId(MDC)
-- 감사 로그(Audit): 누가/언제/무엇을 (post/like/follow/message)
-- 운영 관점 에러 모니터링(추후 Sentry 등)
-
-Phase 2.6 — Messaging (추가)
-- DM Thread(대화방) 모델
-- 메시지 전송/조회 REST API
-- 이벤트 발행(MessageSentEvent) → 알림/푸시로 확장 포인트
+Phase 2.5 — Messaging + Logging
+- DM(1:1) 대화방 생성/목록
+- 메시지 전송/조회(커서 페이징)
+- 파일 첨부(이미지) + 다운로드 접근제어
+- 공통 로그(AOP/Filter):
+  -requestId
+  -method/path/status/duration
+  -userId(있으면) / ip
+-도메인 이벤트 로그:
+  -message_sent, file_uploaded 등
 
 Phase 3 — Frontend
 - Vue 연동

@@ -19,7 +19,7 @@ public class AuthService {
 
     public String login(String email, String rawPassword) {
         User user = userRepository.findByEmail(email)
-                .orElseThrow(() -> new BusinessException(ErrorCode.DUPLICATE_EMAIL));
+                .orElseThrow(() -> new BusinessException(ErrorCode.UNAUTHORIZED));
 
         if (!passwordEncoder.matches(rawPassword, user.getPassword())) {
             throw new BusinessException(ErrorCode.UNAUTHORIZED);

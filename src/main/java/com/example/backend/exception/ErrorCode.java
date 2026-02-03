@@ -26,7 +26,19 @@ public enum ErrorCode {
     CANNOT_FOLLOW_SELF(HttpStatus.BAD_REQUEST, "FOLLOW_CANNOT_FOLLOW_SELF", "자기 자신을 팔로우할 수 없습니다."),
 
     // Like
-    LIKE_ALREADY_EXISTS(HttpStatus.CONFLICT, "LIKE_ALREADY_EXISTS", "이미 좋아요한 게시글입니다.");
+    LIKE_ALREADY_EXISTS(HttpStatus.CONFLICT, "LIKE_ALREADY_EXISTS", "이미 좋아요한 게시글입니다."),
+
+    // Message
+    MESSAGE_CONVERSATION_NOT_FOUND(HttpStatus.NOT_FOUND, "MESSAGE_CONVERSATION_NOT_FOUND", "대화방을 찾을 수 없습니다."),
+    MESSAGE_FORBIDDEN(HttpStatus.FORBIDDEN, "MESSAGE_FORBIDDEN", "대화방에 접근할 수 없습니다."),
+    MESSAGE_EMPTY(HttpStatus.BAD_REQUEST, "MESSAGE_EMPTY", "내용 또는 첨부파일 중 하나는 필수입니다."),
+
+    // File
+    FILE_TOO_LARGE(HttpStatus.BAD_REQUEST, "FILE_TOO_LARGE", "파일 크기가 너무 큽니다."),
+    FILE_TYPE_NOT_ALLOWED(HttpStatus.BAD_REQUEST, "FILE_TYPE_NOT_ALLOWED", "허용되지 않는 파일 형식입니다."),
+    FILE_UPLOAD_FAILED(HttpStatus.INTERNAL_SERVER_ERROR, "FILE_UPLOAD_FAILED", "파일 업로드에 실패했습니다."),
+    FILE_NOT_FOUND(HttpStatus.NOT_FOUND, "FILE_NOT_FOUND", "파일을 찾을 수 없습니다.");
+
 
     private final HttpStatus status;
     private final String code;
