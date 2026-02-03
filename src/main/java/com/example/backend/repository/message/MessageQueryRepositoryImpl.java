@@ -4,7 +4,6 @@ import com.example.backend.controller.message.dto.MessageListResponse;
 import com.example.backend.domain.file.QUploadedFile;
 import com.example.backend.domain.message.QMessage;
 import com.example.backend.domain.message.QMessageAttachment;
-import com.querydsl.core.Tuple;
 import com.querydsl.core.types.dsl.BooleanExpression;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import org.springframework.stereotype.Repository;
@@ -34,9 +33,10 @@ public class MessageQueryRepositoryImpl implements MessageQueryRepository {
 
         BooleanExpression cursorCond = cursor(cursorCreatedAt, cursorMessageId, m);
 
-        // 1) 메시지 size+1개 (hasNext 계산용)
-        List<com.example.backend.domain.message.Message> messages = queryFactory
-                .selectFrom(m)
+        // 1) 메시지 size+1
+        List<UUID> messageIds = queryFactory
+                .select(m.id)
+                .from(m)
                 .where(
                         m.conversationId.eq(conversationId),
                         m.deleted.isFalse(),
@@ -46,64 +46,68 @@ public class MessageQueryRepositoryImpl implements MessageQueryRepository {
                 .limit(size + 1L)
                 .fetch();
 
-        if (messages.isEmpty()) return List.of();
+        if (messageIds.isEmpty()) return List.of();
 
-        List<UUID> messageIds = messages.stream().map(x -> x.getId()).toList();
+        // 2) 메시지 본문들
+        var messages = queryFactory
+                .selectFrom(m)
+                .where(m.id.in(messageIds))
+                .fetch();
 
-        // 2) 첨부 + 파일메타를 한 번에 조회
-        //    - a.id: attachmentId (다운로드 URL 만들 때 필요)
-        //    - a.messageId: 어떤 메시지에 달렸는지
-        //    - a.sortOrder: 정렬
-        //    - f: 파일 메타
-        List<Tuple> rows = queryFactory
+        // 3) 첨부 + 파일 메타를 한 번에(LEFT JOIN)
+        //    a.messageId == m.id 형태로 조인
+        var rows = queryFactory
                 .select(
-                        a.id,          // attachmentId
                         a.messageId,
+                        a.fileId,
                         a.sortOrder,
-                        f.id,          // fileId
                         f.originalFilename,
                         f.contentType,
                         f.size
                 )
                 .from(a)
-                .join(f).on(
-                        f.id.eq(a.fileId),
-                        f.deleted.isFalse()
-                )
+                .leftJoin(f).on(f.id.eq(a.fileId).and(f.deleted.isFalse()))
                 .where(a.messageId.in(messageIds))
-                .orderBy(a.messageId.asc(), a.sortOrder.asc(), a.createdAt.asc())
+                .orderBy(a.messageId.asc(), a.sortOrder.asc())
                 .fetch();
 
-        // messageId -> attachments
         Map<UUID, List<MessageListResponse.Attachment>> attMap = new HashMap<>();
-        for (Tuple t : rows) {
-            UUID attachmentId = t.get(a.id);
-            UUID messageId = t.get(a.messageId);
+        for (var t : rows) {
+            UUID msgId = t.get(a.messageId);
+            UUID fileId = t.get(a.fileId);
 
-            UUID fileId = t.get(f.id);
+            if (fileId == null) continue;
+
             String originalName = t.get(f.originalFilename);
             String mimeType = t.get(f.contentType);
             Long sizeBytes = t.get(f.size);
 
-            attMap.computeIfAbsent(messageId, k -> new ArrayList<>())
+            attMap.computeIfAbsent(msgId, k -> new ArrayList<>())
                     .add(new MessageListResponse.Attachment(
                             fileId,
-                            "/api/messages/attachments/" + attachmentId + "/download",
+                            "/api/files/" + fileId + "/download",
                             originalName,
                             mimeType,
                             sizeBytes == null ? 0L : sizeBytes
                     ));
         }
 
-        // 3) MessageListResponse.Item 만들기
+        // messageIds는 최신순 정렬이 이미 되어있는데, messages는 IN 조회라 순서 보장 X
+        // 따라서 id->Message 매핑 후 messageIds 순서대로 조립
+        Map<UUID, com.example.backend.domain.message.Message> msgMap = new HashMap<>();
+        for (var mm : messages) msgMap.put(mm.getId(), mm);
+
         List<MessageListResponse.Item> result = new ArrayList<>();
-        for (var msg : messages) {
+        for (UUID id : messageIds) {
+            var mm = msgMap.get(id);
+            if (mm == null) continue;
+
             result.add(new MessageListResponse.Item(
-                    msg.getId(),
-                    msg.getSenderId(),
-                    msg.getContent(),
-                    msg.getCreatedAt(),
-                    attMap.getOrDefault(msg.getId(), List.of())
+                    mm.getId(),
+                    mm.getSenderId(),
+                    mm.getContent(),
+                    mm.getCreatedAt(),
+                    attMap.getOrDefault(mm.getId(), List.of())
             ));
         }
 

@@ -5,60 +5,50 @@ import com.example.backend.domain.file.UploadedFile;
 import com.example.backend.exception.BusinessException;
 import com.example.backend.exception.ErrorCode;
 import com.example.backend.repository.file.UploadedFileRepository;
+import com.example.backend.repository.user.UserRepository;
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.io.IOException;
 import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
 public class FileService {
 
+    private final StorageService storageService; // ✅ 인터페이스만 의존
     private final UploadedFileRepository uploadedFileRepository;
-    private final LocalFileStorage localFileStorage;
+    private final UserRepository userRepository;
 
     @Transactional
-    public FileUploadResponse upload(UUID uploaderId, MultipartFile file) {
+    public FileUploadResponse upload(UUID meId, MultipartFile file) {
+        userRepository.findById(meId)
+                .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
+
         if (file == null || file.isEmpty()) {
             throw new BusinessException(ErrorCode.INVALID_REQUEST);
         }
 
-        String originalName = file.getOriginalFilename() == null ? "file" : file.getOriginalFilename();
-        String contentType = file.getContentType() == null ? MediaType.APPLICATION_OCTET_STREAM_VALUE : file.getContentType();
-        long size = file.getSize();
-
-        // 저장용 파일명: UUID + 확장자(있으면)
-        String ext = "";
-        int dot = originalName.lastIndexOf('.');
-        if (dot > -1 && dot < originalName.length() - 1) ext = originalName.substring(dot);
-        String storedFilename = UUID.randomUUID() + ext;
-
-        try {
-            localFileStorage.store(storedFilename, file.getBytes());
-        } catch (IOException e) {
-            throw new BusinessException(ErrorCode.INTERNAL_ERROR);
-        }
+        // ✅ localStorageService 아니라 storageService 사용
+        String fileKey = storageService.store(file);
 
         UploadedFile saved = uploadedFileRepository.save(
-                UploadedFile.create(uploaderId, originalName, storedFilename, contentType, size)
+                UploadedFile.create(
+                        meId,
+                        file.getOriginalFilename(),
+                        fileKey,
+                        file.getContentType(),
+                        file.getSize()
+                )
         );
 
         return new FileUploadResponse(
                 saved.getId(),
-                "/api/files/" + saved.getId(),
+                "/api/files/" + saved.getId(), // ✅ 파일 상세(or 다운로드) URL 정책에 맞게
                 saved.getOriginalFilename(),
                 saved.getContentType(),
                 saved.getSize()
         );
-    }
-
-    @Transactional(readOnly = true)
-    public UploadedFile getFile(UUID fileId) {
-        return uploadedFileRepository.findByIdAndDeletedFalse(fileId)
-                .orElseThrow(() -> new BusinessException(ErrorCode.INVALID_REQUEST));
     }
 }

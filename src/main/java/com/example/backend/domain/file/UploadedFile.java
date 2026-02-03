@@ -33,8 +33,9 @@ public class UploadedFile extends BaseEntity {
     @Column(name = "original_filename", nullable = false, length = 255)
     private String originalFilename;
 
-    @Column(name = "stored_filename", nullable = false, length = 255)
-    private String storedFilename;
+    // ✅ 저장소 키 (로컬이면 저장된 파일명/상대경로, S3면 object key)
+    @Column(name = "file_key", nullable = false, length = 500)
+    private String fileKey;
 
     @Column(name = "content_type", nullable = false, length = 100)
     private String contentType;
@@ -45,16 +46,20 @@ public class UploadedFile extends BaseEntity {
     @Column(nullable = false)
     private boolean deleted;
 
-    private UploadedFile(UUID uploaderId, String originalFilename, String storedFilename, String contentType, long size) {
+    private UploadedFile(UUID uploaderId, String originalFilename, String fileKey, String contentType, long size) {
         this.uploaderId = uploaderId;
         this.originalFilename = originalFilename;
-        this.storedFilename = storedFilename;
+        this.fileKey = fileKey;
         this.contentType = contentType;
         this.size = size;
         this.deleted = false;
     }
 
-    public static UploadedFile create(UUID uploaderId, String originalFilename, String storedFilename, String contentType, long size) {
-        return new UploadedFile(uploaderId, originalFilename, storedFilename, contentType, size);
+    public static UploadedFile create(UUID uploaderId, String originalFilename, String fileKey, String contentType, long size) {
+        return new UploadedFile(uploaderId, originalFilename, fileKey, contentType, size);
+    }
+
+    public void delete() {
+        this.deleted = true;
     }
 }

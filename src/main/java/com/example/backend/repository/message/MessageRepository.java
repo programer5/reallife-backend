@@ -7,6 +7,7 @@ import org.springframework.data.jpa.repository.Query;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 public interface MessageRepository extends JpaRepository<Message, UUID> {
@@ -30,4 +31,5 @@ public interface MessageRepository extends JpaRepository<Message, UUID> {
         order by m.createdAt desc, m.id desc
     """)
     List<Message> findNextPage(UUID conversationId, LocalDateTime cursorCreatedAt, UUID cursorId, Pageable pageable);
+    Optional<Message> findByIdAndDeletedFalse(UUID id);
 }

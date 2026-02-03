@@ -29,18 +29,17 @@ public class MessageQueryService {
             int size
     ) {
         if (!participantRepository.existsByConversationIdAndUserId(conversationId, meId)) {
-            throw new BusinessException(ErrorCode.FORBIDDEN);
+            throw new BusinessException(ErrorCode.MESSAGE_FORBIDDEN);
         }
 
         int pageSize = Math.min(Math.max(size, 1), 50);
 
-        List<MessageListResponse.Item> items =
+        // ✅ repo에서 size+1개까지 가져오도록 구현되어 있음
+        List<MessageListResponse.Item> fetched =
                 messageQueryRepository.fetchPage(conversationId, cursorCreatedAt, cursorMessageId, pageSize);
 
-        boolean hasNext = items.size() > pageSize;
-        if (hasNext) {
-            items = items.subList(0, pageSize);
-        }
+        boolean hasNext = fetched.size() > pageSize;
+        List<MessageListResponse.Item> items = hasNext ? fetched.subList(0, pageSize) : fetched;
 
         MessageListResponse.Cursor nextCursor = null;
         if (hasNext && !items.isEmpty()) {

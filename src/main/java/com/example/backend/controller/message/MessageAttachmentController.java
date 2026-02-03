@@ -1,40 +1,36 @@
 package com.example.backend.controller.message;
 
-import com.example.backend.domain.message.Message;
+import com.example.backend.domain.file.UploadedFile;
 import com.example.backend.domain.message.MessageAttachment;
 import com.example.backend.exception.BusinessException;
 import com.example.backend.exception.ErrorCode;
-import com.example.backend.repository.message.ConversationParticipantRepository;
+import com.example.backend.repository.file.UploadedFileRepository;
+import com.example.backend.repository.message.ConversationMemberRepository;
 import com.example.backend.repository.message.MessageAttachmentRepository;
 import com.example.backend.repository.message.MessageRepository;
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.ResponseEntity;
+import com.example.backend.service.file.LocalStorageService;
+import lombok.RequiredArgsConstructor;
+import org.springframework.core.io.FileSystemResource;
+import org.springframework.http.*;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
-import java.net.URI;
+import java.nio.file.Path;
 import java.util.UUID;
 
 @RestController
+@RequiredArgsConstructor
 @RequestMapping("/api/messages/attachments")
 public class MessageAttachmentController {
 
     private final MessageAttachmentRepository attachmentRepository;
     private final MessageRepository messageRepository;
-    private final ConversationParticipantRepository participantRepository;
-
-    public MessageAttachmentController(
-            MessageAttachmentRepository attachmentRepository,
-            MessageRepository messageRepository,
-            ConversationParticipantRepository participantRepository
-    ) {
-        this.attachmentRepository = attachmentRepository;
-        this.messageRepository = messageRepository;
-        this.participantRepository = participantRepository;
-    }
+    private final ConversationMemberRepository memberRepository;
+    private final UploadedFileRepository uploadedFileRepository;
+    private final LocalStorageService storageService;
 
     @GetMapping("/{attachmentId}/download")
-    public ResponseEntity<Void> download(
+    public ResponseEntity<FileSystemResource> download(
             @PathVariable UUID attachmentId,
             Authentication authentication
     ) {
@@ -43,17 +39,25 @@ public class MessageAttachmentController {
         MessageAttachment att = attachmentRepository.findById(attachmentId)
                 .orElseThrow(() -> new BusinessException(ErrorCode.FILE_NOT_FOUND));
 
-        Message msg = messageRepository.findById(att.getMessageId())
+        var msg = messageRepository.findByIdAndDeletedFalse(att.getMessageId())
                 .orElseThrow(() -> new BusinessException(ErrorCode.MESSAGE_NOT_FOUND));
 
-        if (!participantRepository.existsByConversationIdAndUserId(msg.getConversationId(), meId)) {
-            throw new BusinessException(ErrorCode.FORBIDDEN);
+        if (!memberRepository.existsByConversationIdAndUserId(msg.getConversationId(), meId)) {
+            throw new BusinessException(ErrorCode.MESSAGE_FORBIDDEN);
         }
 
-        // ✅ 실제 다운로드는 files 컨트롤러로 위임
-        URI redirect = URI.create("/api/files/" + att.getFileId());
-        return ResponseEntity.status(302)
-                .header(HttpHeaders.LOCATION, redirect.toString())
-                .build();
+        UploadedFile file = uploadedFileRepository.findByIdAndDeletedFalse(att.getFileId())
+                .orElseThrow(() -> new BusinessException(ErrorCode.FILE_NOT_FOUND));
+
+        Path path = storageService.resolvePath(file.getFileKey());
+        if (!path.toFile().exists()) throw new BusinessException(ErrorCode.FILE_NOT_FOUND);
+
+        FileSystemResource resource = new FileSystemResource(path);
+
+        return ResponseEntity.ok()
+                .contentType(MediaType.parseMediaType(file.getContentType()))
+                .header(HttpHeaders.CONTENT_DISPOSITION,
+                        ContentDisposition.attachment().filename(file.getOriginalFilename()).build().toString())
+                .body(resource);
     }
 }
