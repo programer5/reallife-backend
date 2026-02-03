@@ -17,15 +17,15 @@ public class FollowController {
 
     @PostMapping("/{targetUserId}")
     public ResponseEntity<Void> follow(@PathVariable UUID targetUserId, Authentication authentication) {
-        UUID meId = UUID.fromString(authentication.getName()); // principal=userId 전제
+        UUID meId = UUID.fromString(authentication.getName());
         followService.follow(meId, targetUserId);
-        return ResponseEntity.noContent().build(); // 204
+        return ResponseEntity.noContent().build();
     }
 
     @DeleteMapping("/{targetUserId}")
     public ResponseEntity<Void> unfollow(@PathVariable UUID targetUserId, Authentication authentication) {
         UUID meId = UUID.fromString(authentication.getName());
         followService.unfollow(meId, targetUserId);
-        return ResponseEntity.noContent().build(); // 204
+        return ResponseEntity.noContent().build();
     }
 }

@@ -5,50 +5,56 @@ import com.example.backend.exception.BusinessException;
 import com.example.backend.exception.ErrorCode;
 import com.example.backend.repository.follow.FollowRepository;
 import com.example.backend.repository.user.UserRepository;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.UUID;
 
 @Service
-@Transactional(readOnly = true)
+@RequiredArgsConstructor
 public class FollowService {
 
     private final FollowRepository followRepository;
     private final UserRepository userRepository;
 
-    public FollowService(FollowRepository followRepository, UserRepository userRepository) {
-        this.followRepository = followRepository;
-        this.userRepository = userRepository;
-    }
-
     @Transactional
     public void follow(UUID meId, UUID targetUserId) {
         if (meId.equals(targetUserId)) {
-            throw new BusinessException(ErrorCode.CANNOT_FOLLOW_SELF);
+            throw new BusinessException(ErrorCode.CANNOT_FOLLOW_SELF); // 너 enum에 맞춰 사용
+            // 네 ErrorCode 이름이 FOLLOW_CANNOT_FOLLOW_SELF면 그걸로 바꿔
         }
 
-        // 존재 검증 (원하면 생략 가능하지만 API 안정성을 위해 추천)
-        userRepository.findById(meId).orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
-        var targetUser = userRepository.findById(targetUserId)
+        // target 존재 검증 (원하면 생략 가능)
+        userRepository.findById(targetUserId)
                 .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
 
-        // 이미 팔로우면 그냥 멱등 처리(204 유지) 또는 에러 처리 선택 가능
-        if (followRepository.existsByFollowerIdAndFollowingId(meId, targetUserId)) {
+        // 이미 active면 멱등 성공
+        if (followRepository.existsByFollowerIdAndFollowingIdAndDeletedFalse(meId, targetUserId)) {
             return;
         }
 
-        followRepository.save(Follow.create(meId, targetUserId));
-        targetUser.increaseFollowerCount();
+        // 기존 row가 있으면 restore, 없으면 생성
+        Follow follow = followRepository.findByFollowerIdAndFollowingId(meId, targetUserId)
+                .map(f -> {
+                    f.restore();
+                    return f;
+                })
+                .orElseGet(() -> Follow.create(meId, targetUserId));
+
+        followRepository.save(follow);
     }
 
     @Transactional
     public void unfollow(UUID meId, UUID targetUserId) {
+        if (meId.equals(targetUserId)) {
+            throw new BusinessException(ErrorCode.CANNOT_FOLLOW_SELF);
+        }
+
         followRepository.findByFollowerIdAndFollowingId(meId, targetUserId)
-                .ifPresent(follow -> {
-                    followRepository.delete(follow);
-                    userRepository.findById(targetUserId)
-                            .ifPresent(user -> user.decreaseFollowerCount());
+                .ifPresent(f -> {
+                    // 멱등: 이미 deleted여도 그냥 성공
+                    f.softDelete();
                 });
     }
 }

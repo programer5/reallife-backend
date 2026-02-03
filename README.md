@@ -192,15 +192,17 @@ Phase 2 — SNS 기능 (진행/확장)
 - 피드 조회 (팔로우 기반 + 최신순 + Cursor)
 
 Phase 2.5 — Messaging + Logging
-- DM(1:1) 대화방 생성/목록
-- 메시지 전송/조회(커서 페이징)
-- 파일 첨부(이미지) + 다운로드 접근제어
-- 공통 로그(AOP/Filter):
-  -requestId
-  -method/path/status/duration
-  -userId(있으면) / ip
--도메인 이벤트 로그:
-  -message_sent, file_uploaded 등
+-Direct Message(1:1)
+  -대화방(Conversation) 생성/조회
+  -메시지 전송/조회 (Cursor paging)
+  -읽음 처리(선택)
+-파일첨부
+  -메시지에 첨부(이미지/파일)
+  -v1: 로컬 저장(개발용)
+  -v2: S3/Cloud Storage로 교체(운영용)
+-공통 로깅
+  -RequestId(MDC), 요청/응답/에러 로그 통일
+  -운영/감사 로그 분리(선택)
 
 Phase 3 — Frontend
 - Vue 연동

@@ -45,4 +45,12 @@ public class Follow extends BaseEntity {
     public static Follow create(UUID followerId, UUID followingId) {
         return new Follow(followerId, followingId);
     }
+
+    public void softDelete() {
+        this.markDeleted();
+    }
+
+    public void restore() {
+        super.restore();
+    }
 }

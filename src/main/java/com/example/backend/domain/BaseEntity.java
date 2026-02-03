@@ -41,4 +41,8 @@ public abstract class BaseEntity {
     protected void markDeleted() {
         this.deleted = true;
     }
+
+    protected void restore() {
+        this.deleted = false;
+    }
 }
