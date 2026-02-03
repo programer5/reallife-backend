@@ -18,11 +18,11 @@ public record MessageListResponse(
     ) {}
 
     public record Attachment(
-            UUID attachmentId,
+            UUID fileId,
+            String url,
             String originalName,
             String mimeType,
-            long sizeBytes,
-            String downloadUrl
+            long sizeBytes
     ) {}
 
     public record Cursor(

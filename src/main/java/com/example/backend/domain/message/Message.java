@@ -6,8 +6,6 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import org.hibernate.annotations.UuidGenerator;
 
-import java.util.ArrayList;
-import java.util.List;
 import java.util.UUID;
 
 import static lombok.AccessLevel.PROTECTED;
@@ -18,8 +16,7 @@ import static lombok.AccessLevel.PROTECTED;
 @Table(
         name = "messages",
         indexes = {
-                @Index(name = "idx_conv_created", columnList = "conversation_id, created_at"),
-                @Index(name = "idx_conv_id_id", columnList = "conversation_id, id")
+                @Index(name = "idx_message_conversation_created", columnList = "conversation_id, created_at")
         }
 )
 public class Message extends BaseEntity {
@@ -27,6 +24,7 @@ public class Message extends BaseEntity {
     @Id
     @GeneratedValue
     @UuidGenerator
+    @Column(name = "id", updatable = false, nullable = false)
     private UUID id;
 
     @Column(name = "conversation_id", nullable = false)
@@ -35,27 +33,25 @@ public class Message extends BaseEntity {
     @Column(name = "sender_id", nullable = false)
     private UUID senderId;
 
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private MessageType type;
+
     @Column(columnDefinition = "TEXT")
-    private String content; // nullable 가능
+    private String content;
 
     @Column(nullable = false)
     private boolean deleted;
 
-    @OneToMany(mappedBy = "message", cascade = CascadeType.ALL, orphanRemoval = true)
-    private final List<MessageAttachment> attachments = new ArrayList<>();
-
-    private Message(UUID conversationId, UUID senderId, String content) {
+    private Message(UUID conversationId, UUID senderId, MessageType type, String content) {
         this.conversationId = conversationId;
         this.senderId = senderId;
+        this.type = type;
         this.content = content;
         this.deleted = false;
     }
 
-    public static Message create(UUID conversationId, UUID senderId, String content) {
-        return new Message(conversationId, senderId, content);
-    }
-
-    public void addAttachment(String fileKey, String originalName, String mimeType, long sizeBytes) {
-        this.attachments.add(MessageAttachment.create(this, fileKey, originalName, mimeType, sizeBytes));
+    public static Message text(UUID conversationId, UUID senderId, String content) {
+        return new Message(conversationId, senderId, MessageType.TEXT, content);
     }
 }

@@ -1,53 +1,59 @@
 package com.example.backend.controller.message;
 
+import com.example.backend.domain.message.Message;
 import com.example.backend.domain.message.MessageAttachment;
 import com.example.backend.exception.BusinessException;
 import com.example.backend.exception.ErrorCode;
-import com.example.backend.repository.message.ConversationMemberRepository;
+import com.example.backend.repository.message.ConversationParticipantRepository;
 import com.example.backend.repository.message.MessageAttachmentRepository;
-import com.example.backend.service.file.LocalStorageService;
-import lombok.RequiredArgsConstructor;
-import org.springframework.core.io.FileSystemResource;
-import org.springframework.http.*;
+import com.example.backend.repository.message.MessageRepository;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
-import java.nio.file.Path;
+import java.net.URI;
 import java.util.UUID;
 
 @RestController
-@RequiredArgsConstructor
 @RequestMapping("/api/messages/attachments")
 public class MessageAttachmentController {
 
     private final MessageAttachmentRepository attachmentRepository;
-    private final ConversationMemberRepository memberRepository;
-    private final LocalStorageService storageService;
+    private final MessageRepository messageRepository;
+    private final ConversationParticipantRepository participantRepository;
+
+    public MessageAttachmentController(
+            MessageAttachmentRepository attachmentRepository,
+            MessageRepository messageRepository,
+            ConversationParticipantRepository participantRepository
+    ) {
+        this.attachmentRepository = attachmentRepository;
+        this.messageRepository = messageRepository;
+        this.participantRepository = participantRepository;
+    }
 
     @GetMapping("/{attachmentId}/download")
-    public ResponseEntity<FileSystemResource> download(
+    public ResponseEntity<Void> download(
             @PathVariable UUID attachmentId,
             Authentication authentication
     ) {
         UUID meId = UUID.fromString(authentication.getName());
 
-        MessageAttachment att = attachmentRepository.findByIdWithMessage(attachmentId)
+        MessageAttachment att = attachmentRepository.findById(attachmentId)
                 .orElseThrow(() -> new BusinessException(ErrorCode.FILE_NOT_FOUND));
 
-        UUID convId = att.getMessage().getConversationId();
-        if (!memberRepository.existsByConversationIdAndUserId(convId, meId)) {
-            throw new BusinessException(ErrorCode.MESSAGE_FORBIDDEN);
+        Message msg = messageRepository.findById(att.getMessageId())
+                .orElseThrow(() -> new BusinessException(ErrorCode.MESSAGE_NOT_FOUND));
+
+        if (!participantRepository.existsByConversationIdAndUserId(msg.getConversationId(), meId)) {
+            throw new BusinessException(ErrorCode.FORBIDDEN);
         }
 
-        Path path = storageService.resolvePath(att.getFileKey());
-        if (!path.toFile().exists()) throw new BusinessException(ErrorCode.FILE_NOT_FOUND);
-
-        FileSystemResource resource = new FileSystemResource(path);
-
-        return ResponseEntity.ok()
-                .contentType(MediaType.parseMediaType(att.getMimeType()))
-                .header(HttpHeaders.CONTENT_DISPOSITION,
-                        ContentDisposition.attachment().filename(att.getOriginalName()).build().toString())
-                .body(resource);
+        // ✅ 실제 다운로드는 files 컨트롤러로 위임
+        URI redirect = URI.create("/api/files/" + att.getFileId());
+        return ResponseEntity.status(302)
+                .header(HttpHeaders.LOCATION, redirect.toString())
+                .build();
     }
 }

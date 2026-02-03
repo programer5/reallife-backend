@@ -29,6 +29,7 @@ public enum ErrorCode {
     LIKE_ALREADY_EXISTS(HttpStatus.CONFLICT, "LIKE_ALREADY_EXISTS", "이미 좋아요한 게시글입니다."),
 
     // Message
+    MESSAGE_NOT_FOUND(HttpStatus.NOT_FOUND, "MESSAGE_NOT_FOUND", "메시지를 찾을 수 없습니다."),
     MESSAGE_CONVERSATION_NOT_FOUND(HttpStatus.NOT_FOUND, "MESSAGE_CONVERSATION_NOT_FOUND", "대화방을 찾을 수 없습니다."),
     MESSAGE_FORBIDDEN(HttpStatus.FORBIDDEN, "MESSAGE_FORBIDDEN", "대화방에 접근할 수 없습니다."),
     MESSAGE_EMPTY(HttpStatus.BAD_REQUEST, "MESSAGE_EMPTY", "내용 또는 첨부파일 중 하나는 필수입니다."),

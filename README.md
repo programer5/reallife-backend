@@ -191,18 +191,17 @@ Phase 2 — SNS 기능 (진행/확장)
 - 좋아요 / 팔로우
 - 피드 조회 (팔로우 기반 + 최신순 + Cursor)
 
-Phase 2.5 — Messaging + Logging
--Direct Message(1:1)
-  -대화방(Conversation) 생성/조회
-  -메시지 전송/조회 (Cursor paging)
-  -읽음 처리(선택)
+Phase 2.1 — Messaging
+- DM(1:1) 대화방
+- 메시지 전송/조회(커서)
+- 파일 업로드/첨부(로컬 → S3 교체 가능)
+- (확장) 읽음 처리, 알림 이벤트
+
+Phase 2.5
 -파일첨부
   -메시지에 첨부(이미지/파일)
   -v1: 로컬 저장(개발용)
   -v2: S3/Cloud Storage로 교체(운영용)
--공통 로깅
-  -RequestId(MDC), 요청/응답/에러 로그 통일
-  -운영/감사 로그 분리(선택)
 
 Phase 3 — Frontend
 - Vue 연동
@@ -215,6 +214,8 @@ Phase 4 — DevOps / 운영
 - 무료 서버 배포
 - CI/CD (GitHub Actions: test → docs → build)
 - 운영 로그 / 모니터링
+- 공통 로그(MDC RequestId) + 요청/응답 시간 측정 + 에러 로깅 표준화
+- (확장) AOP/Interceptor로 slow request 경고, traceId 연동
 
 Phase 5 — Advanced
 - 이벤트 기반 아키텍처 (회원가입/로그인/게시글 생성 이벤트)

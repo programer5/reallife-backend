@@ -1,18 +1,16 @@
 package com.example.backend.service.message;
 
-import com.example.backend.controller.message.dto.ConversationResponse;
 import com.example.backend.domain.message.Conversation;
-import com.example.backend.domain.message.ConversationMember;
+import com.example.backend.domain.message.ConversationParticipant;
 import com.example.backend.exception.BusinessException;
 import com.example.backend.exception.ErrorCode;
-import com.example.backend.repository.message.ConversationMemberRepository;
+import com.example.backend.repository.message.ConversationParticipantRepository;
 import com.example.backend.repository.message.ConversationRepository;
 import com.example.backend.repository.user.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.List;
 import java.util.UUID;
 
 @Service
@@ -20,41 +18,35 @@ import java.util.UUID;
 public class ConversationService {
 
     private final ConversationRepository conversationRepository;
-    private final ConversationMemberRepository memberRepository;
+    private final ConversationParticipantRepository participantRepository;
     private final UserRepository userRepository;
 
     @Transactional
-    public ConversationResponse createOrGetDirect(UUID meId, UUID targetUserId) {
-
+    public UUID createOrGetDirect(UUID meId, UUID targetUserId) {
         if (meId.equals(targetUserId)) {
-            throw new BusinessException(ErrorCode.INVALID_REQUEST); // 원하면 별도 코드 추가
+            // FOLLOW_CANNOT_FOLLOW_SELF 같은 별도 코드가 있으면 그걸 써도 됨
+            throw new BusinessException(ErrorCode.INVALID_REQUEST);
         }
 
-        // ✅ 존재 검증 (깔끔한 에러를 위해)
         userRepository.findById(meId).orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
         userRepository.findById(targetUserId).orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
 
-        // ✅ 이미 DIRECT 대화방 있으면 재사용
-        var existing = conversationRepository.findExistingDirectConversation(meId, targetUserId);
-        if (existing.isPresent()) {
-            UUID convId = existing.get();
-            return new ConversationResponse(
-                    convId,
-                    "DIRECT",
-                    List.of(new ConversationResponse.Member(meId), new ConversationResponse.Member(targetUserId))
-            );
+        // ✅ DIRECT 대화방 “중복 방지”를 완벽히 하려면 (meId,targetId) 조합을 저장하는 별도 테이블이 제일 깔끔.
+        // 이번 단계는 간단히: "이미 둘 다 참가한 대화방"이 있는지 조회해서 있으면 재사용.
+        // (규모 커지면 ConversationDirectKey 테이블로 개선 추천)
+
+        var myRooms = participantRepository.findAllByUserId(meId);
+        for (var p : myRooms) {
+            UUID roomId = p.getConversationId();
+            boolean targetIn = participantRepository.existsByConversationIdAndUserId(roomId, targetUserId);
+            if (targetIn) {
+                return roomId;
+            }
         }
 
-        // ✅ 없으면 생성
-        Conversation conv = conversationRepository.save(Conversation.direct());
-
-        memberRepository.save(ConversationMember.join(conv.getId(), meId));
-        memberRepository.save(ConversationMember.join(conv.getId(), targetUserId));
-
-        return new ConversationResponse(
-                conv.getId(),
-                "DIRECT",
-                List.of(new ConversationResponse.Member(meId), new ConversationResponse.Member(targetUserId))
-        );
+        Conversation c = conversationRepository.save(Conversation.direct());
+        participantRepository.save(ConversationParticipant.create(c.getId(), meId));
+        participantRepository.save(ConversationParticipant.create(c.getId(), targetUserId));
+        return c.getId();
     }
 }

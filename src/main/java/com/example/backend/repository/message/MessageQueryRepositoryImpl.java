@@ -1,15 +1,16 @@
 package com.example.backend.repository.message;
 
 import com.example.backend.controller.message.dto.MessageListResponse;
+import com.example.backend.domain.file.QUploadedFile;
 import com.example.backend.domain.message.QMessage;
 import com.example.backend.domain.message.QMessageAttachment;
+import com.querydsl.core.Tuple;
 import com.querydsl.core.types.dsl.BooleanExpression;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import org.springframework.stereotype.Repository;
 
 import java.time.LocalDateTime;
 import java.util.*;
-import java.util.stream.Collectors;
 
 @Repository
 public class MessageQueryRepositoryImpl implements MessageQueryRepository {
@@ -29,11 +30,12 @@ public class MessageQueryRepositoryImpl implements MessageQueryRepository {
     ) {
         QMessage m = QMessage.message;
         QMessageAttachment a = QMessageAttachment.messageAttachment;
+        QUploadedFile f = QUploadedFile.uploadedFile;
 
         BooleanExpression cursorCond = cursor(cursorCreatedAt, cursorMessageId, m);
 
-        // 1) 메시지 먼저 size+1개 가져오기
-        var messages = queryFactory
+        // 1) 메시지 size+1개 (hasNext 계산용)
+        List<com.example.backend.domain.message.Message> messages = queryFactory
                 .selectFrom(m)
                 .where(
                         m.conversationId.eq(conversationId),
@@ -48,37 +50,64 @@ public class MessageQueryRepositoryImpl implements MessageQueryRepository {
 
         List<UUID> messageIds = messages.stream().map(x -> x.getId()).toList();
 
-        // 2) 첨부는 IN으로 가져오기
-        var attachments = queryFactory
-                .selectFrom(a)
-                .where(a.message.id.in(messageIds))
-                .orderBy(a.createdAt.asc())
+        // 2) 첨부 + 파일메타를 한 번에 조회
+        //    - a.id: attachmentId (다운로드 URL 만들 때 필요)
+        //    - a.messageId: 어떤 메시지에 달렸는지
+        //    - a.sortOrder: 정렬
+        //    - f: 파일 메타
+        List<Tuple> rows = queryFactory
+                .select(
+                        a.id,          // attachmentId
+                        a.messageId,
+                        a.sortOrder,
+                        f.id,          // fileId
+                        f.originalFilename,
+                        f.contentType,
+                        f.size
+                )
+                .from(a)
+                .join(f).on(
+                        f.id.eq(a.fileId),
+                        f.deleted.isFalse()
+                )
+                .where(a.messageId.in(messageIds))
+                .orderBy(a.messageId.asc(), a.sortOrder.asc(), a.createdAt.asc())
                 .fetch();
 
-        Map<UUID, List<MessageListResponse.Attachment>> attMap = attachments.stream()
-                .collect(Collectors.groupingBy(
-                        x -> x.getMessage().getId(),
-                        Collectors.mapping(
-                                x -> new MessageListResponse.Attachment(
-                                        x.getId(),
-                                        x.getOriginalName(),
-                                        x.getMimeType(),
-                                        x.getSizeBytes(),
-                                        "/api/messages/attachments/" + x.getId() + "/download"
-                                ),
-                                Collectors.toList()
-                        )
-                ));
+        // messageId -> attachments
+        Map<UUID, List<MessageListResponse.Attachment>> attMap = new HashMap<>();
+        for (Tuple t : rows) {
+            UUID attachmentId = t.get(a.id);
+            UUID messageId = t.get(a.messageId);
 
-        return messages.stream()
-                .map(x -> new MessageListResponse.Item(
-                        x.getId(),
-                        x.getSenderId(),
-                        x.getContent(),
-                        x.getCreatedAt(),
-                        attMap.getOrDefault(x.getId(), List.of())
-                ))
-                .toList();
+            UUID fileId = t.get(f.id);
+            String originalName = t.get(f.originalFilename);
+            String mimeType = t.get(f.contentType);
+            Long sizeBytes = t.get(f.size);
+
+            attMap.computeIfAbsent(messageId, k -> new ArrayList<>())
+                    .add(new MessageListResponse.Attachment(
+                            fileId,
+                            "/api/messages/attachments/" + attachmentId + "/download",
+                            originalName,
+                            mimeType,
+                            sizeBytes == null ? 0L : sizeBytes
+                    ));
+        }
+
+        // 3) MessageListResponse.Item 만들기
+        List<MessageListResponse.Item> result = new ArrayList<>();
+        for (var msg : messages) {
+            result.add(new MessageListResponse.Item(
+                    msg.getId(),
+                    msg.getSenderId(),
+                    msg.getContent(),
+                    msg.getCreatedAt(),
+                    attMap.getOrDefault(msg.getId(), List.of())
+            ));
+        }
+
+        return result;
     }
 
     private BooleanExpression cursor(LocalDateTime cursorCreatedAt, UUID cursorId, QMessage m) {

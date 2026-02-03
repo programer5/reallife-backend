@@ -1,87 +1,83 @@
 package com.example.backend.service.message;
 
+import com.example.backend.controller.message.dto.MessageSendRequest;
 import com.example.backend.controller.message.dto.MessageSendResponse;
-import com.example.backend.domain.message.Conversation;
+import com.example.backend.domain.file.UploadedFile;
 import com.example.backend.domain.message.Message;
+import com.example.backend.domain.message.MessageAttachment;
 import com.example.backend.exception.BusinessException;
 import com.example.backend.exception.ErrorCode;
-import com.example.backend.repository.message.ConversationMemberRepository;
-import com.example.backend.repository.message.ConversationRepository;
+import com.example.backend.repository.file.UploadedFileRepository;
+import com.example.backend.repository.message.ConversationParticipantRepository;
+import com.example.backend.repository.message.MessageAttachmentRepository;
 import com.example.backend.repository.message.MessageRepository;
-import com.example.backend.service.file.LocalStorageService;
+import com.example.backend.repository.user.UserRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.util.StringUtils;
-import org.springframework.web.multipart.MultipartFile;
 
-import java.util.List;
-import java.util.UUID;
+import java.util.*;
 
 @Service
 @RequiredArgsConstructor
 public class MessageService {
 
-    private final ConversationRepository conversationRepository;
-    private final ConversationMemberRepository memberRepository;
     private final MessageRepository messageRepository;
-    private final LocalStorageService storageService;
+    private final MessageAttachmentRepository attachmentRepository;
+    private final UploadedFileRepository uploadedFileRepository;
+    private final ConversationParticipantRepository participantRepository;
+    private final UserRepository userRepository;
+    private final ApplicationEventPublisher eventPublisher;
 
     @Transactional
-    public MessageSendResponse send(UUID meId, UUID conversationId, String content, List<MultipartFile> files) {
+    public MessageSendResponse send(UUID meId, UUID conversationId, MessageSendRequest req) {
+        // ✅ 멤버 검증
+        if (!participantRepository.existsByConversationIdAndUserId(conversationId, meId)) {
+            throw new BusinessException(ErrorCode.FORBIDDEN);
+        }
+        userRepository.findById(meId).orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
 
-        Conversation conv = conversationRepository.findById(conversationId)
-                .orElseThrow(() -> new BusinessException(ErrorCode.MESSAGE_CONVERSATION_NOT_FOUND));
+        String content = req.content() == null ? null : req.content().trim();
+        List<UUID> attachmentIds = req.attachmentIds() == null ? List.of() : req.attachmentIds();
 
-        if (!memberRepository.existsByConversationIdAndUserId(conv.getId(), meId)) {
-            throw new BusinessException(ErrorCode.MESSAGE_FORBIDDEN);
+        if ((content == null || content.isBlank()) && attachmentIds.isEmpty()) {
+            throw new BusinessException(ErrorCode.INVALID_REQUEST);
         }
 
-        boolean hasText = StringUtils.hasText(content);
-        boolean hasFiles = files != null && files.stream().anyMatch(f -> f != null && !f.isEmpty());
+        // ✅ 메시지 저장 (텍스트/첨부 둘 다 가능)
+        Message saved = messageRepository.save(Message.text(conversationId, meId, content));
 
-        if (!hasText && !hasFiles) {
-            throw new BusinessException(ErrorCode.MESSAGE_EMPTY);
+        List<MessageSendResponse.FileItem> files = new ArrayList<>();
+        for (int i = 0; i < attachmentIds.size(); i++) {
+            UUID fileId = attachmentIds.get(i);
+
+            UploadedFile file = uploadedFileRepository.findByIdAndDeletedFalse(fileId)
+                    .orElseThrow(() -> new BusinessException(ErrorCode.INVALID_REQUEST));
+
+            attachmentRepository.save(MessageAttachment.create(saved.getId(), fileId, i));
+
+            files.add(new MessageSendResponse.FileItem(
+                    file.getId(),
+                    "/api/files/" + file.getId(),
+                    file.getOriginalFilename(),
+                    file.getContentType(),
+                    file.getSize()
+            ));
         }
 
-        // 파일 개수 제한
-        if (hasFiles) {
-            long count = files.stream().filter(f -> f != null && !f.isEmpty()).count();
-            if (count > storageService.maxFilesPerMessage()) {
-                throw new BusinessException(ErrorCode.INVALID_REQUEST); // 원하면 별도 코드 추가 가능
-            }
-        }
-
-        Message message = Message.create(conversationId, meId, hasText ? content : null);
-
-        // 파일 저장 + attachment 추가
-        if (hasFiles) {
-            for (MultipartFile f : files) {
-                if (f == null || f.isEmpty()) continue;
-                var stored = storageService.store(conversationId, f);
-                message.addAttachment(stored.fileKey(), stored.originalName(), stored.mimeType(), stored.sizeBytes());
-            }
-        }
-
-        Message saved = messageRepository.save(message);
-
-        var atts = saved.getAttachments().stream()
-                .map(a -> new MessageSendResponse.AttachmentDto(
-                        a.getId(),
-                        a.getOriginalName(),
-                        a.getMimeType(),
-                        a.getSizeBytes(),
-                        "/api/messages/attachments/" + a.getId() + "/download"
-                ))
-                .toList();
+        // ✅ (선택) 이벤트 발행
+        eventPublisher.publishEvent(new MessageSentEvent(saved.getId(), conversationId, meId));
 
         return new MessageSendResponse(
                 saved.getId(),
                 saved.getConversationId(),
                 saved.getSenderId(),
                 saved.getContent(),
-                saved.getCreatedAt(),
-                atts
+                files,
+                saved.getCreatedAt()
         );
     }
+
+    public record MessageSentEvent(UUID messageId, UUID conversationId, UUID senderId) {}
 }

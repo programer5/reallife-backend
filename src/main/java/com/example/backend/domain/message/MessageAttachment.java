@@ -15,8 +15,11 @@ import static lombok.AccessLevel.PROTECTED;
 @NoArgsConstructor(access = PROTECTED)
 @Table(
         name = "message_attachments",
+        uniqueConstraints = {
+                @UniqueConstraint(name = "uk_message_file", columnNames = {"message_id", "file_id"})
+        },
         indexes = {
-                @Index(name = "idx_message_id", columnList = "message_id")
+                @Index(name = "idx_message_attachment_message", columnList = "message_id")
         }
 )
 public class MessageAttachment extends BaseEntity {
@@ -24,33 +27,25 @@ public class MessageAttachment extends BaseEntity {
     @Id
     @GeneratedValue
     @UuidGenerator
+    @Column(name = "id", updatable = false, nullable = false)
     private UUID id;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "message_id", nullable = false)
-    private Message message;
+    @Column(name = "message_id", nullable = false)
+    private UUID messageId;
 
-    @Column(name = "file_key", nullable = false, length = 300)
-    private String fileKey;
+    @Column(name = "file_id", nullable = false)
+    private UUID fileId;
 
-    @Column(name = "original_name", nullable = false, length = 255)
-    private String originalName;
+    @Column(name = "sort_order", nullable = false)
+    private int sortOrder;
 
-    @Column(name = "mime_type", nullable = false, length = 100)
-    private String mimeType;
-
-    @Column(name = "size_bytes", nullable = false)
-    private long sizeBytes;
-
-    private MessageAttachment(Message message, String fileKey, String originalName, String mimeType, long sizeBytes) {
-        this.message = message;
-        this.fileKey = fileKey;
-        this.originalName = originalName;
-        this.mimeType = mimeType;
-        this.sizeBytes = sizeBytes;
+    private MessageAttachment(UUID messageId, UUID fileId, int sortOrder) {
+        this.messageId = messageId;
+        this.fileId = fileId;
+        this.sortOrder = sortOrder;
     }
 
-    public static MessageAttachment create(Message message, String fileKey, String originalName, String mimeType, long sizeBytes) {
-        return new MessageAttachment(message, fileKey, originalName, mimeType, sizeBytes);
+    public static MessageAttachment create(UUID messageId, UUID fileId, int sortOrder) {
+        return new MessageAttachment(messageId, fileId, sortOrder);
     }
 }

@@ -1,14 +1,11 @@
 package com.example.backend.repository.message;
 
 import com.example.backend.domain.message.MessageAttachment;
-import org.springframework.data.jpa.repository.*;
-import org.springframework.data.repository.query.Param;
+import org.springframework.data.jpa.repository.JpaRepository;
 
-import java.util.Optional;
+import java.util.List;
 import java.util.UUID;
 
 public interface MessageAttachmentRepository extends JpaRepository<MessageAttachment, UUID> {
-
-    @Query("select a from MessageAttachment a join fetch a.message where a.id = :id")
-    Optional<MessageAttachment> findByIdWithMessage(@Param("id") UUID id);
+    List<MessageAttachment> findAllByMessageId(UUID messageId);
 }

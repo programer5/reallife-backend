@@ -9,14 +9,8 @@ public record MessageSendResponse(
         UUID conversationId,
         UUID senderId,
         String content,
-        LocalDateTime createdAt,
-        List<AttachmentDto> attachments
+        List<FileItem> attachments,
+        LocalDateTime createdAt
 ) {
-    public record AttachmentDto(
-            UUID attachmentId,
-            String originalName,
-            String mimeType,
-            long sizeBytes,
-            String downloadUrl
-    ) {}
+    public record FileItem(UUID fileId, String url, String originalFilename, String contentType, long size) {}
 }
