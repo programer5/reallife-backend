@@ -21,6 +21,7 @@ import static org.springframework.restdocs.mockmvc.MockMvcRestDocumentation.docu
 import static org.springframework.restdocs.mockmvc.MockMvcRestDocumentation.documentationConfiguration;
 import static org.springframework.restdocs.request.RequestDocumentation.parameterWithName;
 import static org.springframework.restdocs.request.RequestDocumentation.pathParameters;
+import static org.springframework.security.test.web.servlet.setup.SecurityMockMvcConfigurers.springSecurity;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
@@ -35,6 +36,7 @@ class FollowControllerDocsTest {
 
     private MockMvc mockMvc(RestDocumentationContextProvider restDocumentation) {
         return MockMvcBuilders.webAppContextSetup(context)
+                .apply(springSecurity())
                 .apply(documentationConfiguration(restDocumentation))
                 .build();
     }
