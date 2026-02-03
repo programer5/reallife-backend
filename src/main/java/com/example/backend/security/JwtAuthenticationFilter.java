@@ -73,6 +73,8 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         String uri = request.getRequestURI();
         return uri.startsWith("/docs")
                 || uri.startsWith("/static")
+                || uri.startsWith("/oauth2")
+                || uri.startsWith("/login/oauth2")
                 || uri.startsWith("/favicon.ico")
                 || uri.startsWith("/error");
     }

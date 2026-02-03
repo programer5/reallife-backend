@@ -61,11 +61,36 @@ public class User extends BaseEntity {
         this.provider = AuthProvider.LOCAL;
     }
 
+    private User(String email, String handle, String password, String name, AuthProvider provider, String providerId) {
+        this.email = email;
+        this.handle = handle;
+        this.password = password;
+        this.name = name;
+        this.provider = provider;
+        this.providerId = providerId;
+    }
+
+    public static User createOAuthUser(
+            String email,
+            String handle,
+            String password,
+            String name,
+            AuthProvider provider,
+            String providerId
+    ) {
+        return new User(email, handle, password, name, provider, providerId);
+    }
+
     public void increaseFollowerCount() {
         this.followerCount++;
     }
 
     public void decreaseFollowerCount() {
         if (this.followerCount > 0) this.followerCount--;
+    }
+
+    public void linkProvider(AuthProvider provider, String providerId) {
+        this.provider = provider;
+        this.providerId = providerId;
     }
 }
