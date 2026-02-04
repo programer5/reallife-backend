@@ -14,6 +14,7 @@ import com.example.backend.repository.message.MessageAttachmentRepository;
 import com.example.backend.repository.message.MessageRepository;
 import com.example.backend.repository.user.UserRepository;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -22,6 +23,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class MessageService {
@@ -35,6 +37,9 @@ public class MessageService {
 
     @Transactional
     public MessageSendResponse send(UUID meId, UUID conversationId, MessageSendRequest req) {
+
+        log.error("🔥🔥🔥 MessageService.send ENTERED | convId={} meId={}", conversationId, meId);
+
         // ✅ 멤버 검증
         if (!participantRepository.existsByConversationIdAndUserId(conversationId, meId)) {
             throw new BusinessException(ErrorCode.FORBIDDEN);
@@ -79,6 +84,8 @@ public class MessageService {
                         saved.getCreatedAt()
                 )
         );
+
+        log.info("📨 MessageSentEvent published | messageId={}", saved.getId());
 
         return new MessageSendResponse(
                 saved.getId(),

@@ -2,6 +2,8 @@ package com.example.backend.service.notification;
 
 import com.example.backend.controller.notification.dto.NotificationListResponse;
 import com.example.backend.domain.notification.Notification;
+import com.example.backend.exception.BusinessException;
+import com.example.backend.exception.ErrorCode;
 import com.example.backend.repository.notification.NotificationRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -36,5 +38,16 @@ public class NotificationService {
                 .toList();
 
         return new NotificationListResponse(items, hasUnread);
+    }
+
+    @Transactional
+    public void markRead(UUID meId, UUID notificationId) {
+        Notification n = notificationRepository.findByIdAndUserIdAndDeletedFalse(notificationId, meId)
+                .orElseThrow(() -> new BusinessException(ErrorCode.NOTIFICATION_NOT_FOUND));
+
+        // 이미 읽음이면 그대로 204 (멱등)
+        if (!n.isRead()) {
+            n.markAsRead(); // ✅ 여기!
+        }
     }
 }

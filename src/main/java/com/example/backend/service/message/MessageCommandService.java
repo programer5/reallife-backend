@@ -5,6 +5,7 @@ import com.example.backend.controller.message.dto.MessageSendResponse;
 import com.example.backend.domain.file.UploadedFile;
 import com.example.backend.domain.message.Message;
 import com.example.backend.domain.message.MessageAttachment;
+import com.example.backend.domain.message.event.MessageSentEvent;
 import com.example.backend.exception.BusinessException;
 import com.example.backend.exception.ErrorCode;
 import com.example.backend.repository.file.UploadedFileRepository;
@@ -13,11 +14,14 @@ import com.example.backend.repository.message.MessageAttachmentRepository;
 import com.example.backend.repository.message.MessageRepository;
 import com.example.backend.repository.user.UserRepository;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.*;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class MessageCommandService {
@@ -27,6 +31,7 @@ public class MessageCommandService {
     private final UploadedFileRepository uploadedFileRepository;
     private final ConversationParticipantRepository participantRepository;
     private final UserRepository userRepository;
+    private final ApplicationEventPublisher eventPublisher; // ✅ 추가
 
     @Transactional
     public MessageSendResponse send(UUID meId, UUID conversationId, MessageSendRequest req) {
@@ -66,6 +71,17 @@ public class MessageCommandService {
                     file.getSize()
             ));
         }
+
+        // ✅ 이벤트 발행 (추가)
+        eventPublisher.publishEvent(new MessageSentEvent(
+                saved.getId(),
+                saved.getConversationId(),
+                saved.getSenderId(),
+                saved.getContent(),
+                saved.getCreatedAt()
+        ));
+
+        log.info("📨 MessageSentEvent published | messageId={}", saved.getId());
 
         return new MessageSendResponse(
                 saved.getId(),
