@@ -32,4 +32,8 @@ public interface MessageRepository extends JpaRepository<Message, UUID> {
     """)
     List<Message> findNextPage(UUID conversationId, LocalDateTime cursorCreatedAt, UUID cursorId, Pageable pageable);
     Optional<Message> findByIdAndDeletedFalse(UUID id);
+
+    Optional<Message>
+    findTopByConversationIdAndDeletedFalseOrderByCreatedAtDesc(UUID conversationId);
+
 }

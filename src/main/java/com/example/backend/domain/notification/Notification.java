@@ -60,7 +60,7 @@ public class Notification extends BaseEntity {
         return new Notification(userId, type, refId, body);
     }
 
-    public void markRead() {
+    public void markAsRead() {
         this.readAt = LocalDateTime.now();
     }
 
