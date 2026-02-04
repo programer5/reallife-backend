@@ -1,9 +1,9 @@
 package com.example.backend.controller.notification;
 
 import com.example.backend.controller.notification.dto.NotificationListResponse;
+import com.example.backend.service.notification.NotificationQueryService;
 import com.example.backend.service.notification.NotificationService;
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
@@ -14,21 +14,26 @@ import java.util.UUID;
 @RequestMapping("/api/notifications")
 public class NotificationController {
 
+    private final NotificationQueryService notificationQueryService;
     private final NotificationService notificationService;
 
+    /**
+     * 알림 목록 조회
+     */
     @GetMapping
-    public NotificationListResponse list(Authentication authentication) {
+    public NotificationListResponse getNotifications(Authentication authentication) {
         UUID meId = UUID.fromString(authentication.getName());
-        return notificationService.list(meId);
+        return notificationQueryService.getMyNotifications(meId);
     }
 
-    @PatchMapping("/{notificationId}/read")
-    public ResponseEntity<Void> markRead(
-            @PathVariable UUID notificationId,
-            Authentication authentication
-    ) {
+    /**
+     * 단건 알림 읽음 처리
+     */
+    @PostMapping("/{id}/read")
+    public void read(@PathVariable UUID id,
+                     Authentication authentication) {
+
         UUID meId = UUID.fromString(authentication.getName());
-        notificationService.markRead(meId, notificationId);
-        return ResponseEntity.noContent().build(); // 204
+        notificationService.markAsRead(meId, id);
     }
 }
