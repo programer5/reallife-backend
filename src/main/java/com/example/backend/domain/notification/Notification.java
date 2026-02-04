@@ -6,6 +6,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import org.hibernate.annotations.UuidGenerator;
 
+import java.time.LocalDateTime;
 import java.util.UUID;
 
 import static lombok.AccessLevel.PROTECTED;
@@ -42,7 +43,7 @@ public class Notification extends BaseEntity {
     private String body; // 화면에 보여줄 텍스트
 
     @Column(name = "read_at")
-    private java.time.LocalDateTime readAt;
+    private LocalDateTime readAt;
 
     @Column(name = "deleted", nullable = false)
     private boolean deleted;
@@ -60,7 +61,7 @@ public class Notification extends BaseEntity {
     }
 
     public void markRead() {
-        this.readAt = java.time.LocalDateTime.now();
+        this.readAt = LocalDateTime.now();
     }
 
     public void delete() {

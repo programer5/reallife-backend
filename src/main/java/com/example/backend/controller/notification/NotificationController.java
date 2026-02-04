@@ -1,12 +1,11 @@
 package com.example.backend.controller.notification;
 
-import com.example.backend.controller.notification.dto.NotificationListResponse;
-import com.example.backend.repository.notification.NotificationRepository;
+import com.example.backend.service.notification.NotificationService;
 import lombok.RequiredArgsConstructor;
-import org.springframework.data.domain.PageRequest;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.Map;
 import java.util.UUID;
 
 @RestController
@@ -14,31 +13,21 @@ import java.util.UUID;
 @RequestMapping("/api/notifications")
 public class NotificationController {
 
-    private final NotificationRepository notificationRepository;
+    private final NotificationService notificationService;
 
-    @GetMapping
-    public NotificationListResponse list(
-            @RequestParam(defaultValue = "20") int size,
+    @PatchMapping("/{notificationId}/read")
+    public void read(
+            @PathVariable UUID notificationId,
             Authentication authentication
     ) {
         UUID meId = UUID.fromString(authentication.getName());
+        notificationService.markAsRead(meId, notificationId);
+    }
 
-        int pageSize = Math.min(Math.max(size, 1), 50);
-        var pageable = PageRequest.of(0, pageSize);
-
-        var items = notificationRepository
-                .findAllByUserIdAndDeletedFalseOrderByCreatedAtDesc(meId, pageable)
-                .stream()
-                .map(n -> new NotificationListResponse.Item(
-                        n.getId(),
-                        n.getType().name(),
-                        n.getRefId(),
-                        n.getBody(),
-                        n.isRead(),
-                        n.getCreatedAt()
-                ))
-                .toList();
-
-        return new NotificationListResponse(items);
+    @GetMapping("/unread-count")
+    public Map<String, Long> unreadCount(Authentication authentication) {
+        UUID meId = UUID.fromString(authentication.getName());
+        long count = notificationService.countUnread(meId);
+        return Map.of("count", count);
     }
 }
