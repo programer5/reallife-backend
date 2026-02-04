@@ -1,14 +1,18 @@
 package com.example.backend.repository.notification;
 
 import com.example.backend.domain.notification.Notification;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 
-import java.util.Optional;
+import java.util.List;
 import java.util.UUID;
 
 public interface NotificationRepository extends JpaRepository<Notification, UUID> {
 
-    Optional<Notification> findByIdAndReceiverId(UUID id, UUID receiverId);
+    List<Notification> findByUserIdAndDeletedFalseOrderByCreatedAtDesc(
+            UUID userId,
+            Pageable pageable
+    );
 
-    long countByReceiverIdAndReadAtIsNull(UUID receiverId);
+    long countByUserIdAndReadAtIsNullAndDeletedFalse(UUID userId);
 }

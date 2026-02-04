@@ -1,11 +1,12 @@
 package com.example.backend.controller.notification;
 
+import com.example.backend.controller.notification.dto.NotificationListResponse;
+import com.example.backend.controller.notification.dto.NotificationUnreadCountResponse;
 import com.example.backend.service.notification.NotificationService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.Map;
 import java.util.UUID;
 
 @RestController
@@ -15,8 +16,17 @@ public class NotificationController {
 
     private final NotificationService notificationService;
 
-    @PatchMapping("/{notificationId}/read")
-    public void read(
+    @GetMapping
+    public NotificationListResponse list(
+            @RequestParam(defaultValue = "20") int size,
+            Authentication authentication
+    ) {
+        UUID meId = UUID.fromString(authentication.getName());
+        return notificationService.list(meId, size);
+    }
+
+    @PostMapping("/{notificationId}/read")
+    public void markAsRead(
             @PathVariable UUID notificationId,
             Authentication authentication
     ) {
@@ -25,9 +35,8 @@ public class NotificationController {
     }
 
     @GetMapping("/unread-count")
-    public Map<String, Long> unreadCount(Authentication authentication) {
+    public NotificationUnreadCountResponse unreadCount(Authentication authentication) {
         UUID meId = UUID.fromString(authentication.getName());
-        long count = notificationService.countUnread(meId);
-        return Map.of("count", count);
+        return notificationService.unreadCount(meId);
     }
 }
