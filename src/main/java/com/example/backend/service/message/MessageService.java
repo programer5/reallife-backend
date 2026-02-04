@@ -5,6 +5,7 @@ import com.example.backend.controller.message.dto.MessageSendResponse;
 import com.example.backend.domain.file.UploadedFile;
 import com.example.backend.domain.message.Message;
 import com.example.backend.domain.message.MessageAttachment;
+import com.example.backend.domain.message.event.MessageSentEvent;
 import com.example.backend.exception.BusinessException;
 import com.example.backend.exception.ErrorCode;
 import com.example.backend.repository.file.UploadedFileRepository;
@@ -17,7 +18,9 @@ import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
@@ -66,8 +69,16 @@ public class MessageService {
             ));
         }
 
-        // ✅ (선택) 이벤트 발행
-        eventPublisher.publishEvent(new MessageSentEvent(saved.getId(), conversationId, meId));
+        // ✅ 이벤트 발행
+        eventPublisher.publishEvent(
+                new MessageSentEvent(
+                        saved.getId(),
+                        saved.getConversationId(),
+                        saved.getSenderId(),
+                        saved.getContent(),
+                        saved.getCreatedAt()
+                )
+        );
 
         return new MessageSendResponse(
                 saved.getId(),
@@ -79,5 +90,4 @@ public class MessageService {
         );
     }
 
-    public record MessageSentEvent(UUID messageId, UUID conversationId, UUID senderId) {}
 }
