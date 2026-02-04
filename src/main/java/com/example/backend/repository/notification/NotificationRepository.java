@@ -19,4 +19,8 @@ public interface NotificationRepository extends JpaRepository<Notification, UUID
 
     boolean existsByUserIdAndTypeAndRefIdAndDeletedFalse(UUID userId, NotificationType type, UUID refId);
 
+    List<Notification> findTop50ByUserIdAndDeletedFalseOrderByCreatedAtDesc(UUID userId);
+
+    boolean existsByUserIdAndReadAtIsNullAndDeletedFalse(UUID userId);
+
 }
