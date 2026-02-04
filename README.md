@@ -71,24 +71,26 @@ JWT 인증, 테스트 기반 문서화(REST Docs), 실제 배포까지 고려한
 - 팔로우 / 언팔로우
 - 팔로우 기반 피드 조회 (Cursor 기반 페이징)
 
+### Messaging
+- 1:1 대화방 기반 메시지 전송/조회
+- 메시지 파일 첨부 (로컬 스토리지)
+- 커서 기반 메시지 페이징
+
+### File
+- 파일 업로드 API
+- 메시지 첨부 파일 다운로드
+- 스토리지 추상화 (Local → S3 교체 가능)
+
 ### Error Handling / Docs
 - 에러 응답 표준화 (`ErrorResponse`)
-  - 400 Bad Request (Validation 등)
-  - 401 Unauthorized
-  - 403 Forbidden
-  - 409 Conflict (Duplicate Email 등)
 - Spring REST Docs 기반 API 문서 자동 생성
-- `/docs` 경로로 문서 서빙 (Notion-like 스타일)
+- `/docs` 경로로 문서 서빙
 
 ---
 
 ## 📚 API Documentation
 
-서버 실행 후 아래 주소에서 API 문서를 확인할 수 있습니다.
-
 - http://localhost:8080/docs
-
-### 문서 갱신 명령어
 
 ```bash
 ./gradlew clean test asciidoctor copyRestDocs
@@ -103,17 +105,16 @@ src
 └─ main
    ├─ java
    │  └─ com.example.backend
-   │     ├─ config           # Security, JPA, Bean 설정 (QuerydslConfig 포함)
-   │     ├─ controller       # REST API (users, auth, posts, follows, likes, feed)
-   │     ├─ domain           # Entity, BaseEntity
-   │     ├─ repository       # JPA Repository (+ QueryDSL Custom Repository)
-   │     ├─ service          # 비즈니스 로직
-   │     ├─ security         # JWT (TokenProvider, Filter, ErrorHandler)
-   │     └─ exception        # ErrorCode, ErrorResponse, GlobalExceptionHandler
+   │     ├─ config           # Security, JPA, Logging, Querydsl
+   │     ├─ controller       # REST API
+   │     ├─ domain           # Entity, Aggregate Root
+   │     ├─ repository       # JPA + QueryDSL
+   │     ├─ service          # Business Logic
+   │     ├─ security         # JWT
+   │     ├─ exception        # Error Handling
+   │     └─ logging          # MDC RequestId
    └─ resources
-      ├─ application.yml     # ⚠️ 민감정보 커밋 금지
-      └─ static
-         └─ docs             # REST Docs HTML (copyRestDocs 결과)
+      └─ static/docs         # REST Docs
 ```
 
 ---
@@ -167,6 +168,28 @@ jwt:
 ```
 
 ---
+
+## 🧱 Architecture Strategy (MSA Ready)
+
+```text
+본 프로젝트는 초기에는 모놀리식 구조로 시작하되,
+도메인 단위 분리 → 마이크로서비스(MSA) 로 점진적 전환이 가능하도록 설계되었습니다.
+
+현재 단계: Modular Monolith
+ - 도메인별 패키지 분리
+ - 명확한 Service / Repository 경계
+ - 도메인 이벤트 확장 가능 구조
+  
+  향후 MSA 전환 전략
+    - Auth / User Service
+    - Post / Feed Service
+    - Messaging Service
+    - File Service
+    - Notification Service
+  각 서비스는:
+    - 독립적인 DB
+    - JWT 기반 인증
+    - 이벤트(Kafka) 기반 통신
 
 ## ✅ Roadmap
 
@@ -226,7 +249,7 @@ Phase 5 — Advanced
 - Airflow 기반 배치 파이프라인 (통계/리포트 스케줄링)
 - Spark / Flink 기반 스트리밍/배치 확장 (Kafka 연계)
 - LLM 활용(선택): 자동 콘텐츠 분류 / 신고 처리 보조 / 운영 FAQ 보조
-
+- MSA
 Phase 6 — Product Expansion
 - 실제 사용자 공개 베타
 - Android 앱 출시 (Google Play)
