@@ -10,33 +10,25 @@ public record NotificationListResponse(
         List<Item> items,
         boolean hasUnread
 ) {
-
-    public static NotificationListResponse from(
-            List<Notification> notifications,
-            boolean hasUnread
-    ) {
-        List<Item> items = notifications.stream()
-                .map(Item::from)
-                .toList();
-
-        return new NotificationListResponse(items, hasUnread);
-    }
-
     public record Item(
             UUID id,
             String type,
             String body,
             boolean read,
             LocalDateTime createdAt
-    ) {
-        public static Item from(Notification notification) {
-            return new Item(
-                    notification.getId(),
-                    notification.getType().name(),
-                    notification.getBody(),
-                    notification.isRead(),
-                    notification.getCreatedAt()
-            );
-        }
+    ) {}
+
+    public static NotificationListResponse from(List<Notification> notifications, boolean hasUnread) {
+        List<Item> items = notifications.stream()
+                .map(n -> new Item(
+                        n.getId(),
+                        n.getType().name(),
+                        n.getBody(),
+                        n.isRead(),
+                        n.getCreatedAt()
+                ))
+                .toList();
+
+        return new NotificationListResponse(items, hasUnread);
     }
 }

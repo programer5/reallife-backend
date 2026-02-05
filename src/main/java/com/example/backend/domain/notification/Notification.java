@@ -18,7 +18,8 @@ import static lombok.AccessLevel.PROTECTED;
         name = "notifications",
         indexes = {
                 @Index(name = "idx_notification_user_created", columnList = "user_id, created_at"),
-                @Index(name = "idx_notification_user_read", columnList = "user_id, read_at")
+                @Index(name = "idx_notification_user_read", columnList = "user_id, read_at"),
+                @Index(name = "idx_notification_user_deleted", columnList = "user_id, deleted")
         }
 )
 public class Notification extends BaseEntity {
@@ -45,27 +46,30 @@ public class Notification extends BaseEntity {
     @Column(name = "read_at")
     private LocalDateTime readAt;
 
-    @Column(name = "deleted", nullable = false)
-    private boolean deleted;
-
     private Notification(UUID userId, NotificationType type, UUID refId, String body) {
         this.userId = userId;
         this.type = type;
         this.refId = refId;
         this.body = body;
-        this.deleted = false;
+        // deleted는 BaseEntity가 관리 (기본 false)
     }
 
     public static Notification create(UUID userId, NotificationType type, UUID refId, String body) {
         return new Notification(userId, type, refId, body);
     }
 
-    public void markAsRead() {
+    /** ✅ 멱등 */
+    public boolean markAsRead() {
+        if (this.readAt != null) return false;
         this.readAt = LocalDateTime.now();
+        return true;
     }
 
-    public void delete() {
-        this.deleted = true;
+    /** ✅ 멱등 + BaseEntity deleted 사용 */
+    public boolean delete() {
+        if (this.isDeleted()) return false;
+        this.markDeleted();
+        return true;
     }
 
     public boolean isRead() {

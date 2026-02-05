@@ -17,23 +17,25 @@ public class NotificationController {
     private final NotificationQueryService notificationQueryService;
     private final NotificationService notificationService;
 
-    /**
-     * 알림 목록 조회
-     */
     @GetMapping
     public NotificationListResponse getNotifications(Authentication authentication) {
         UUID meId = UUID.fromString(authentication.getName());
         return notificationQueryService.getMyNotifications(meId);
     }
 
-    /**
-     * 단건 알림 읽음 처리
-     */
     @PostMapping("/{id}/read")
-    public void read(@PathVariable UUID id,
-                     Authentication authentication) {
-
+    public void read(@PathVariable UUID id, Authentication authentication) {
         UUID meId = UUID.fromString(authentication.getName());
         notificationService.markAsRead(meId, id);
     }
+
+    // ✅ 추가: 전체 읽음 처리
+    @PostMapping("/read-all")
+    public ReadAllResponse readAll(Authentication authentication) {
+        UUID meId = UUID.fromString(authentication.getName());
+        int updatedCount = notificationService.markAllAsRead(meId);
+        return new ReadAllResponse(updatedCount);
+    }
+
+    public record ReadAllResponse(int updatedCount) {}
 }

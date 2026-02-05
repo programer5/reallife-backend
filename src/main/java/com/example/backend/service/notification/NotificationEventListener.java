@@ -1,10 +1,8 @@
 package com.example.backend.service.notification;
 
 import com.example.backend.domain.message.event.MessageSentEvent;
-import com.example.backend.domain.notification.Notification;
 import com.example.backend.domain.notification.NotificationType;
 import com.example.backend.repository.message.ConversationParticipantRepository;
-import com.example.backend.repository.notification.NotificationRepository;
 import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -22,8 +20,8 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class NotificationEventListener {
 
-    private final NotificationRepository notificationRepository;
     private final ConversationParticipantRepository participantRepository;
+    private final NotificationCommandService notificationCommandService;
 
     @PostConstruct
     public void init() {
@@ -31,8 +29,8 @@ public class NotificationEventListener {
     }
 
     /**
-     * 메시지 저장 트랜잭션이 "커밋된 이후"에만 실행 (AFTER_COMMIT)
-     * 알림 저장은 별도의 새 트랜잭션으로 실행 (REQUIRES_NEW)
+     * 메시지 저장 트랜잭션이 커밋된 이후에만 실행
+     * 알림 저장은 별도 새 트랜잭션으로 실행
      */
     @Transactional(propagation = Propagation.REQUIRES_NEW)
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
@@ -47,18 +45,13 @@ public class NotificationEventListener {
                 .toList();
 
         for (UUID targetId : targets) {
-            notificationRepository.save(
-                    Notification.create(
-                            targetId,
-                            NotificationType.MESSAGE_RECEIVED,
-                            event.messageId(),
-                            "새 메시지가 도착했습니다."
-                    )
+            notificationCommandService.createIfNotExists(
+                    targetId,
+                    NotificationType.MESSAGE_RECEIVED,
+                    event.messageId(),
+                    "새 메시지가 도착했습니다."
             );
         }
-
-        // 선택: 테스트/확실성 위해 강제 flush (없어도 커밋 시점에 flush 됨)
-        notificationRepository.flush();
 
         log.info("🔔 notifications created | convId={} targets={}",
                 event.conversationId(), targets.size());
