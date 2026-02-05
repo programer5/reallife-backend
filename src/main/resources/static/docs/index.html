@@ -46,6 +46,14 @@
 <li><a href="#_좋아요_취소">좋아요 취소</a></li>
 </ul>
 </li>
+<li><a href="#_notifications">Notifications</a>
+<ul class="sectlevel2">
+<li><a href="#_내_알림_목록_조회">내 알림 목록 조회</a></li>
+<li><a href="#_알림_단건_읽음_처리">알림 단건 읽음 처리</a></li>
+<li><a href="#_알림_전체_읽음_처리">알림 전체 읽음 처리</a></li>
+<li><a href="#_읽은_알림_일괄_삭제soft_delete">읽은 알림 일괄 삭제(soft delete)</a></li>
+</ul>
+</li>
 </ul>
 </div>
 </div>
@@ -79,7 +87,7 @@ Content-Type: application/json
 Content-Length: 140
 Host: localhost:8080
 
-{"password":"password1234","name":"테스트유저","handle":"user_11a66f70","email":"signup+69010ecd-987e-425b-a34c-9954ca9911b0@test.com"}</code></pre>
+{"password":"password1234","name":"테스트유저","handle":"user_984f0116","email":"signup+a8998005-cf97-40bd-a576-a336fdc92a9c@test.com"}</code></pre>
 </div>
 </div>
 <table class="tableblock frame-all grid-all stretch">
@@ -127,7 +135,7 @@ Host: localhost:8080
 Content-Type: application/json
 Content-Length: 158
 
-{"id":"1db4085e-5a07-4487-a6fa-e537cf8e04f6","email":"signup+69010ecd-987e-425b-a34c-9954ca9911b0@test.com","handle":"user_11a66f70","name":"테스트유저"}</code></pre>
+{"id":"75e7b95f-4849-41ad-8f4e-d998a4768703","email":"signup+a8998005-cf97-40bd-a576-a336fdc92a9c@test.com","handle":"user_984f0116","name":"테스트유저"}</code></pre>
 </div>
 </div>
 <table class="tableblock frame-all grid-all stretch">
@@ -177,7 +185,7 @@ Content-Length: 158
 Content-Type: application/json
 Content-Length: 208
 
-{"code":"COMMON_INVALID_REQUEST","message":"요청이 올바르지 않습니다.","timestamp":"2026-02-04T10:38:31.6431067","path":"/api/users","fieldErrors":[{"field":"handle","reason":"must not be blank"}]}</code></pre>
+{"code":"COMMON_INVALID_REQUEST","message":"요청이 올바르지 않습니다.","timestamp":"2026-02-05T13:51:29.4189112","path":"/api/users","fieldErrors":[{"field":"handle","reason":"must not be blank"}]}</code></pre>
 </div>
 </div>
 <table class="tableblock frame-all grid-all stretch">
@@ -238,9 +246,9 @@ Content-Length: 208
 <div class="content">
 <pre class="highlight nowrap"><code class="language-http" data-lang="http">HTTP/1.1 409 Conflict
 Content-Type: application/json
-Content-Length: 161
+Content-Length: 160
 
-{"code":"USER_DUPLICATE_EMAIL","message":"이미 가입된 이메일입니다.","timestamp":"2026-02-04T10:38:31.7640246","path":"/api/users","fieldErrors":null}</code></pre>
+{"code":"USER_DUPLICATE_EMAIL","message":"이미 가입된 이메일입니다.","timestamp":"2026-02-05T13:51:29.539842","path":"/api/users","fieldErrors":null}</code></pre>
 </div>
 </div>
 <table class="tableblock frame-all grid-all stretch">
@@ -299,7 +307,7 @@ Content-Length: 161
 <div class="listingblock">
 <div class="content">
 <pre class="highlight nowrap"><code class="language-http" data-lang="http">GET /api/me HTTP/1.1
-Authorization: Bearer eyJhbGciOiJIUzM4NCJ9.eyJzdWIiOiJjZWQ0ZjRhNC03YjhkLTQyMmYtYjQ1Mi0yYzVjNjlhYjM2YjMiLCJlbWFpbCI6Im1lKzU4NjZlODJlLTk2NGQtNDA5Zi05MTIxLTE3N2U4YzdkOWQwYkB0ZXN0LmNvbSIsImlhdCI6MTc3MDE2OTExMSwiZXhwIjoxNzcwMTcyNzExfQ.YIzg8j_WJTJg8Q0NSj6SSBMU2BQqs2xkP5uHKgoZTYlfHUYNJ2Ht_XhzLAN1Y6C_
+Authorization: Bearer eyJhbGciOiJIUzM4NCJ9.eyJzdWIiOiIxZGJiNzFiMS02N2Q5LTRlYjMtODYzOC1mOTNkYWFhODliOWUiLCJlbWFpbCI6Im1lKzMyYWYyNzAwLWZlZDEtNGQ4My04N2Q3LWZkOWI2MjFjODY3ZEB0ZXN0LmNvbSIsImlhdCI6MTc3MDI2NzA4OCwiZXhwIjoxNzcwMjcwNjg4fQ.51IDgS72VuoBOwJz0kNEWUiF6IZ-ZR8r9Q6Qr6uM_11qnivm6iCT5eJHyJkISg3K
 Host: localhost:8080</code></pre>
 </div>
 </div>
@@ -333,7 +341,7 @@ Expires: 0
 X-Frame-Options: DENY
 Content-Length: 181
 
-{"id":"ced4f4a4-7b8d-422f-b452-2c5c69ab36b3","email":"me+5866e82e-964d-409f-9121-177e8c7d9d0b@test.com","handle":"me_5b6e1664","name":"시드유저","followerCount":0,"tier":"NONE"}</code></pre>
+{"id":"1dbb71b1-67d9-4eb3-8638-f93daaa89b9e","email":"me+32af2700-fed1-4d83-87d7-fd9b621c867d@test.com","handle":"me_b99bc1a6","name":"시드유저","followerCount":0,"tier":"NONE"}</code></pre>
 </div>
 </div>
 <table class="tableblock frame-all grid-all stretch">
@@ -403,7 +411,7 @@ Expires: 0
 X-Frame-Options: DENY
 Content-Length: 145
 
-{"code":"AUTH_UNAUTHORIZED","message":"인증이 필요합니다.","timestamp":[2026,2,4,10,38,31,263364600],"path":"/api/me","fieldErrors":null}</code></pre>
+{"code":"AUTH_UNAUTHORIZED","message":"인증이 필요합니다.","timestamp":[2026,2,5,13,51,28,958174100],"path":"/api/me","fieldErrors":null}</code></pre>
 </div>
 </div>
 </div>
@@ -421,7 +429,7 @@ Content-Length: 145
 <div class="content">
 <pre class="highlight nowrap"><code class="language-http" data-lang="http">POST /api/posts HTTP/1.1
 Content-Type: application/json
-Authorization: Bearer eyJhbGciOiJIUzM4NCJ9.eyJzdWIiOiIyZjgwNDY3MS1hNmYwLTQ1NmMtYWVhOS1lZGZlZWI3MTNiNDYiLCJlbWFpbCI6InBvc3QrYmY3NGI3MjQtMjcyNC00M2YxLWFmZWYtY2RiYTllM2QxMTI4QHRlc3QuY29tIiwiaWF0IjoxNzcwMTY5MTEwLCJleHAiOjE3NzAxNzI3MTB9.wSyIxE6GK2FoFNzEFdOaPIbBlwItMN2fyP4AY4lbTjPhW72Dc8vDiTXPpsh4Xhj4
+Authorization: Bearer eyJhbGciOiJIUzM4NCJ9.eyJzdWIiOiIwMzZkMDkwYy00NzZkLTRhNTctOGM0Ni0yMGRiN2ZjMGVhZDYiLCJlbWFpbCI6InBvc3QrMjBlYjQwZjItYWE3MS00OWM5LWE3NTMtYzEzZTMzNjVhZjhmQHRlc3QuY29tIiwiaWF0IjoxNzcwMjY3MDg4LCJleHAiOjE3NzAyNzA2ODh9.1bCXAf9F88NoyXEVhJSvoUWdFFf2WDwYrml3sHm7fZt77OYz1WWfzhK2RDdNi2xR
 Content-Length: 125
 Host: localhost:8080
 
@@ -492,7 +500,7 @@ Expires: 0
 X-Frame-Options: DENY
 Content-Length: 265
 
-{"postId":"0edad990-4434-402d-a9fd-4baa8b48cd9d","authorId":"2f804671-a6f0-456c-aea9-edfeeb713b46","content":"팔로워에게만 공유합니다 🙂","imageUrls":["https://example.com/image1.jpg"],"visibility":"FOLLOWERS","createdAt":"2026-02-04T10:38:31.0250952"}</code></pre>
+{"postId":"15f7e703-f822-4fc8-ad0a-c882d7366368","authorId":"036d090c-476d-4a57-8c46-20db7fc0ead6","content":"팔로워에게만 공유합니다 🙂","imageUrls":["https://example.com/image1.jpg"],"visibility":"FOLLOWERS","createdAt":"2026-02-05T13:51:28.7002435"}</code></pre>
 </div>
 </div>
 <table class="tableblock frame-all grid-all stretch">
@@ -549,8 +557,8 @@ Content-Length: 265
 <h4 id="_request_3"><a class="anchor" href="#_request_3"></a><a class="link" href="#_request_3">Request</a></h4>
 <div class="listingblock">
 <div class="content">
-<pre class="highlight nowrap"><code class="language-http" data-lang="http">GET /api/posts/80bb47d3-56bf-4212-996b-f21b19ba27e1 HTTP/1.1
-Authorization: Bearer eyJhbGciOiJIUzM4NCJ9.eyJzdWIiOiIxMDdhMzY2Zi1iNDI2LTQzODktOWVlYy00YWZmY2RkNzg0MTgiLCJlbWFpbCI6ImRldGFpbCs0MzhkMGY2NS0zMGZkLTRiYTYtYTI5OS03ZjJkZjg5OWRjYzhAdGVzdC5jb20iLCJpYXQiOjE3NzAxNjkxMTEsImV4cCI6MTc3MDE3MjcxMX0.7Qo8IvEyHvq3zaZl-j4Mb1OarHsFXwJfOgzfrC_CzG2eytjNygZd94xeOOwJYHx1
+<pre class="highlight nowrap"><code class="language-http" data-lang="http">GET /api/posts/eeb713a4-033d-41f7-8b3a-8cc2d1350b56 HTTP/1.1
+Authorization: Bearer eyJhbGciOiJIUzM4NCJ9.eyJzdWIiOiJkYWFmZGI1NC04N2RkLTRmN2ItODEyMy02ZjYzMmI1YmM0ODgiLCJlbWFpbCI6ImRldGFpbCtkZGExNGMwNy01NmEwLTQyMzEtYjk2ZC0zNjc0NzM5Zjg5ZTdAdGVzdC5jb20iLCJpYXQiOjE3NzAyNjcwODgsImV4cCI6MTc3MDI3MDY4OH0.8ZFvQXfpQ-KH9o1xh2ca5Fe_RpjxRTTHRTZZoff7s6u-t5E7qbX2Vz1vs_Om7gvM
 Host: localhost:8080</code></pre>
 </div>
 </div>
@@ -587,7 +595,7 @@ Expires: 0
 X-Frame-Options: DENY
 Content-Length: 248
 
-{"postId":"80bb47d3-56bf-4212-996b-f21b19ba27e1","authorId":"107a366f-b426-4389-9eec-4affcdd78418","content":"상세조회 테스트","imageUrls":["https://example.com/image1.jpg"],"visibility":"FOLLOWERS","createdAt":"2026-02-04T10:38:31.1344547"}</code></pre>
+{"postId":"eeb713a4-033d-41f7-8b3a-8cc2d1350b56","authorId":"daafdb54-87dd-4f7b-8123-6f632b5bc488","content":"상세조회 테스트","imageUrls":["https://example.com/image1.jpg"],"visibility":"FOLLOWERS","createdAt":"2026-02-05T13:51:28.8172537"}</code></pre>
 </div>
 </div>
 <table class="tableblock frame-all grid-all stretch">
@@ -645,7 +653,7 @@ Content-Length: 248
 <div class="listingblock">
 <div class="content">
 <pre class="highlight nowrap"><code class="language-http" data-lang="http">GET /api/feed HTTP/1.1
-Authorization: Bearer eyJhbGciOiJIUzM4NCJ9.eyJzdWIiOiIyNDk4MzUyOS1iZjM2LTRiOWQtYjAxZi0zZDg5NGYyNTgyYmIiLCJlbWFpbCI6ImZlZWRtZSthOGU0ZTNjOC1jYmQ1LTRiYzQtYTVkMS1jYWEzODNhZjI0YWVAdGVzdC5jb20iLCJpYXQiOjE3NzAxNjkxMDksImV4cCI6MTc3MDE3MjcwOX0.So1uUvmQ476_EMivYQkCmd6hYva2Y4Ax8bBEmzMBpjYmGKqQsC2sPfqdDqmvjClm
+Authorization: Bearer eyJhbGciOiJIUzM4NCJ9.eyJzdWIiOiI4NzllMjk5Zi04ZGNkLTQ3ZmEtOGVjZS01ZjYwODIzYjkwYjEiLCJlbWFpbCI6ImZlZWRtZSthZGZhY2RmNy01OTBhLTQwOWUtOWJjNy1lOTAxM2Q0NTNmNzFAdGVzdC5jb20iLCJpYXQiOjE3NzAyNjcwODYsImV4cCI6MTc3MDI3MDY4Nn0.cj-v6YkDpuq4yXneL2EIIxTrQaTDywsWvHWpZEneiVCTaQ7tq-aROLAn5DmMndVb
 Host: localhost:8080</code></pre>
 </div>
 </div>
@@ -682,7 +690,7 @@ Expires: 0
 X-Frame-Options: DENY
 Content-Length: 311
 
-{"items":[{"postId":"20423cde-1bb6-47a1-b37d-383e73cc3138","authorId":"6f7bb17d-cc00-477b-b274-13301c3144d9","authorHandle":"feedtarget_69d1157b","authorName":"타겟유저","content":"팔로잉 글","imageUrls":[],"visibility":"ALL","createdAt":"2026-02-04T10:38:29.716688"}],"nextCursor":null,"hasNext":false}</code></pre>
+{"items":[{"postId":"cca8f7cf-4569-462a-a810-d7b4163997cd","authorId":"41efc7cc-bbd5-4a6b-a9fc-f4d6e5b80609","authorHandle":"feedtarget_3bf72cb4","authorName":"타겟유저","content":"팔로잉 글","imageUrls":[],"visibility":"ALL","createdAt":"2026-02-05T13:51:26.808324"}],"nextCursor":null,"hasNext":false}</code></pre>
 </div>
 </div>
 <table class="tableblock frame-all grid-all stretch">
@@ -764,8 +772,8 @@ Content-Length: 311
 <h4 id="_request_5"><a class="anchor" href="#_request_5"></a><a class="link" href="#_request_5">Request</a></h4>
 <div class="listingblock">
 <div class="content">
-<pre class="highlight nowrap"><code class="language-http" data-lang="http">DELETE /api/posts/14e7423b-2df9-4a89-8150-2e866ee389bf HTTP/1.1
-Authorization: Bearer eyJhbGciOiJIUzM4NCJ9.eyJzdWIiOiJkYjc5MWU3My02ODdkLTQ3NzItOGY5Yy0zZjAzNDBkMzZmNjkiLCJlbWFpbCI6ImRlbCs3YzFiMzJmZC02OWEwLTQ5NmYtYTY5My00OWRiZGEzY2NlNGRAdGVzdC5jb20iLCJpYXQiOjE3NzAxNjkxMTEsImV4cCI6MTc3MDE3MjcxMX0.XEUh6xnSVsZJ53hsuqCBJ6saZwjoqShxC3yinm0gfzN_gMbc44WUerRUx7xSPgAU
+<pre class="highlight nowrap"><code class="language-http" data-lang="http">DELETE /api/posts/d6e96a5a-9aca-40af-b10b-e1159f630a13 HTTP/1.1
+Authorization: Bearer eyJhbGciOiJIUzM4NCJ9.eyJzdWIiOiI3NmU2MzdhMS00MjRjLTRjZWItOGQ0Yi1lNGFjMGIyZDA5MTUiLCJlbWFpbCI6ImRlbCs0OGEzODEzZS01MmVjLTRmYjMtYTNhZS1hNTNmZDQwM2I2ZDJAdGVzdC5jb20iLCJpYXQiOjE3NzAyNjcwODgsImV4cCI6MTc3MDI3MDY4OH0.fBOwEyq6A2ZrSaweJcWuEu_ifXxH6Lmnwl46kcFU3hObvHkK8XNFm0h94gw-y6TS
 Host: localhost:8080</code></pre>
 </div>
 </div>
@@ -810,24 +818,10 @@ X-Frame-Options: DENY</code></pre>
 <div class="sectionbody">
 <div class="sect2">
 <h3 id="_팔로우"><a class="anchor" href="#_팔로우"></a><a class="link" href="#_팔로우">팔로우</a></h3>
-<div class="paragraph">
-<p>Unresolved directive in index.adoc - include::C:\workspace\backend\build\generated-snippets/follows-create-204/http-request.adoc[]
-Unresolved directive in index.adoc - include::C:\workspace\backend\build\generated-snippets/follows-create-204/request-headers.adoc[]
-Unresolved directive in index.adoc - include::C:\workspace\backend\build\generated-snippets/follows-create-204/path-parameters.adoc[]
-Unresolved directive in index.adoc - include::C:\workspace\backend\build\generated-snippets/follows-create-204/http-response.adoc[]</p>
-</div>
-</div>
-</div>
-</div>
-<div class="sect1">
-<h2 id="_likes"><a class="anchor" href="#_likes"></a><a class="link" href="#_likes">Likes</a></h2>
-<div class="sectionbody">
-<div class="sect2">
-<h3 id="_좋아요"><a class="anchor" href="#_좋아요"></a><a class="link" href="#_좋아요">좋아요</a></h3>
 <div class="listingblock">
 <div class="content">
-<pre class="highlight nowrap"><code class="language-http" data-lang="http">POST /api/posts/d32a3de2-2f42-4bae-9f10-27d16cf8e801/likes HTTP/1.1
-Authorization: Bearer eyJhbGciOiJIUzM4NCJ9.eyJzdWIiOiIwMjY0NzU1NC1mN2M1LTRjZTItYmY2ZC1iODUwMDFkYjBjZWYiLCJlbWFpbCI6Imxpa2UrMzQxNmI4MGEtMjk1Mi00NDUyLThjZGUtMDgxNzU0OTBjYjNiQHRlc3QuY29tIiwiaWF0IjoxNzcwMTY5MTEwLCJleHAiOjE3NzAxNzI3MTB9.Ftx0YmkBaU7ieewSKPjzFeZEddnWMzMq9wSS-55HV2d-shCxZv0xhzkyz5QtYsf0
+<pre class="highlight nowrap"><code class="language-http" data-lang="http">POST /api/follows/73549861-385e-422a-87be-194292a8e08a HTTP/1.1
+Authorization: Bearer eyJhbGciOiJIUzM4NCJ9.eyJzdWIiOiIwNjJiYjNmNy04NjRkLTRlMmQtYjg0Zi0zZjM0YzA0MWUwMDUiLCJlbWFpbCI6ImZvbGxvd21lKzc0ZTAxN2VhLWJkNzQtNDFlNy1hZWE4LTExZWM4MWVlOTA5MEB0ZXN0LmNvbSIsImlhdCI6MTc3MDI2NzA4NywiZXhwIjoxNzcwMjcwNjg3fQ.erj3fKl5nyXvT6-daOeGow-vLypmRPt3rPkhcSRM1sEKvxVanDfjmyt9VGjgv8TD
 Host: localhost:8080
 Content-Type: application/x-www-form-urlencoded</code></pre>
 </div>
@@ -851,7 +845,7 @@ Content-Type: application/x-www-form-urlencoded</code></pre>
 </tbody>
 </table>
 <table class="tableblock frame-all grid-all stretch">
-<caption class="title">Table 1. /api/posts/{postId}/likes</caption>
+<caption class="title">Table 1. /api/follows/{targetUserId}</caption>
 <colgroup>
 <col style="width: 50%;">
 <col style="width: 50%;">
@@ -864,8 +858,8 @@ Content-Type: application/x-www-form-urlencoded</code></pre>
 </thead>
 <tbody>
 <tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><code>postId</code></p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">게시글 ID(UUID)</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>targetUserId</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">팔로우 대상 사용자 ID(UUID)</p></td>
 </tr>
 </tbody>
 </table>
@@ -881,12 +875,17 @@ X-Frame-Options: DENY</code></pre>
 </div>
 </div>
 </div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_likes"><a class="anchor" href="#_likes"></a><a class="link" href="#_likes">Likes</a></h2>
+<div class="sectionbody">
 <div class="sect2">
-<h3 id="_좋아요_취소"><a class="anchor" href="#_좋아요_취소"></a><a class="link" href="#_좋아요_취소">좋아요 취소</a></h3>
+<h3 id="_좋아요"><a class="anchor" href="#_좋아요"></a><a class="link" href="#_좋아요">좋아요</a></h3>
 <div class="listingblock">
 <div class="content">
-<pre class="highlight nowrap"><code class="language-http" data-lang="http">POST /api/posts/d32a3de2-2f42-4bae-9f10-27d16cf8e801/likes HTTP/1.1
-Authorization: Bearer eyJhbGciOiJIUzM4NCJ9.eyJzdWIiOiIwMjY0NzU1NC1mN2M1LTRjZTItYmY2ZC1iODUwMDFkYjBjZWYiLCJlbWFpbCI6Imxpa2UrMzQxNmI4MGEtMjk1Mi00NDUyLThjZGUtMDgxNzU0OTBjYjNiQHRlc3QuY29tIiwiaWF0IjoxNzcwMTY5MTEwLCJleHAiOjE3NzAxNzI3MTB9.Ftx0YmkBaU7ieewSKPjzFeZEddnWMzMq9wSS-55HV2d-shCxZv0xhzkyz5QtYsf0
+<pre class="highlight nowrap"><code class="language-http" data-lang="http">POST /api/posts/e5232b90-0a72-4e63-bd33-3e1ead6897a9/likes HTTP/1.1
+Authorization: Bearer eyJhbGciOiJIUzM4NCJ9.eyJzdWIiOiJiZWYxYTQ1MS02ZDZkLTQ0ZTYtYTE5ZC0yNTY5NTY2Yjg0ZDkiLCJlbWFpbCI6Imxpa2UrNWRmODkwNjQtZjUwOS00MTRlLWEzYjktZTFiNzFjNTQ3MGIxQHRlc3QuY29tIiwiaWF0IjoxNzcwMjY3MDg4LCJleHAiOjE3NzAyNzA2ODh9.MfKSp_dPesCNyp9QDlI8H_UWXNTMcfAIaHsVVFnRouFg9mXnc6Vwtb5boXvzB2uv
 Host: localhost:8080
 Content-Type: application/x-www-form-urlencoded</code></pre>
 </div>
@@ -940,13 +939,488 @@ X-Frame-Options: DENY</code></pre>
 </div>
 </div>
 </div>
+<div class="sect2">
+<h3 id="_좋아요_취소"><a class="anchor" href="#_좋아요_취소"></a><a class="link" href="#_좋아요_취소">좋아요 취소</a></h3>
+<div class="listingblock">
+<div class="content">
+<pre class="highlight nowrap"><code class="language-http" data-lang="http">POST /api/posts/e5232b90-0a72-4e63-bd33-3e1ead6897a9/likes HTTP/1.1
+Authorization: Bearer eyJhbGciOiJIUzM4NCJ9.eyJzdWIiOiJiZWYxYTQ1MS02ZDZkLTQ0ZTYtYTE5ZC0yNTY5NTY2Yjg0ZDkiLCJlbWFpbCI6Imxpa2UrNWRmODkwNjQtZjUwOS00MTRlLWEzYjktZTFiNzFjNTQ3MGIxQHRlc3QuY29tIiwiaWF0IjoxNzcwMjY3MDg4LCJleHAiOjE3NzAyNzA2ODh9.MfKSp_dPesCNyp9QDlI8H_UWXNTMcfAIaHsVVFnRouFg9mXnc6Vwtb5boXvzB2uv
+Host: localhost:8080
+Content-Type: application/x-www-form-urlencoded</code></pre>
+</div>
+</div>
+<table class="tableblock frame-all grid-all stretch">
+<colgroup>
+<col style="width: 50%;">
+<col style="width: 50%;">
+</colgroup>
+<thead>
+<tr>
+<th class="tableblock halign-left valign-top">Name</th>
+<th class="tableblock halign-left valign-top">Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>Authorization</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Bearer {accessToken}</p></td>
+</tr>
+</tbody>
+</table>
+<table class="tableblock frame-all grid-all stretch">
+<caption class="title">Table 3. /api/posts/{postId}/likes</caption>
+<colgroup>
+<col style="width: 50%;">
+<col style="width: 50%;">
+</colgroup>
+<thead>
+<tr>
+<th class="tableblock halign-left valign-top">Parameter</th>
+<th class="tableblock halign-left valign-top">Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>postId</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">게시글 ID(UUID)</p></td>
+</tr>
+</tbody>
+</table>
+<div class="listingblock">
+<div class="content">
+<pre class="highlight nowrap"><code class="language-http" data-lang="http">HTTP/1.1 204 No Content
+X-Content-Type-Options: nosniff
+X-XSS-Protection: 0
+Cache-Control: no-cache, no-store, max-age=0, must-revalidate
+Pragma: no-cache
+Expires: 0
+X-Frame-Options: DENY</code></pre>
+</div>
+</div>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_notifications"><a class="anchor" href="#_notifications"></a><a class="link" href="#_notifications">Notifications</a></h2>
+<div class="sectionbody">
+<div class="sect2">
+<h3 id="_내_알림_목록_조회"><a class="anchor" href="#_내_알림_목록_조회"></a><a class="link" href="#_내_알림_목록_조회">내 알림 목록 조회</a></h3>
+<div class="listingblock">
+<div class="content">
+<pre class="highlight nowrap"><code class="language-http" data-lang="http">GET /api/notifications HTTP/1.1
+Authorization: Bearer eyJhbGciOiJIUzM4NCJ9.eyJzdWIiOiI4OWVjMDQyNy0xODlkLTQxN2UtYmQxYS02NTQ1MTQxYmM1YTQiLCJlbWFpbCI6Im5vdGkrZDYyM2IxMzctMWZiNC00YjU2LTg4N2YtZGUzYmExNGYzY2M4QHRlc3QuY29tIiwiaWF0IjoxNzcwMjY3MDg4LCJleHAiOjE3NzAyNzA2ODh9.go0Y6DzLkRGIJZM_kdB0SvQlLWULzmKnq8fgcvTMk5i2w53Pa-czaIpnfUtKdSIS
+Host: localhost:8080</code></pre>
+</div>
+</div>
+<table class="tableblock frame-all grid-all stretch">
+<colgroup>
+<col style="width: 50%;">
+<col style="width: 50%;">
+</colgroup>
+<thead>
+<tr>
+<th class="tableblock halign-left valign-top">Name</th>
+<th class="tableblock halign-left valign-top">Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>Authorization</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Bearer {accessToken}</p></td>
+</tr>
+</tbody>
+</table>
+<div class="listingblock">
+<div class="content">
+<pre class="highlight nowrap"><code class="language-http" data-lang="http">HTTP/1.1 200 OK
+Content-Type: application/json
+X-Content-Type-Options: nosniff
+X-XSS-Protection: 0
+Cache-Control: no-cache, no-store, max-age=0, must-revalidate
+Pragma: no-cache
+Expires: 0
+X-Frame-Options: DENY
+Content-Length: 422
+
+{
+  "items" : [ {
+    "id" : "e6e44227-f12f-4eb7-a724-5ec91f06dc56",
+    "type" : "MESSAGE_RECEIVED",
+    "body" : "알림 2",
+    "read" : true,
+    "createdAt" : "2026-02-05T13:51:28.4593807"
+  }, {
+    "id" : "e09a83c7-a743-4698-b19f-387c6732f29c",
+    "type" : "MESSAGE_RECEIVED",
+    "body" : "알림 1",
+    "read" : false,
+    "createdAt" : "2026-02-05T13:51:28.4583795"
+  } ],
+  "hasUnread" : true
+}</code></pre>
+</div>
+</div>
+<table class="tableblock frame-all grid-all stretch">
+<colgroup>
+<col style="width: 33.3333%;">
+<col style="width: 33.3333%;">
+<col style="width: 33.3334%;">
+</colgroup>
+<thead>
+<tr>
+<th class="tableblock halign-left valign-top">Path</th>
+<th class="tableblock halign-left valign-top">Type</th>
+<th class="tableblock halign-left valign-top">Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>items</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>Array</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">알림 목록(최신순)</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>items[].id</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>String</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">알림 ID(UUID)</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>items[].type</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>String</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">알림 타입</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>items[].body</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>String</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">알림 내용</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>items[].read</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>Boolean</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">읽음 여부</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>items[].createdAt</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>String</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">생성 시각</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>hasUnread</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>Boolean</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">미읽음 알림 존재 여부</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="sect2">
+<h3 id="_알림_단건_읽음_처리"><a class="anchor" href="#_알림_단건_읽음_처리"></a><a class="link" href="#_알림_단건_읽음_처리">알림 단건 읽음 처리</a></h3>
+<div class="listingblock">
+<div class="content">
+<pre class="highlight nowrap"><code class="language-http" data-lang="http">POST /api/notifications/9dd33135-efeb-4e4a-af92-7c94182b147b/read HTTP/1.1
+Authorization: Bearer eyJhbGciOiJIUzM4NCJ9.eyJzdWIiOiJkODliNzIxNy1hZGEwLTQ2OWMtYjMxNy1kOTEyZDJjYTkyZGMiLCJlbWFpbCI6Im5vdGkrNDNmOGZlZGEtZWViOS00MmVmLWFkZTAtZWU2NTRhNTc1NDFlQHRlc3QuY29tIiwiaWF0IjoxNzcwMjY3MDg4LCJleHAiOjE3NzAyNzA2ODh9.MOteuw4nYk0NZV2vmEjmIL8p3PQ4bJsjux0yrOL6RNczK72ZLRZETFiUDgr5sTyK
+Host: localhost:8080
+Content-Type: application/x-www-form-urlencoded</code></pre>
+</div>
+</div>
+<table class="tableblock frame-all grid-all stretch">
+<colgroup>
+<col style="width: 50%;">
+<col style="width: 50%;">
+</colgroup>
+<thead>
+<tr>
+<th class="tableblock halign-left valign-top">Name</th>
+<th class="tableblock halign-left valign-top">Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>Authorization</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Bearer {accessToken}</p></td>
+</tr>
+</tbody>
+</table>
+<table class="tableblock frame-all grid-all stretch">
+<caption class="title">Table 4. /api/notifications/{id}/read</caption>
+<colgroup>
+<col style="width: 50%;">
+<col style="width: 50%;">
+</colgroup>
+<thead>
+<tr>
+<th class="tableblock halign-left valign-top">Parameter</th>
+<th class="tableblock halign-left valign-top">Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>id</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">알림 ID(UUID)</p></td>
+</tr>
+</tbody>
+</table>
+<div class="listingblock">
+<div class="content">
+<pre class="highlight nowrap"><code class="language-http" data-lang="http">HTTP/1.1 200 OK
+X-Content-Type-Options: nosniff
+X-XSS-Protection: 0
+Cache-Control: no-cache, no-store, max-age=0, must-revalidate
+Pragma: no-cache
+Expires: 0
+X-Frame-Options: DENY</code></pre>
+</div>
+</div>
+<div class="sect3">
+<h4 id="_404_not_found_알림_없음"><a class="anchor" href="#_404_not_found_알림_없음"></a><a class="link" href="#_404_not_found_알림_없음">404 Not Found (알림 없음)</a></h4>
+<div class="listingblock">
+<div class="content">
+<pre class="highlight nowrap"><code class="language-http" data-lang="http">POST /api/notifications/9f8c9008-2eaa-4a79-8d9e-24108dbdb2dd/read HTTP/1.1
+Authorization: Bearer eyJhbGciOiJIUzM4NCJ9.eyJzdWIiOiI2MjNjMzY4NC1jZWMzLTRmZTctODFkMy1iN2ZjMDM1NDkzMDQiLCJlbWFpbCI6Im5vdGkrNTk1NDA4YWYtYjEwOC00Y2YyLThlN2QtYmYxYjdjODQ1MWE2QHRlc3QuY29tIiwiaWF0IjoxNzcwMjY3MDg4LCJleHAiOjE3NzAyNzA2ODh9.COej1VZxZ-IhDZ15fE7F2ks4Z4t_iAKwDy3f6NEJPVfhVrIM5hS5BDWFEfFZIeyg
+Host: localhost:8080
+Content-Type: application/x-www-form-urlencoded</code></pre>
+</div>
+</div>
+<table class="tableblock frame-all grid-all stretch">
+<colgroup>
+<col style="width: 50%;">
+<col style="width: 50%;">
+</colgroup>
+<thead>
+<tr>
+<th class="tableblock halign-left valign-top">Name</th>
+<th class="tableblock halign-left valign-top">Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>Authorization</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Bearer {accessToken}</p></td>
+</tr>
+</tbody>
+</table>
+<table class="tableblock frame-all grid-all stretch">
+<caption class="title">Table 5. /api/notifications/{id}/read</caption>
+<colgroup>
+<col style="width: 50%;">
+<col style="width: 50%;">
+</colgroup>
+<thead>
+<tr>
+<th class="tableblock halign-left valign-top">Parameter</th>
+<th class="tableblock halign-left valign-top">Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>id</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">알림 ID(UUID)</p></td>
+</tr>
+</tbody>
+</table>
+<div class="listingblock">
+<div class="content">
+<pre class="highlight nowrap"><code class="language-http" data-lang="http">HTTP/1.1 404 Not Found
+Content-Type: application/json
+X-Content-Type-Options: nosniff
+X-XSS-Protection: 0
+Cache-Control: no-cache, no-store, max-age=0, must-revalidate
+Pragma: no-cache
+Expires: 0
+X-Frame-Options: DENY
+Content-Length: 243
+
+{
+  "code" : "NOTIFICATION_NOT_FOUND",
+  "message" : "알림을 찾을 수 없습니다.",
+  "timestamp" : "2026-02-05T13:51:28.2664901",
+  "path" : "/api/notifications/9f8c9008-2eaa-4a79-8d9e-24108dbdb2dd/read",
+  "fieldErrors" : null
+}</code></pre>
+</div>
+</div>
+<table class="tableblock frame-all grid-all stretch">
+<colgroup>
+<col style="width: 33.3333%;">
+<col style="width: 33.3333%;">
+<col style="width: 33.3334%;">
+</colgroup>
+<thead>
+<tr>
+<th class="tableblock halign-left valign-top">Path</th>
+<th class="tableblock halign-left valign-top">Type</th>
+<th class="tableblock halign-left valign-top">Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>code</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>String</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">에러 코드</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>message</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>String</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">에러 메시지</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>timestamp</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>String</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">에러 발생 시각</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>path</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>String</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">요청 경로</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>fieldErrors</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>Null</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">필드 검증 오류 목록 (검증 오류일 때만 존재)</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_알림_전체_읽음_처리"><a class="anchor" href="#_알림_전체_읽음_처리"></a><a class="link" href="#_알림_전체_읽음_처리">알림 전체 읽음 처리</a></h3>
+<div class="listingblock">
+<div class="content">
+<pre class="highlight nowrap"><code class="language-http" data-lang="http">POST /api/notifications/read-all HTTP/1.1
+Authorization: Bearer eyJhbGciOiJIUzM4NCJ9.eyJzdWIiOiJjOTA4ZDVlZi1hZmQ4LTQ1OTQtYTY4Yi01OGUzZmZhNmFkMDQiLCJlbWFpbCI6Im5vdGkrMzdhMjM0YTMtYzE1Yy00MzU1LTk4ZTItNzUxYjk5N2QzZTllQHRlc3QuY29tIiwiaWF0IjoxNzcwMjY3MDg4LCJleHAiOjE3NzAyNzA2ODh9.1QYKhgU0yoEFKxxUcKgs9c7YnL7hHlc2K-0q8sp6CUBwPfrfa6qYvj4ue4smS0Qc
+Host: localhost:8080
+Content-Type: application/x-www-form-urlencoded</code></pre>
+</div>
+</div>
+<table class="tableblock frame-all grid-all stretch">
+<colgroup>
+<col style="width: 50%;">
+<col style="width: 50%;">
+</colgroup>
+<thead>
+<tr>
+<th class="tableblock halign-left valign-top">Name</th>
+<th class="tableblock halign-left valign-top">Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>Authorization</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Bearer {accessToken}</p></td>
+</tr>
+</tbody>
+</table>
+<div class="listingblock">
+<div class="content">
+<pre class="highlight nowrap"><code class="language-http" data-lang="http">HTTP/1.1 200 OK
+Content-Type: application/json
+X-Content-Type-Options: nosniff
+X-XSS-Protection: 0
+Cache-Control: no-cache, no-store, max-age=0, must-revalidate
+Pragma: no-cache
+Expires: 0
+X-Frame-Options: DENY
+Content-Length: 26
+
+{
+  "updatedCount" : 2
+}</code></pre>
+</div>
+</div>
+<table class="tableblock frame-all grid-all stretch">
+<colgroup>
+<col style="width: 33.3333%;">
+<col style="width: 33.3333%;">
+<col style="width: 33.3334%;">
+</colgroup>
+<thead>
+<tr>
+<th class="tableblock halign-left valign-top">Path</th>
+<th class="tableblock halign-left valign-top">Type</th>
+<th class="tableblock halign-left valign-top">Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>updatedCount</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>Number</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">이번 요청으로 읽음 처리된 알림 개수</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="sect2">
+<h3 id="_읽은_알림_일괄_삭제soft_delete"><a class="anchor" href="#_읽은_알림_일괄_삭제soft_delete"></a><a class="link" href="#_읽은_알림_일괄_삭제soft_delete">읽은 알림 일괄 삭제(soft delete)</a></h3>
+<div class="listingblock">
+<div class="content">
+<pre class="highlight nowrap"><code class="language-http" data-lang="http">DELETE /api/notifications/read HTTP/1.1
+Authorization: Bearer eyJhbGciOiJIUzM4NCJ9.eyJzdWIiOiJlMDY3NmJkNS01MWEwLTRhZWEtOTdlOS1mODAwYTU4ZDdhN2MiLCJlbWFpbCI6Im5vdGkrN2JmYmE3MGEtNDRmMi00YTMxLWE5N2QtMjQyNzgxNDUyY2I5QHRlc3QuY29tIiwiaWF0IjoxNzcwMjY3MDg4LCJleHAiOjE3NzAyNzA2ODh9.d3HsAjsCFEW3Y-JKPCg7_5VFLLr6Nwac_h8a0E0LBOXkuGNGBq-ilqfCbpQLx3a3
+Host: localhost:8080</code></pre>
+</div>
+</div>
+<table class="tableblock frame-all grid-all stretch">
+<colgroup>
+<col style="width: 50%;">
+<col style="width: 50%;">
+</colgroup>
+<thead>
+<tr>
+<th class="tableblock halign-left valign-top">Name</th>
+<th class="tableblock halign-left valign-top">Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>Authorization</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Bearer {accessToken}</p></td>
+</tr>
+</tbody>
+</table>
+<div class="listingblock">
+<div class="content">
+<pre class="highlight nowrap"><code class="language-http" data-lang="http">HTTP/1.1 200 OK
+Content-Type: application/json
+X-Content-Type-Options: nosniff
+X-XSS-Protection: 0
+Cache-Control: no-cache, no-store, max-age=0, must-revalidate
+Pragma: no-cache
+Expires: 0
+X-Frame-Options: DENY
+Content-Length: 26
+
+{
+  "deletedCount" : 2
+}</code></pre>
+</div>
+</div>
+<table class="tableblock frame-all grid-all stretch">
+<colgroup>
+<col style="width: 33.3333%;">
+<col style="width: 33.3333%;">
+<col style="width: 33.3334%;">
+</colgroup>
+<thead>
+<tr>
+<th class="tableblock halign-left valign-top">Path</th>
+<th class="tableblock halign-left valign-top">Type</th>
+<th class="tableblock halign-left valign-top">Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>deletedCount</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>Number</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">이번 요청으로 삭제 처리된(soft delete) 알림 개수</p></td>
+</tr>
+</tbody>
+</table>
+</div>
 </div>
 </div>
 </div>
 <div id="footer">
 <div id="footer-text">
 Version 0.0.1-SNAPSHOT<br>
-Last updated 2026-02-02 18:01:13 +0900
+Last updated 2026-02-05 13:50:57 +0900
 </div>
 </div>
 </body>
