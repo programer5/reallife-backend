@@ -10,13 +10,13 @@ import java.util.UUID;
 
 public interface NotificationRepository extends JpaRepository<Notification, UUID>, NotificationRepositoryCustom {
 
-    // ✅ 목록 조회 (현재 요구사항: 최신 50개)
+    // ✅ 최신 50개 조회
     List<Notification> findTop50ByUserIdAndDeletedFalseOrderByCreatedAtDesc(UUID userId);
 
-    // ✅ 미읽음 존재 여부 (hasUnread)
+    // ✅ 미읽음 존재 여부(hasUnread)
     boolean existsByUserIdAndReadAtIsNullAndDeletedFalse(UUID userId);
 
-    // ✅ 단건 권한/존재 확인 (read/delete 등에 사용)
+    // ✅ 단건 권한/존재 확인(read/delete)
     Optional<Notification> findByIdAndUserIdAndDeletedFalse(UUID id, UUID userId);
 
     // ✅ 중복 생성 방지(1차 방어)

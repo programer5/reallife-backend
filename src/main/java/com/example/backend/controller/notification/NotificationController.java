@@ -38,4 +38,13 @@ public class NotificationController {
     }
 
     public record ReadAllResponse(int updatedCount) {}
+
+    @DeleteMapping("/read")
+    public DeleteReadResponse deleteRead(Authentication authentication) {
+        UUID meId = UUID.fromString(authentication.getName());
+        int deletedCount = notificationService.deleteRead(meId);
+        return new DeleteReadResponse(deletedCount);
+    }
+
+    public record DeleteReadResponse(int deletedCount) {}
 }

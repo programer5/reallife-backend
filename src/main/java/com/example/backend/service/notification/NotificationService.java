@@ -33,4 +33,10 @@ public class NotificationService {
     public int markAllAsRead(UUID meId) {
         return notificationRepository.markAllAsRead(meId, LocalDateTime.now());
     }
+
+    @Transactional
+    public int deleteRead(UUID meId) {
+        return notificationRepository.softDeleteRead(meId);
+    }
+
 }
