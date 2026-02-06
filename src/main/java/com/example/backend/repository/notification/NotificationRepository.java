@@ -21,4 +21,8 @@ public interface NotificationRepository extends JpaRepository<Notification, UUID
 
     // ✅ 중복 생성 방지(1차 방어)
     boolean existsByUserIdAndTypeAndRefIdAndDeletedFalse(UUID userId, NotificationType type, UUID refId);
+
+    // ✅ 추가(가벼운 존재 확인)
+    boolean existsByIdAndUserIdAndDeletedFalse(UUID id, UUID userId);
+
 }

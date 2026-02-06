@@ -22,6 +22,8 @@ import static org.springframework.restdocs.mockmvc.MockMvcRestDocumentation.docu
 import static org.springframework.restdocs.mockmvc.MockMvcRestDocumentation.documentationConfiguration;
 import static org.springframework.restdocs.payload.JsonFieldType.*;
 import static org.springframework.restdocs.payload.PayloadDocumentation.*;
+import static org.springframework.restdocs.request.RequestDocumentation.parameterWithName;
+import static org.springframework.restdocs.request.RequestDocumentation.queryParameters;
 import static org.springframework.security.test.web.servlet.setup.SecurityMockMvcConfigurers.springSecurity;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
@@ -57,6 +59,8 @@ class FeedControllerDocsTest {
 
         mockMvc(restDocumentation)
                 .perform(get("/api/feed")
+                        .param("cursor", "")   // ✅ 첫 페이지면 비워도 되고, 아예 param을 빼도 됨
+                        .param("size", "20")   // ✅ 기본 20, 네 API에 맞게
                         .header(HttpHeaders.AUTHORIZATION, DocsTestSupport.auth(token)))
                 .andDo(org.springframework.test.web.servlet.result.MockMvcResultHandlers.print())
                 .andExpect(status().isOk())
@@ -64,6 +68,10 @@ class FeedControllerDocsTest {
                 .andDo(document("feed-get",
                         requestHeaders(
                                 headerWithName(HttpHeaders.AUTHORIZATION).description("Bearer {accessToken}")
+                        ),
+                        queryParameters(
+                                parameterWithName("cursor").optional().description("다음 페이지 커서(없으면 첫 페이지)"),
+                                parameterWithName("size").optional().description("페이지 크기(기본값/최대값은 서버 정책)")
                         ),
                         responseFields(
                                 fieldWithPath("items").type(ARRAY).description("피드 아이템 목록"),

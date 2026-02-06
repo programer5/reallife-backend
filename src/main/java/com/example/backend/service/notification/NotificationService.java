@@ -19,11 +19,12 @@ public class NotificationService {
     @Transactional
     public void markAsRead(UUID meId, UUID notificationId) {
         int updated = notificationRepository.markAsReadIfUnread(notificationId, meId, LocalDateTime.now());
-
         if (updated == 1) return;
 
-        // 이미 읽음이면 OK, 진짜 없으면 NOT_FOUND
-        boolean exists = notificationRepository.findByIdAndUserIdAndDeletedFalse(notificationId, meId).isPresent();
+        // updated == 0 인 경우:
+        // 1) 이미 읽음 (존재는 함) -> OK
+        // 2) 존재 자체가 없음 -> NOT_FOUND
+        boolean exists = notificationRepository.existsByIdAndUserIdAndDeletedFalse(notificationId, meId);
         if (!exists) {
             throw new BusinessException(ErrorCode.NOTIFICATION_NOT_FOUND);
         }
@@ -38,5 +39,4 @@ public class NotificationService {
     public int deleteRead(UUID meId) {
         return notificationRepository.softDeleteRead(meId);
     }
-
 }

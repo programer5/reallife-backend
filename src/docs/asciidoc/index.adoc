@@ -82,6 +82,7 @@ include::{snippets}/posts-get/response-fields.adoc[]
 ==== Request
 include::{snippets}/feed-get/http-request.adoc[]
 include::{snippets}/feed-get/request-headers.adoc[]
+include::{snippets}/feed-get/query-parameters.adoc[]
 
 ==== Response
 include::{snippets}/feed-get/http-response.adoc[]
@@ -123,12 +124,21 @@ include::{snippets}/post-likes-delete-204/http-response.adoc[]
 
 == Notifications
 
-=== 내 알림 목록 조회
+=== 내 알림 목록 조회 (Cursor Paging)
 
 include::{snippets}/notifications-get-200/http-request.adoc[]
 include::{snippets}/notifications-get-200/request-headers.adoc[]
+include::{snippets}/notifications-get-200/query-parameters.adoc[]
 include::{snippets}/notifications-get-200/http-response.adoc[]
 include::{snippets}/notifications-get-200/response-fields.adoc[]
+
+==== 다음 페이지 조회 예시
+
+include::{snippets}/notifications-get-200-next-page/http-request.adoc[]
+include::{snippets}/notifications-get-200-next-page/request-headers.adoc[]
+include::{snippets}/notifications-get-200-next-page/query-parameters.adoc[]
+include::{snippets}/notifications-get-200-next-page/http-response.adoc[]
+include::{snippets}/notifications-get-200-next-page/response-fields.adoc[]
 
 === 알림 단건 읽음 처리
 
@@ -137,15 +147,7 @@ include::{snippets}/notifications-read-200/request-headers.adoc[]
 include::{snippets}/notifications-read-200/path-parameters.adoc[]
 include::{snippets}/notifications-read-200/http-response.adoc[]
 
-==== 404 Not Found (알림 없음)
-
-include::{snippets}/notifications-read-404-not-found/http-request.adoc[]
-include::{snippets}/notifications-read-404-not-found/request-headers.adoc[]
-include::{snippets}/notifications-read-404-not-found/path-parameters.adoc[]
-include::{snippets}/notifications-read-404-not-found/http-response.adoc[]
-include::{snippets}/notifications-read-404-not-found/response-fields.adoc[]
-
-=== 알림 전체 읽음 처리
+=== 내 미읽음 알림 전체 읽음 처리
 
 include::{snippets}/notifications-read-all-200/http-request.adoc[]
 include::{snippets}/notifications-read-all-200/request-headers.adoc[]

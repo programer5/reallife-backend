@@ -51,8 +51,9 @@ JWT 인증, 테스트 기반 문서화(REST Docs), 실제 배포까지 고려한
 
 ### DevOps (Planned)
 - Docker / Docker Compose
+- Nginx (Reverse Proxy / Static / Gzip / HTTPS)
 - GitHub Actions (CI/CD)
-- Free Hosting (Render / Railway / Fly.io)
+- Free Hosting (Render / Railway / Fly.io / OCI Free Tier)
 
 ---
 
@@ -69,12 +70,18 @@ JWT 인증, 테스트 기반 문서화(REST Docs), 실제 배포까지 고려한
 - 게시글 생성/조회/삭제
 - 좋아요 / 좋아요 취소
 - 팔로우 / 언팔로우
-- 팔로우 기반 피드 조회 (Cursor 기반 페이징)
+- 팔로우 기반 피드 조회 (**Cursor 기반 페이징**)
 
 ### Messaging
 - 1:1 대화방 기반 메시지 전송/조회
 - 메시지 파일 첨부 (로컬 스토리지)
 - 커서 기반 메시지 페이징
+
+### Notification
+- 메시지 전송 시 이벤트 발행 → 상대방에게 알림 생성
+  - `MessageSentEvent` → `@TransactionalEventListener(AFTER_COMMIT)` 기반
+- 내 알림 조회 / 읽음 처리 / 전체 읽음 / 읽은 알림 일괄 삭제(soft delete)
+- 중복 알림 방지 로직(존재 여부 체크 기반)
 
 ### File
 - 파일 업로드 API
@@ -204,55 +211,35 @@ Phase 1 — Core Backend (완료)
 - 에러 응답 표준화
 - REST Docs 문서 자동화 + /docs 서빙 + 스타일링
 
-Phase 1.5 — Identity Upgrade
-- handle(username) 도입 + 중복체크 API
-- 회원가입 시 handle 받기(or 설정 API 추가)
-- 프로필 조회 응답에 handle 포함
-- 팔로워 등급(tier) 계산 로직 추가 + 응답에 포함
-- OAuth2 로그인(구글부터) + JWT 발급 연결
-
 Phase 2 — SNS 기능 (진행/확장)
 - 게시글(사진/텍스트) CRUD
 - 댓글(Comment) CRUD
 - 좋아요 / 팔로우
 - 피드 조회 (팔로우 기반 + 최신순 + Cursor)
 
-Phase 2.1 — Messaging
+Phase 2.1 — Messaging (진행/확장)
 - DM(1:1) 대화방
 - 메시지 전송/조회(커서)
 - 파일 업로드/첨부(로컬 → S3 교체 가능)
 - (확장) 읽음 처리, 알림 이벤트
 
-Phase 2.5
--파일첨부
-  -메시지에 첨부(이미지/파일)
-  -v1: 로컬 저장(개발용)
-  -v2: S3/Cloud Storage로 교체(운영용)
-
-Phase 3 — Frontend
-- Vue 연동
-- 로그인 / 회원가입 UI
-- 피드 / 게시글 화면
-- 토큰 기반 인증 처리 (Axios 인터셉터)
+Phase 2.2 — Notification (진행/확장)
+- 이벤트 기반 알림 생성(MessageSentEvent 등)
+- 알림 조회/읽음/전체읽음/읽은알림 일괄삭제
+- (다음) 알림 목록 Cursor 기반 페이징 적용
+- (다음) 중복 알림 방지 고도화(동시성/DB 유니크 방어)
 
 Phase 4 — DevOps / 운영
 - Docker / Docker Compose (MySQL 포함)
-- 무료 서버 배포
+- Nginx Reverse Proxy 적용
+  - /api → Spring Boot 프록시
+  - /docs → 정적 문서 서빙
+  - gzip 압축, 캐시, 업로드 제한
+  - HTTPS(무료 인증서: Let's Encrypt) + 자동 갱신(서버 환경에서)
 - CI/CD (GitHub Actions: test → docs → build)
 - 운영 로그 / 모니터링
 - 공통 로그(MDC RequestId) + 요청/응답 시간 측정 + 에러 로깅 표준화
-- (확장) AOP/Interceptor로 slow request 경고, traceId 연동
 
-Phase 5 — Advanced
-- 이벤트 기반 아키텍처 (회원가입/로그인/게시글 생성 이벤트)
-- Redis 적용
-- Refresh Token 저장 / 토큰 블랙리스트
-- 캐시(피드, 인기 게시글) / Rate Limit(로그인/회원가입)
-- Kafka 기반 이벤트 스트리밍 (도메인 이벤트 토픽)
-- Airflow 기반 배치 파이프라인 (통계/리포트 스케줄링)
-- Spark / Flink 기반 스트리밍/배치 확장 (Kafka 연계)
-- LLM 활용(선택): 자동 콘텐츠 분류 / 신고 처리 보조 / 운영 FAQ 보조
-- MSA
 Phase 6 — Product Expansion
 - 실제 사용자 공개 베타
 - Android 앱 출시 (Google Play)

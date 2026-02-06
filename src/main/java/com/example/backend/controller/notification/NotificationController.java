@@ -1,6 +1,6 @@
 package com.example.backend.controller.notification;
 
-import com.example.backend.controller.notification.dto.NotificationListResponse;
+import com.example.backend.controller.notification.dto.NotificationCursorResponse;
 import com.example.backend.service.notification.NotificationQueryService;
 import com.example.backend.service.notification.NotificationService;
 import lombok.RequiredArgsConstructor;
@@ -18,9 +18,13 @@ public class NotificationController {
     private final NotificationService notificationService;
 
     @GetMapping
-    public NotificationListResponse getNotifications(Authentication authentication) {
+    public NotificationCursorResponse getNotifications(
+            @RequestParam(required = false) String cursor,
+            @RequestParam(required = false) Integer size,
+            Authentication authentication
+    ) {
         UUID meId = UUID.fromString(authentication.getName());
-        return notificationQueryService.getMyNotifications(meId);
+        return notificationQueryService.getMyNotifications(meId, cursor, size);
     }
 
     @PostMapping("/{id}/read")
