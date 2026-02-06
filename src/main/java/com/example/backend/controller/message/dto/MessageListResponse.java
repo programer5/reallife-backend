@@ -6,7 +6,7 @@ import java.util.UUID;
 
 public record MessageListResponse(
         List<Item> items,
-        Cursor nextCursor,
+        String nextCursor,
         boolean hasNext
 ) {
     public record Item(
@@ -20,13 +20,8 @@ public record MessageListResponse(
     public record Attachment(
             UUID fileId,
             String url,
-            String originalName,
-            String mimeType,
-            long sizeBytes
-    ) {}
-
-    public record Cursor(
-            LocalDateTime cursorCreatedAt,
-            UUID cursorMessageId
+            String originalFilename,
+            String contentType,
+            long size
     ) {}
 }
