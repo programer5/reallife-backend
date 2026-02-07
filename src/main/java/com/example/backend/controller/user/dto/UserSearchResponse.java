@@ -12,7 +12,8 @@ public record UserSearchResponse(
             UUID userId,
             String handle,
             String name,
-            long followerCount
+            long followerCount,
+            int rank
     ) {}
 
     public record Cursor(int rank, String handle, UUID userId) {

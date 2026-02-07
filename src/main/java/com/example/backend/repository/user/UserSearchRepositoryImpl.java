@@ -2,7 +2,7 @@ package com.example.backend.repository.user;
 
 import com.example.backend.controller.user.dto.UserSearchResponse;
 import com.example.backend.domain.user.QUser;
-import com.querydsl.core.types.OrderSpecifier;
+import com.querydsl.core.Tuple;
 import com.querydsl.core.types.dsl.BooleanExpression;
 import com.querydsl.core.types.dsl.CaseBuilder;
 import com.querydsl.core.types.dsl.NumberExpression;
@@ -20,63 +20,65 @@ public class UserSearchRepositoryImpl implements UserSearchRepository {
     private final JPAQueryFactory queryFactory;
 
     @Override
-    public List<UserSearchResponse.Item> searchUsers(String q, UserSearchResponse.Cursor cursor, int limit) {
+    public List<UserSearchResponse.Item> search(UUID meId, String q, UserSearchResponse.Cursor cursor, int limit) {
         QUser u = QUser.user;
 
-        String query = q.trim();
+        String keyword = (q == null) ? "" : q.trim();
+        if (keyword.isEmpty()) return List.of();
 
-        // rank: 0(정확) -> 1(handle prefix) -> 2(name prefix) -> 3(contains) -> 9(기타)
+        // 대소문자 무시
+        String k = keyword.toLowerCase();
+
+        // prefix / contains 조건
+        BooleanExpression prefix =
+                u.handle.lower().startsWith(k)
+                        .or(u.name.lower().startsWith(k));
+
+        BooleanExpression contains =
+                u.handle.lower().contains(k)
+                        .or(u.name.lower().contains(k));
+
+        // rank: prefix=0, contains=1 (그 외는 제외)
         NumberExpression<Integer> rankExpr = new CaseBuilder()
-                .when(u.handle.equalsIgnoreCase(query)).then(0)
-                .when(u.handle.startsWithIgnoreCase(query)).then(1)
-                .when(u.name.startsWithIgnoreCase(query)).then(2)
-                .when(u.handle.containsIgnoreCase(query).or(u.name.containsIgnoreCase(query))).then(3)
-                .otherwise(9);
+                .when(prefix).then(0)
+                .when(contains).then(1)
+                .otherwise(99);
 
-        BooleanExpression baseCond =
-                u.deleted.isFalse()
-                        .and(
-                                u.handle.containsIgnoreCase(query)
-                                        .or(u.name.containsIgnoreCase(query))
-                        );
+        BooleanExpression searchCond = prefix.or(contains);
 
-        BooleanExpression cursorCond = cursorCondition(u, rankExpr, cursor);
+        // ASC 정렬용 커서 조건
+        BooleanExpression cursorCond = null;
+        if (cursor != null) {
+            cursorCond =
+                    rankExpr.gt(cursor.rank())
+                            .or(rankExpr.eq(cursor.rank()).and(u.handle.gt(cursor.handle())))
+                            .or(rankExpr.eq(cursor.rank()).and(u.handle.eq(cursor.handle())).and(u.id.gt(cursor.userId())));
+        }
 
-        // 정렬: rank ASC, handle ASC, id ASC (안정적인 커서용)
-        OrderSpecifier<?>[] order = new OrderSpecifier[]{
-                rankExpr.asc(),
-                u.handle.asc(),
-                u.id.asc()
-        };
+        // (선택) 나 자신 제외하고 싶으면 아래 조건 추가
+        BooleanExpression notMe = (meId == null) ? null : u.id.ne(meId);
 
-        return queryFactory
+        List<Tuple> rows = queryFactory
                 .select(u.id, u.handle, u.name, u.followerCount, rankExpr)
                 .from(u)
-                .where(baseCond, cursorCond)
-                .orderBy(order)
+                .where(
+                        u.deleted.isFalse(),
+                        notMe,
+                        searchCond,
+                        cursorCond
+                )
+                .orderBy(rankExpr.asc(), u.handle.asc(), u.id.asc())
                 .limit(limit)
-                .fetch()
-                .stream()
+                .fetch();
+
+        return rows.stream()
                 .map(t -> new UserSearchResponse.Item(
                         t.get(u.id),
                         t.get(u.handle),
                         t.get(u.name),
-                        t.get(u.followerCount) == null ? 0L : t.get(u.followerCount)
+                        t.get(u.followerCount),
+                        t.get(rankExpr)
                 ))
                 .toList();
-    }
-
-    private BooleanExpression cursorCondition(QUser u, NumberExpression<Integer> rankExpr, UserSearchResponse.Cursor cursor) {
-        if (cursor == null) return null;
-
-        int r = cursor.rank();
-        String h = cursor.handle();
-        UUID id = cursor.userId();
-
-        // ASC 정렬 기준으로 "다음 페이지" 조건
-        // (rank > r) OR (rank == r AND handle > h) OR (rank == r AND handle == h AND id > id)
-        return rankExpr.gt(r)
-                .or(rankExpr.eq(r).and(u.handle.gt(h)))
-                .or(rankExpr.eq(r).and(u.handle.eq(h)).and(u.id.gt(id)));
     }
 }

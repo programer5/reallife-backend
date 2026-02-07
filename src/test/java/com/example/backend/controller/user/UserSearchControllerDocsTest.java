@@ -73,6 +73,7 @@ class UserSearchControllerDocsTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.items").isArray())
                 .andExpect(jsonPath("$.hasNext").value(true))
+                .andDo(org.springframework.test.web.servlet.result.MockMvcResultHandlers.print())
                 .andDo(document("users-search-200",
                         preprocessRequest(prettyPrint()),
                         preprocessResponse(prettyPrint()),
@@ -85,11 +86,12 @@ class UserSearchControllerDocsTest {
                                 parameterWithName("size").optional().description("페이지 크기(기본 20, 최대 50)")
                         ),
                         responseFields(
-                                fieldWithPath("items").description("검색 결과 유저 목록"),
+                                fieldWithPath("items").description("검색 결과 목록"),
                                 fieldWithPath("items[].userId").description("유저 ID(UUID)"),
-                                fieldWithPath("items[].handle").description("유저 핸들(아이디)"),
+                                fieldWithPath("items[].handle").description("유저 핸들(@아이디)"),
                                 fieldWithPath("items[].name").description("유저 이름"),
                                 fieldWithPath("items[].followerCount").description("팔로워 수"),
+                                fieldWithPath("items[].rank").description("정렬 랭크(0=prefix, 1=contains)"),
                                 fieldWithPath("nextCursor").optional().description("다음 페이지 커서(없으면 null)"),
                                 fieldWithPath("hasNext").description("다음 페이지 존재 여부")
                         )
@@ -126,6 +128,7 @@ class UserSearchControllerDocsTest {
                         .header(HttpHeaders.AUTHORIZATION, DocsTestSupport.auth(token)))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.items").isArray())
+                .andDo(org.springframework.test.web.servlet.result.MockMvcResultHandlers.print())
                 .andDo(document("users-search-200-next-page",
                         preprocessRequest(prettyPrint()),
                         preprocessResponse(prettyPrint()),
@@ -138,11 +141,12 @@ class UserSearchControllerDocsTest {
                                 parameterWithName("size").optional().description("페이지 크기(기본 20, 최대 50)")
                         ),
                         responseFields(
-                                fieldWithPath("items").description("검색 결과 유저 목록"),
+                                fieldWithPath("items").description("검색 결과 목록"),
                                 fieldWithPath("items[].userId").description("유저 ID(UUID)"),
-                                fieldWithPath("items[].handle").description("유저 핸들(아이디)"),
+                                fieldWithPath("items[].handle").description("유저 핸들(@아이디)"),
                                 fieldWithPath("items[].name").description("유저 이름"),
                                 fieldWithPath("items[].followerCount").description("팔로워 수"),
+                                fieldWithPath("items[].rank").description("정렬 랭크(0=prefix, 1=contains)"),
                                 fieldWithPath("nextCursor").optional().description("다음 페이지 커서(없으면 null)"),
                                 fieldWithPath("hasNext").description("다음 페이지 존재 여부")
                         )
