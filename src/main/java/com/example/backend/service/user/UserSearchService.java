@@ -33,7 +33,12 @@ public class UserSearchService {
         String nextCursor = null;
         if (hasNext && !page.isEmpty()) {
             var last = page.get(page.size() - 1);
-            nextCursor = UserSearchResponse.Cursor.encode(last.rank(), last.handle(), last.userId());
+            nextCursor = UserSearchResponse.Cursor.encode(
+                    last.rank(),
+                    last.followerCount(),
+                    last.handle(),
+                    last.userId()
+            );
         }
 
         return new UserSearchResponse(page, nextCursor, hasNext);

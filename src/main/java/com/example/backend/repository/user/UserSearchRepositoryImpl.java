@@ -6,6 +6,7 @@ import com.querydsl.core.Tuple;
 import com.querydsl.core.types.dsl.BooleanExpression;
 import com.querydsl.core.types.dsl.CaseBuilder;
 import com.querydsl.core.types.dsl.NumberExpression;
+import com.querydsl.core.types.dsl.StringExpression;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Repository;
@@ -26,37 +27,41 @@ public class UserSearchRepositoryImpl implements UserSearchRepository {
         String keyword = (q == null) ? "" : q.trim();
         if (keyword.isEmpty()) return List.of();
 
-        // 대소문자 무시
         String k = keyword.toLowerCase();
+        StringExpression handleLower = u.handle.lower();
+        StringExpression nameLower = u.name.lower();
 
-        // prefix / contains 조건
-        BooleanExpression prefix =
-                u.handle.lower().startsWith(k)
-                        .or(u.name.lower().startsWith(k));
+        // ✅ rank 기준
+        // -1: handle 정확 일치
+        //  0: prefix (handle/name)
+        //  1: contains (handle/name)
+        BooleanExpression exact = handleLower.eq(k);
+        BooleanExpression prefix = handleLower.startsWith(k).or(nameLower.startsWith(k));
+        BooleanExpression contains = handleLower.contains(k).or(nameLower.contains(k));
 
-        BooleanExpression contains =
-                u.handle.lower().contains(k)
-                        .or(u.name.lower().contains(k));
-
-        // rank: prefix=0, contains=1 (그 외는 제외)
         NumberExpression<Integer> rankExpr = new CaseBuilder()
+                .when(exact).then(-1)
                 .when(prefix).then(0)
                 .when(contains).then(1)
                 .otherwise(99);
 
-        BooleanExpression searchCond = prefix.or(contains);
+        BooleanExpression searchCond = exact.or(prefix).or(contains);
 
-        // ASC 정렬용 커서 조건
+        // (선택) 나 자신 제외
+        BooleanExpression notMe = (meId == null) ? null : u.id.ne(meId);
+
+        // ✅ 커서 조건 (orderBy와 100% 동일한 튜플 비교)
+        // order: rank ASC, followerCount DESC, handle ASC, id ASC
         BooleanExpression cursorCond = null;
         if (cursor != null) {
-            cursorCond =
-                    rankExpr.gt(cursor.rank())
-                            .or(rankExpr.eq(cursor.rank()).and(u.handle.gt(cursor.handle())))
-                            .or(rankExpr.eq(cursor.rank()).and(u.handle.eq(cursor.handle())).and(u.id.gt(cursor.userId())));
+            cursorCond = rankExpr.gt(cursor.rank())
+                    .or(rankExpr.eq(cursor.rank()).and(u.followerCount.lt(cursor.followerCount())))
+                    .or(rankExpr.eq(cursor.rank()).and(u.followerCount.eq(cursor.followerCount()))
+                            .and(u.handle.gt(cursor.handle())))
+                    .or(rankExpr.eq(cursor.rank()).and(u.followerCount.eq(cursor.followerCount()))
+                            .and(u.handle.eq(cursor.handle()))
+                            .and(u.id.gt(cursor.userId())));
         }
-
-        // (선택) 나 자신 제외하고 싶으면 아래 조건 추가
-        BooleanExpression notMe = (meId == null) ? null : u.id.ne(meId);
 
         List<Tuple> rows = queryFactory
                 .select(u.id, u.handle, u.name, u.followerCount, rankExpr)
@@ -67,7 +72,12 @@ public class UserSearchRepositoryImpl implements UserSearchRepository {
                         searchCond,
                         cursorCond
                 )
-                .orderBy(rankExpr.asc(), u.handle.asc(), u.id.asc())
+                .orderBy(
+                        rankExpr.asc(),
+                        u.followerCount.desc(),
+                        u.handle.asc(),
+                        u.id.asc()
+                )
                 .limit(limit)
                 .fetch();
 
