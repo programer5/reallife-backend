@@ -26,6 +26,7 @@ import static org.springframework.restdocs.headers.HeaderDocumentation.requestHe
 import static org.springframework.restdocs.mockmvc.MockMvcRestDocumentation.document;
 import static org.springframework.restdocs.mockmvc.MockMvcRestDocumentation.documentationConfiguration;
 import static org.springframework.restdocs.operation.preprocess.Preprocessors.*;
+import static org.springframework.restdocs.payload.JsonFieldType.*;
 import static org.springframework.restdocs.payload.PayloadDocumentation.*;
 import static org.springframework.restdocs.request.RequestDocumentation.*;
 import static org.springframework.security.test.web.servlet.setup.SecurityMockMvcConfigurers.springSecurity;
@@ -55,7 +56,7 @@ class NotificationControllerDocsTest {
         var me = docs.saveUser("noti", "me");
         String token = docs.issueTokenFor(me);
 
-        // size=2 이면 hasNext=true 되도록 3개 생성
+        // size=2 → hasNext=true 되도록 3개 생성
         notificationRepository.save(Notification.create(me.getId(), NotificationType.MESSAGE_RECEIVED, UUID.randomUUID(), "알림 1"));
         notificationRepository.save(Notification.create(me.getId(), NotificationType.MESSAGE_RECEIVED, UUID.randomUUID(), "알림 2"));
         notificationRepository.save(Notification.create(me.getId(), NotificationType.MESSAGE_RECEIVED, UUID.randomUUID(), "알림 3"));
@@ -68,6 +69,7 @@ class NotificationControllerDocsTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.items").isArray())
                 .andExpect(jsonPath("$.hasNext").value(true))
+                .andExpect(jsonPath("$.items[0].read").value(false))
                 .andDo(document("notifications-get-200",
                         preprocessRequest(prettyPrint()),
                         preprocessResponse(prettyPrint()),
@@ -79,15 +81,15 @@ class NotificationControllerDocsTest {
                                 parameterWithName("size").optional().description("페이지 크기(기본 20, 최대 50)")
                         ),
                         responseFields(
-                                fieldWithPath("items").description("알림 목록(최신순)"),
-                                fieldWithPath("items[].id").description("알림 ID(UUID)"),
-                                fieldWithPath("items[].type").description("알림 타입"),
-                                fieldWithPath("items[].body").description("알림 내용"),
-                                fieldWithPath("items[].read").description("읽음 여부"),
-                                fieldWithPath("items[].createdAt").description("생성 시각"),
-                                fieldWithPath("nextCursor").optional().description("다음 페이지 커서(없으면 null)"),
-                                fieldWithPath("hasNext").description("다음 페이지 존재 여부"),
-                                fieldWithPath("hasUnread").description("미읽음 알림 존재 여부")
+                                fieldWithPath("items").type(ARRAY).description("알림 목록(최신순)"),
+                                fieldWithPath("items[].id").type(STRING).description("알림 ID(UUID)"),
+                                fieldWithPath("items[].type").type(STRING).description("알림 타입"),
+                                fieldWithPath("items[].body").type(STRING).description("알림 내용"),
+                                fieldWithPath("items[].read").type(BOOLEAN).description("읽음 여부"),
+                                fieldWithPath("items[].createdAt").type(STRING).description("생성 시각"),
+                                fieldWithPath("nextCursor").optional().type(STRING).description("다음 페이지 커서(없으면 null)"),
+                                fieldWithPath("hasNext").type(BOOLEAN).description("다음 페이지 존재 여부"),
+                                fieldWithPath("hasUnread").type(BOOLEAN).description("미읽음 알림 존재 여부")
                         )
                 ));
     }
@@ -107,11 +109,12 @@ class NotificationControllerDocsTest {
                         .param("size", "2")
                         .header(HttpHeaders.AUTHORIZATION, DocsTestSupport.auth(token)))
                 .andExpect(status().isOk())
+                .andExpect(jsonPath("$.nextCursor").isNotEmpty())
                 .andReturn()
                 .getResponse()
                 .getContentAsString();
 
-        String nextCursor = objectMapper.readTree(firstPage).get("nextCursor").asText();
+        String nextCursor = objectMapper.readTree(firstPage).path("nextCursor").asText();
 
         mockMvc(restDocumentation)
                 .perform(get("/api/notifications")
@@ -119,7 +122,6 @@ class NotificationControllerDocsTest {
                         .param("cursor", nextCursor)
                         .header(HttpHeaders.AUTHORIZATION, DocsTestSupport.auth(token)))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.items").isArray())
                 .andDo(document("notifications-get-200-next-page",
                         preprocessRequest(prettyPrint()),
                         preprocessResponse(prettyPrint()),
@@ -131,15 +133,15 @@ class NotificationControllerDocsTest {
                                 parameterWithName("size").optional().description("페이지 크기(기본 20, 최대 50)")
                         ),
                         responseFields(
-                                fieldWithPath("items").description("알림 목록(최신순)"),
-                                fieldWithPath("items[].id").description("알림 ID(UUID)"),
-                                fieldWithPath("items[].type").description("알림 타입"),
-                                fieldWithPath("items[].body").description("알림 내용"),
-                                fieldWithPath("items[].read").description("읽음 여부"),
-                                fieldWithPath("items[].createdAt").description("생성 시각"),
-                                fieldWithPath("nextCursor").optional().description("다음 페이지 커서(없으면 null)"),
-                                fieldWithPath("hasNext").description("다음 페이지 존재 여부"),
-                                fieldWithPath("hasUnread").description("미읽음 알림 존재 여부")
+                                fieldWithPath("items").type(ARRAY).description("알림 목록(최신순)"),
+                                fieldWithPath("items[].id").type(STRING).description("알림 ID(UUID)"),
+                                fieldWithPath("items[].type").type(STRING).description("알림 타입"),
+                                fieldWithPath("items[].body").type(STRING).description("알림 내용"),
+                                fieldWithPath("items[].read").type(BOOLEAN).description("읽음 여부"),
+                                fieldWithPath("items[].createdAt").type(STRING).description("생성 시각"),
+                                fieldWithPath("nextCursor").optional().type(STRING).description("다음 페이지 커서(없으면 null)"),
+                                fieldWithPath("hasNext").type(BOOLEAN).description("다음 페이지 존재 여부"),
+                                fieldWithPath("hasUnread").type(BOOLEAN).description("미읽음 알림 존재 여부")
                         )
                 ));
     }
@@ -161,7 +163,6 @@ class NotificationControllerDocsTest {
                 .andExpect(status().isOk())
                 .andDo(document("notifications-read-200",
                         preprocessRequest(prettyPrint()),
-                        preprocessResponse(prettyPrint()),
                         requestHeaders(
                                 headerWithName(HttpHeaders.AUTHORIZATION).description("Bearer {accessToken}")
                         ),
@@ -192,7 +193,8 @@ class NotificationControllerDocsTest {
                                 headerWithName(HttpHeaders.AUTHORIZATION).description("Bearer {accessToken}")
                         ),
                         responseFields(
-                                fieldWithPath("updatedCount").description("이번 요청으로 읽음 처리된 알림 개수")
+                                fieldWithPath("updatedCount").type(NUMBER)
+                                        .description("이번 요청으로 읽음 처리된 알림 개수")
                         )
                 ));
     }
@@ -225,7 +227,8 @@ class NotificationControllerDocsTest {
                                 headerWithName(HttpHeaders.AUTHORIZATION).description("Bearer {accessToken}")
                         ),
                         responseFields(
-                                fieldWithPath("deletedCount").description("이번 요청으로 삭제 처리된(soft delete) 알림 개수")
+                                fieldWithPath("deletedCount").type(NUMBER)
+                                        .description("이번 요청으로 삭제 처리된(soft delete) 알림 개수")
                         )
                 ));
     }

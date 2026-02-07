@@ -217,17 +217,20 @@ Phase 2 — SNS 기능 (진행/확장)
 - 좋아요 / 팔로우
 - 피드 조회 (팔로우 기반 + 최신순 + Cursor)
 
-Phase 2.1 — Messaging (진행/확장)
+Phase 2.1 — Messaging (완료)
 - DM(1:1) 대화방
 - 메시지 전송/조회(커서)
 - 파일 업로드/첨부(로컬 → S3 교체 가능)
-- (확장) 읽음 처리, 알림 이벤트
+- 메시지 조회 API REST Docs 문서화
 
-Phase 2.2 — Notification (진행/확장)
+Phase 2.2 — Notification (완료)
 - 이벤트 기반 알림 생성(MessageSentEvent 등)
 - 알림 조회/읽음/전체읽음/읽은알림 일괄삭제
-- (다음) 알림 목록 Cursor 기반 페이징 적용
-- (다음) 중복 알림 방지 고도화(동시성/DB 유니크 방어)
+- 중복 알림 방지 로직(존재 여부 체크 기반)
+
+Phase 2.2+ — Notification (다음)
+- 알림 목록 Cursor 기반 페이징 적용
+- 중복 알림 방지 고도화(동시성/DB 유니크 방어)
 
 Phase 2.3 — Search (계획 / 적정 타이밍에 진행)
 - 사용자 검색 (handle / name 기반)
