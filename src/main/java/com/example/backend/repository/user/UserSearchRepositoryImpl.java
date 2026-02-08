@@ -28,14 +28,14 @@ public class UserSearchRepositoryImpl implements UserSearchRepository {
 
         String k = keyword.toLowerCase();
 
-        // prefix / contains 조건
+        // ✅ 이제 lower() 계산하지 말고, 컬럼(handleLower/nameLower)로 검색
         BooleanExpression prefix =
-                u.handle.lower().startsWith(k)
-                        .or(u.name.lower().startsWith(k));
+                u.handleLower.startsWith(k)
+                        .or(u.nameLower.startsWith(k));
 
         BooleanExpression contains =
-                u.handle.lower().contains(k)
-                        .or(u.name.lower().contains(k));
+                u.handleLower.contains(k)
+                        .or(u.nameLower.contains(k));
 
         // rank: prefix=0, contains=1 (그 외는 제외)
         NumberExpression<Integer> rankExpr = new CaseBuilder()
@@ -45,31 +45,12 @@ public class UserSearchRepositoryImpl implements UserSearchRepository {
 
         BooleanExpression searchCond = prefix.or(contains);
 
-        // 나 자신 제외(선택)
+        // (선택) 나 자신 제외
         BooleanExpression notMe = (meId == null) ? null : u.id.ne(meId);
 
-        // ✅ 정렬: rank ASC, followerCount DESC, handle ASC, id ASC
-        // ✅ 커서 조건은 "정렬 기준 그대로" 다음 페이지를 찾도록 작성해야 함
-        BooleanExpression cursorCond = null;
-        if (cursor != null) {
-            cursorCond =
-                    // rank가 더 큰 그룹(뒤쪽)
-                    rankExpr.gt(cursor.rank())
-
-                            // rank 동일 + followerCount가 더 작은 것(뒤쪽)  <-- DESC라서 작은 값이 뒤로 감
-                            .or(rankExpr.eq(cursor.rank()).and(u.followerCount.lt(cursor.followerCount())))
-
-                            // rank 동일 + followerCount 동일 + handle 더 큰 것(뒤쪽)  <-- ASC
-                            .or(rankExpr.eq(cursor.rank())
-                                    .and(u.followerCount.eq(cursor.followerCount()))
-                                    .and(u.handle.gt(cursor.handle())))
-
-                            // rank 동일 + followerCount 동일 + handle 동일 + id 더 큰 것(뒤쪽) <-- ASC
-                            .or(rankExpr.eq(cursor.rank())
-                                    .and(u.followerCount.eq(cursor.followerCount()))
-                                    .and(u.handle.eq(cursor.handle()))
-                                    .and(u.id.gt(cursor.userId())));
-        }
+        // ✅ 정렬 기준(인스타 느낌)
+        // rank ASC, followerCount DESC, handleLower ASC, id ASC
+        BooleanExpression cursorCond = buildCursorCond(u, rankExpr, cursor);
 
         List<Tuple> rows = queryFactory
                 .select(u.id, u.handle, u.name, u.followerCount, rankExpr)
@@ -83,7 +64,7 @@ public class UserSearchRepositoryImpl implements UserSearchRepository {
                 .orderBy(
                         rankExpr.asc(),
                         u.followerCount.desc(),
-                        u.handle.asc(),
+                        u.handleLower.asc(),
                         u.id.asc()
                 )
                 .limit(limit)
@@ -98,5 +79,26 @@ public class UserSearchRepositoryImpl implements UserSearchRepository {
                         t.get(rankExpr)
                 ))
                 .toList();
+    }
+
+    private BooleanExpression buildCursorCond(QUser u,
+                                              NumberExpression<Integer> rankExpr,
+                                              UserSearchResponse.Cursor cursor) {
+        if (cursor == null) return null;
+
+        int cRank = cursor.rank();
+        long cFollower = cursor.followerCount();
+        String cHandleLower = (cursor.handle() == null) ? "" : cursor.handle().toLowerCase();
+        UUID cUserId = cursor.userId();
+
+        // 다음 페이지 조건(정렬 기준과 "완전히 동일"해야 함)
+        // (rank > cRank)
+        // OR (rank == cRank AND followerCount < cFollower)   // DESC 이므로 "작은 쪽"이 다음
+        // OR (rank == cRank AND followerCount == cFollower AND handleLower > cHandleLower)
+        // OR (rank == cRank AND followerCount == cFollower AND handleLower == cHandleLower AND id > cUserId)
+        return rankExpr.gt(cRank)
+                .or(rankExpr.eq(cRank).and(u.followerCount.lt(cFollower)))
+                .or(rankExpr.eq(cRank).and(u.followerCount.eq(cFollower)).and(u.handleLower.gt(cHandleLower)))
+                .or(rankExpr.eq(cRank).and(u.followerCount.eq(cFollower)).and(u.handleLower.eq(cHandleLower)).and(u.id.gt(cUserId)));
     }
 }

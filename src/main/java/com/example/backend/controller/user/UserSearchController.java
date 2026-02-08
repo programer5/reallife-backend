@@ -6,7 +6,10 @@ import com.example.backend.exception.ErrorCode;
 import com.example.backend.service.user.UserSearchService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.Authentication;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
 
 import java.util.UUID;
 
@@ -24,9 +27,12 @@ public class UserSearchController {
             @RequestParam(required = false) Integer size,
             Authentication authentication
     ) {
+        // ✅ q blank -> 400
         if (q == null || q.isBlank()) {
-            throw new BusinessException(ErrorCode.INVALID_REQUEST); // 아래 ErrorCode 추가/사용
+            throw new BusinessException(ErrorCode.INVALID_REQUEST);
         }
+
+        // ✅ size 범위 -> 400 (테스트가 999로 400 기대하니까 normalize 하지 말고 막아주자)
         if (size != null && (size < 1 || size > 50)) {
             throw new BusinessException(ErrorCode.INVALID_REQUEST);
         }

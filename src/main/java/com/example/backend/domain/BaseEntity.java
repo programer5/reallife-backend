@@ -26,34 +26,31 @@ public abstract class BaseEntity {
         this.updateAt = now;
         this.deleted = false;
 
-        beforePersist(); // ✅ 자식 훅
+        // ✅ 서브클래스 훅
+        prePersist();
     }
 
     @PreUpdate
     protected void onUpdate() {
         this.updateAt = LocalDateTime.now();
 
-        beforeUpdate(); // ✅ 자식 훅
+        // ✅ 서브클래스 훅
+        preUpdate();
     }
 
-    /**
-     * 자식 엔티티가 PrePersist 시점에 추가 작업이 필요하면 override
-     */
-    protected void beforePersist() {
-        // default no-op
-    }
-
-    /**
-     * 자식 엔티티가 PreUpdate 시점에 추가 작업이 필요하면 override
-     */
-    protected void beforeUpdate() {
-        // default no-op
-    }
+    // ✅ 기본은 아무것도 안 함. 필요하면 엔티티에서 override
+    protected void prePersist() {}
+    protected void preUpdate() {}
 
     public LocalDateTime getCreatedAt() { return createdAt; }
     public LocalDateTime getUpdateAt() { return updateAt; }
     public boolean isDeleted() { return deleted; }
 
-    protected void markDeleted() { this.deleted = true; }
-    protected void restore() { this.deleted = false; }
+    protected void markDeleted() {
+        this.deleted = true;
+    }
+
+    protected void restore() {
+        this.deleted = false;
+    }
 }

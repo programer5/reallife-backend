@@ -83,7 +83,7 @@ class UserSearchControllerDocsTest {
                         ),
                         queryParameters(
                                 parameterWithName("q").description("검색어(handle/name)"),
-                                parameterWithName("cursor").optional().description("페이지 커서(rank|followerCount|handle|userId)"),
+                                parameterWithName("cursor").optional().description("페이지 커서(rank|followerCount|handle|userId). 없으면 첫 페이지"),
                                 parameterWithName("size").optional().description("페이지 크기(기본 20, 최대 50)")
                         ),
                         responseFields(
@@ -138,7 +138,7 @@ class UserSearchControllerDocsTest {
                         ),
                         queryParameters(
                                 parameterWithName("q").description("검색어(handle/name)"),
-                                parameterWithName("cursor").optional().description("페이지 커서(rank|followerCount|handle|userId)"),
+                                parameterWithName("cursor").optional().description("페이지 커서(rank|followerCount|handle|userId). 없으면 첫 페이지"),
                                 parameterWithName("size").optional().description("페이지 크기(기본 20, 최대 50)")
                         ),
                         responseFields(
@@ -172,7 +172,7 @@ class UserSearchControllerDocsTest {
                         ),
                         queryParameters(
                                 parameterWithName("q").description("검색어(handle/name) (blank 불가)"),
-                                parameterWithName("cursor").optional().description("페이지 커서(rank|followerCount|handle|userId)"),
+                                parameterWithName("cursor").optional().description("페이지 커서(rank|followerCount|handle|userId). 없으면 첫 페이지"),
                                 parameterWithName("size").optional().description("페이지 크기(기본 20, 최대 50)")
                         ),
                         responseFields(ErrorResponseSnippet.common())
@@ -198,7 +198,7 @@ class UserSearchControllerDocsTest {
                         ),
                         queryParameters(
                                 parameterWithName("q").description("검색어(handle/name)"),
-                                parameterWithName("cursor").optional().description("페이지 커서(rank|followerCount|handle|userId)"),
+                                parameterWithName("cursor").optional().description("페이지 커서(rank|followerCount|handle|userId). 없으면 첫 페이지"),
                                 parameterWithName("size").optional().description("페이지 크기(1~50)")
                         ),
                         responseFields(ErrorResponseSnippet.common())
