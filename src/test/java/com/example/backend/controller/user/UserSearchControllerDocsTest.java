@@ -3,6 +3,7 @@ package com.example.backend.controller.user;
 import com.example.backend.controller.DocsTestSupport;
 import com.example.backend.domain.user.User;
 import com.example.backend.repository.user.UserRepository;
+import com.example.backend.restdocs.ErrorResponseSnippet;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -21,15 +22,15 @@ import static org.springframework.restdocs.headers.HeaderDocumentation.headerWit
 import static org.springframework.restdocs.headers.HeaderDocumentation.requestHeaders;
 import static org.springframework.restdocs.mockmvc.MockMvcRestDocumentation.document;
 import static org.springframework.restdocs.mockmvc.MockMvcRestDocumentation.documentationConfiguration;
-import static org.springframework.restdocs.operation.preprocess.Preprocessors.prettyPrint;
-import static org.springframework.restdocs.operation.preprocess.Preprocessors.preprocessRequest;
-import static org.springframework.restdocs.operation.preprocess.Preprocessors.preprocessResponse;
-import static org.springframework.restdocs.payload.PayloadDocumentation.*;
+import static org.springframework.restdocs.operation.preprocess.Preprocessors.*;
+import static org.springframework.restdocs.payload.PayloadDocumentation.fieldWithPath;
+import static org.springframework.restdocs.payload.PayloadDocumentation.responseFields;
 import static org.springframework.restdocs.request.RequestDocumentation.parameterWithName;
 import static org.springframework.restdocs.request.RequestDocumentation.queryParameters;
 import static org.springframework.security.test.web.servlet.setup.SecurityMockMvcConfigurers.springSecurity;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @SpringBootTest
 @ExtendWith({RestDocumentationExtension.class, SpringExtension.class})
@@ -150,6 +151,57 @@ class UserSearchControllerDocsTest {
                                 fieldWithPath("nextCursor").optional().description("다음 페이지 커서(없으면 null)"),
                                 fieldWithPath("hasNext").description("다음 페이지 존재 여부")
                         )
+                ));
+    }
+
+    @Test
+    void 유저검색_q_blank_400(RestDocumentationContextProvider restDocumentation) throws Exception {
+        var me = docs.saveUser("searchme", "나");
+        String token = docs.issueTokenFor(me);
+
+        mockMvc(restDocumentation)
+                .perform(get("/api/users/search")
+                        .param("q", "   ")
+                        .header(HttpHeaders.AUTHORIZATION, DocsTestSupport.auth(token)))
+                .andExpect(status().isBadRequest())
+                .andDo(document("users-search-400-q-blank",
+                        preprocessRequest(prettyPrint()),
+                        preprocessResponse(prettyPrint()),
+                        requestHeaders(
+                                headerWithName(HttpHeaders.AUTHORIZATION).description("Bearer {accessToken}")
+                        ),
+                        queryParameters(
+                                parameterWithName("q").description("검색어(handle/name) (blank 불가)"),
+                                parameterWithName("cursor").optional().description("페이지 커서(rank|handle|userId)"),
+                                parameterWithName("size").optional().description("페이지 크기(기본 20, 최대 50)")
+                        ),
+                        responseFields(ErrorResponseSnippet.common())
+                ));
+    }
+
+    @Test
+    void 유저검색_size_범위초과_400(RestDocumentationContextProvider restDocumentation) throws Exception {
+        var me = docs.saveUser("searchme", "나");
+        String token = docs.issueTokenFor(me);
+
+        mockMvc(restDocumentation)
+                .perform(get("/api/users/search")
+                        .param("q", "kim")
+                        .param("size", "999")
+                        .header(HttpHeaders.AUTHORIZATION, DocsTestSupport.auth(token)))
+                .andExpect(status().isBadRequest())
+                .andDo(document("users-search-400-size-range",
+                        preprocessRequest(prettyPrint()),
+                        preprocessResponse(prettyPrint()),
+                        requestHeaders(
+                                headerWithName(HttpHeaders.AUTHORIZATION).description("Bearer {accessToken}")
+                        ),
+                        queryParameters(
+                                parameterWithName("q").description("검색어(handle/name)"),
+                                parameterWithName("cursor").optional().description("페이지 커서(rank|handle|userId)"),
+                                parameterWithName("size").optional().description("페이지 크기(1~50)")
+                        ),
+                        responseFields(ErrorResponseSnippet.common())
                 ));
     }
 }

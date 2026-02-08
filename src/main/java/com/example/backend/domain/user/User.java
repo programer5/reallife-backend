@@ -13,10 +13,17 @@ import static jakarta.persistence.EnumType.STRING;
 @Getter
 @NoArgsConstructor
 @Entity
-@Table(name = "users",
+@Table(
+        name = "users",
         uniqueConstraints = {
                 @UniqueConstraint(name = "uk_users_email", columnNames = "email"),
                 @UniqueConstraint(name = "uk_users_handle", columnNames = "handle")
+        },
+        indexes = {
+                // ✅ 검색 성능용 인덱스
+                @Index(name = "idx_users_handle_lower", columnList = "handle_lower"),
+                @Index(name = "idx_users_name_lower", columnList = "name_lower"),
+                @Index(name = "idx_users_handle_lower_id", columnList = "handle_lower, id")
         }
 )
 public class User extends BaseEntity {
@@ -34,11 +41,19 @@ public class User extends BaseEntity {
     @Column(nullable = false, length = 30, unique = true)
     private String handle;
 
+    // ✅ 검색 최적화용 (항상 소문자)
+    @Column(name = "handle_lower", nullable = false, length = 30)
+    private String handleLower;
+
     @Column(nullable = false, length = 60)
     private String password;
 
     @Column(nullable = false, length = 30)
     private String name;
+
+    // ✅ 검색 최적화용 (항상 소문자)
+    @Column(name = "name_lower", nullable = false, length = 30)
+    private String nameLower;
 
     // ✅ OAuth 확장용 (지금은 LOCAL)
     @Enumerated(STRING)
@@ -59,6 +74,22 @@ public class User extends BaseEntity {
         this.password = password;
         this.name = name;
         this.provider = AuthProvider.LOCAL;
+        syncSearchFields();
+    }
+
+    @Override
+    protected void beforePersist() {
+        syncSearchFields();
+    }
+
+    @Override
+    protected void beforeUpdate() {
+        syncSearchFields();
+    }
+
+    private void syncSearchFields() {
+        this.handleLower = (handle == null) ? "" : handle.toLowerCase();
+        this.nameLower = (name == null) ? "" : name.toLowerCase();
     }
 
     public void increaseFollowerCount() {

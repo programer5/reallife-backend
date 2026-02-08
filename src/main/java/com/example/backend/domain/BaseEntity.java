@@ -16,7 +16,6 @@ public abstract class BaseEntity {
     @Column(name = "update_at", nullable = false)
     private LocalDateTime updateAt;
 
-    // ✅ 핵심: 기본값 false + insert 시 값 들어가게
     @Column(name = "deleted", nullable = false)
     private boolean deleted = false;
 
@@ -25,24 +24,36 @@ public abstract class BaseEntity {
         LocalDateTime now = LocalDateTime.now();
         this.createdAt = now;
         this.updateAt = now;
-        // ✅ 혹시라도 null/초기화 누락 방지(primitive라 사실상 필요 없지만 안전)
         this.deleted = false;
+
+        beforePersist(); // ✅ 자식 훅
     }
 
     @PreUpdate
     protected void onUpdate() {
         this.updateAt = LocalDateTime.now();
+
+        beforeUpdate(); // ✅ 자식 훅
+    }
+
+    /**
+     * 자식 엔티티가 PrePersist 시점에 추가 작업이 필요하면 override
+     */
+    protected void beforePersist() {
+        // default no-op
+    }
+
+    /**
+     * 자식 엔티티가 PreUpdate 시점에 추가 작업이 필요하면 override
+     */
+    protected void beforeUpdate() {
+        // default no-op
     }
 
     public LocalDateTime getCreatedAt() { return createdAt; }
     public LocalDateTime getUpdateAt() { return updateAt; }
     public boolean isDeleted() { return deleted; }
 
-    protected void markDeleted() {
-        this.deleted = true;
-    }
-
-    protected void restore() {
-        this.deleted = false;
-    }
+    protected void markDeleted() { this.deleted = true; }
+    protected void restore() { this.deleted = false; }
 }
