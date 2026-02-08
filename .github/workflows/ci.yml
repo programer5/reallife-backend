@@ -8,6 +8,8 @@ on:
 jobs:
   build-test:
     runs-on: ubuntu-latest
+    env:
+      SPRING_PROFILES_ACTIVE: test
 
     steps:
       - name: Checkout
@@ -23,11 +25,14 @@ jobs:
       - name: Grant execute permission for gradlew
         run: chmod +x ./gradlew
 
-      - name: Build docs (tests + asciidoctor)
-        run: ./gradlew -Dspring.profiles.active=test clean asciidoctor
+      - name: Test (generate REST Docs snippets)
+        run: ./gradlew clean test
+
+      - name: Asciidoctor (generate docs)
+        run: ./gradlew asciidoctor
 
       - name: Upload docs artifact
         uses: actions/upload-artifact@v4
         with:
           name: restdocs
-          path: src/main/resources/static/docs
+          path: build/docs/asciidoc
