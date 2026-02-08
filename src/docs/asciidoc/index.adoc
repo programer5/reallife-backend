@@ -40,14 +40,6 @@ include::{snippets}/users-create-400-validation/response-fields.adoc[]
 include::{snippets}/users-create-409-duplicate-email/http-response.adoc[]
 include::{snippets}/users-create-409-duplicate-email/response-fields.adoc[]
 
-===== 400 Bad Request (q blank)
-include::{snippets}/users-search-400-q-blank/http-request.adoc[]
-include::{snippets}/users-search-400-q-blank/http-response.adoc[]
-
-===== 400 Bad Request (size out of range)
-include::{snippets}/users-search-400-size-range/http-request.adoc[]
-include::{snippets}/users-search-400-size-range/http-response.adoc[]
-
 === 사용자 검색 (Cursor Paging)
 
 include::{snippets}/users-search-200/http-request.adoc[]
@@ -56,6 +48,22 @@ include::{snippets}/users-search-200/query-parameters.adoc[]
 include::{snippets}/users-search-200/http-response.adoc[]
 include::{snippets}/users-search-200/response-fields.adoc[]
 
+==== 실패 응답
+
+===== 400 Bad Request (q blank)
+include::{snippets}/users-search-400-q-blank/http-request.adoc[]
+include::{snippets}/users-search-400-q-blank/request-headers.adoc[]
+include::{snippets}/users-search-400-q-blank/query-parameters.adoc[]
+include::{snippets}/users-search-400-q-blank/http-response.adoc[]
+include::{snippets}/users-search-400-q-blank/response-fields.adoc[]
+
+===== 400 Bad Request (size out of range)
+include::{snippets}/users-search-400-size-range/http-request.adoc[]
+include::{snippets}/users-search-400-size-range/request-headers.adoc[]
+include::{snippets}/users-search-400-size-range/query-parameters.adoc[]
+include::{snippets}/users-search-400-size-range/http-response.adoc[]
+include::{snippets}/users-search-400-size-range/response-fields.adoc[]
+
 ==== 다음 페이지 조회 예시
 
 include::{snippets}/users-search-200-next-page/http-request.adoc[]
@@ -63,6 +71,14 @@ include::{snippets}/users-search-200-next-page/request-headers.adoc[]
 include::{snippets}/users-search-200-next-page/query-parameters.adoc[]
 include::{snippets}/users-search-200-next-page/http-response.adoc[]
 include::{snippets}/users-search-200-next-page/response-fields.adoc[]
+
+==== 팔로우 여부 표시 예시 (isFollowing)
+
+include::{snippets}/users-search-200-following-flag/http-request.adoc[]
+include::{snippets}/users-search-200-following-flag/request-headers.adoc[]
+include::{snippets}/users-search-200-following-flag/query-parameters.adoc[]
+include::{snippets}/users-search-200-following-flag/http-response.adoc[]
+include::{snippets}/users-search-200-following-flag/response-fields.adoc[]
 
 == Auth
 
@@ -148,7 +164,7 @@ include::{snippets}/post-likes-create-204/http-response.adoc[]
 
 === 좋아요 취소
 
-include::{snippets}/post-likes-create-204/http-request.adoc[]
+include::{snippets}/post-likes-delete-204/http-request.adoc[]
 include::{snippets}/post-likes-delete-204/request-headers.adoc[]
 include::{snippets}/post-likes-delete-204/path-parameters.adoc[]
 include::{snippets}/post-likes-delete-204/http-response.adoc[]
