@@ -25,7 +25,7 @@ jobs:
 
       # ✅ 테스트 실행 + snippets 생성
       - name: Test (generate REST Docs snippets)
-        run: ./gradlew test
+        run: ./gradlew test -Dspring.profiles.active=test
 
       # ✅ asciidoctor 문서 생성 (build/docs/asciidoc)
       - name: Asciidoctor (generate docs)
