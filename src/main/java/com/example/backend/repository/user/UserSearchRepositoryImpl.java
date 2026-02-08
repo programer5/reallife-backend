@@ -28,16 +28,16 @@ public class UserSearchRepositoryImpl implements UserSearchRepository {
 
         String k = keyword.toLowerCase();
 
-        // ✅ lower 컬럼 기반 prefix / contains
+        // prefix / contains 조건
         BooleanExpression prefix =
-                u.handleLower.startsWith(k)
-                        .or(u.nameLower.startsWith(k));
+                u.handle.lower().startsWith(k)
+                        .or(u.name.lower().startsWith(k));
 
         BooleanExpression contains =
-                u.handleLower.contains(k)
-                        .or(u.nameLower.contains(k));
+                u.handle.lower().contains(k)
+                        .or(u.name.lower().contains(k));
 
-        // rank: prefix=0, contains=1
+        // rank: prefix=0, contains=1 (그 외는 제외)
         NumberExpression<Integer> rankExpr = new CaseBuilder()
                 .when(prefix).then(0)
                 .when(contains).then(1)
@@ -45,18 +45,30 @@ public class UserSearchRepositoryImpl implements UserSearchRepository {
 
         BooleanExpression searchCond = prefix.or(contains);
 
-        // 나 자신 제외
+        // 나 자신 제외(선택)
         BooleanExpression notMe = (meId == null) ? null : u.id.ne(meId);
 
-        // ✅ 정렬: rank ASC, followerCount DESC, handleLower ASC, id ASC
-        // ✅ 커서 조건: (정렬 기준의 "다음"을 정확히 표현)
+        // ✅ 정렬: rank ASC, followerCount DESC, handle ASC, id ASC
+        // ✅ 커서 조건은 "정렬 기준 그대로" 다음 페이지를 찾도록 작성해야 함
         BooleanExpression cursorCond = null;
         if (cursor != null) {
             cursorCond =
+                    // rank가 더 큰 그룹(뒤쪽)
                     rankExpr.gt(cursor.rank())
+
+                            // rank 동일 + followerCount가 더 작은 것(뒤쪽)  <-- DESC라서 작은 값이 뒤로 감
                             .or(rankExpr.eq(cursor.rank()).and(u.followerCount.lt(cursor.followerCount())))
-                            .or(rankExpr.eq(cursor.rank()).and(u.followerCount.eq(cursor.followerCount())).and(u.handleLower.gt(cursor.handle())))
-                            .or(rankExpr.eq(cursor.rank()).and(u.followerCount.eq(cursor.followerCount())).and(u.handleLower.eq(cursor.handle())).and(u.id.gt(cursor.userId())));
+
+                            // rank 동일 + followerCount 동일 + handle 더 큰 것(뒤쪽)  <-- ASC
+                            .or(rankExpr.eq(cursor.rank())
+                                    .and(u.followerCount.eq(cursor.followerCount()))
+                                    .and(u.handle.gt(cursor.handle())))
+
+                            // rank 동일 + followerCount 동일 + handle 동일 + id 더 큰 것(뒤쪽) <-- ASC
+                            .or(rankExpr.eq(cursor.rank())
+                                    .and(u.followerCount.eq(cursor.followerCount()))
+                                    .and(u.handle.eq(cursor.handle()))
+                                    .and(u.id.gt(cursor.userId())));
         }
 
         List<Tuple> rows = queryFactory
@@ -71,7 +83,7 @@ public class UserSearchRepositoryImpl implements UserSearchRepository {
                 .orderBy(
                         rankExpr.asc(),
                         u.followerCount.desc(),
-                        u.handleLower.asc(),
+                        u.handle.asc(),
                         u.id.asc()
                 )
                 .limit(limit)
