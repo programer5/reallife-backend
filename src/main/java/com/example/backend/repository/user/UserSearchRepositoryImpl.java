@@ -44,13 +44,21 @@ public class UserSearchRepositoryImpl implements UserSearchRepository {
 
         BooleanExpression searchCond = prefix.or(contains);
 
+        // ✅ ASC(rank) + DESC(followerCount) + ASC(handleLower) + ASC(id) 에 맞춘 커서 조건
         BooleanExpression cursorCond = null;
         if (cursor != null) {
+            String cursorHandleLower = (cursor.handle() == null) ? "" : cursor.handle().toLowerCase();
+
             cursorCond =
                     rankExpr.gt(cursor.rank())
                             .or(rankExpr.eq(cursor.rank()).and(u.followerCount.lt(cursor.followerCount())))
-                            .or(rankExpr.eq(cursor.rank()).and(u.followerCount.eq(cursor.followerCount())).and(u.handleLower.gt(cursor.handle())))
-                            .or(rankExpr.eq(cursor.rank()).and(u.followerCount.eq(cursor.followerCount())).and(u.handleLower.eq(cursor.handle())).and(u.id.gt(cursor.userId())));
+                            .or(rankExpr.eq(cursor.rank())
+                                    .and(u.followerCount.eq(cursor.followerCount()))
+                                    .and(u.handleLower.gt(cursorHandleLower)))
+                            .or(rankExpr.eq(cursor.rank())
+                                    .and(u.followerCount.eq(cursor.followerCount()))
+                                    .and(u.handleLower.eq(cursorHandleLower))
+                                    .and(u.id.gt(cursor.userId())));
         }
 
         BooleanExpression notMe = (meId == null) ? null : u.id.ne(meId);
@@ -64,7 +72,7 @@ public class UserSearchRepositoryImpl implements UserSearchRepository {
                         searchCond,
                         cursorCond
                 )
-                // ✅ 인스타 느낌: rank(정확도) 우선, 그 다음 followerCount desc, 그 다음 handle asc, id asc
+                // ✅ 정렬키 고정: rank ASC → followerCount DESC → handleLower ASC → id ASC
                 .orderBy(rankExpr.asc(), u.followerCount.desc(), u.handleLower.asc(), u.id.asc())
                 .limit(limit)
                 .fetch();
