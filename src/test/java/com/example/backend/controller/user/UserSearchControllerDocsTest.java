@@ -1,7 +1,9 @@
 package com.example.backend.controller.user;
 
 import com.example.backend.controller.DocsTestSupport;
+import com.example.backend.domain.follow.Follow;
 import com.example.backend.domain.user.User;
+import com.example.backend.repository.follow.FollowRepository;
 import com.example.backend.repository.user.UserRepository;
 import com.example.backend.restdocs.ErrorResponseSnippet;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -40,6 +42,7 @@ class UserSearchControllerDocsTest {
     @Autowired WebApplicationContext context;
     @Autowired DocsTestSupport docs;
     @Autowired UserRepository userRepository;
+    @Autowired FollowRepository followRepository;
 
     private final ObjectMapper objectMapper = new ObjectMapper();
 
@@ -204,6 +207,51 @@ class UserSearchControllerDocsTest {
                                 parameterWithName("size").optional().description("페이지 크기(1~50)")
                         ),
                         responseFields(ErrorResponseSnippet.common())
+                ));
+    }
+
+    @Test
+    void 유저검색_isFollowing_true_200(RestDocumentationContextProvider restDocumentation) throws Exception {
+        var me = docs.saveUser("searchme", "나");
+        String token = docs.issueTokenFor(me);
+
+        // 검색 대상 유저들
+        var kim = saveFixedUser("kim@test.com", "kim", "김철수");
+        saveFixedUser("kimchi@test.com", "kimchi", "김치");
+
+        // ✅ me -> kim 팔로우 생성
+        followRepository.saveAndFlush(Follow.create(me.getId(), kim.getId()));
+
+        mockMvc(restDocumentation)
+                .perform(get("/api/users/search")
+                        .param("q", "kim")
+                        .param("size", "10")
+                        .header(HttpHeaders.AUTHORIZATION, DocsTestSupport.auth(token)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.items[0].handle").value("kim"))
+                .andExpect(jsonPath("$.items[0].isFollowing").value(true))
+                .andDo(document("users-search-200-following-flag",
+                        preprocessRequest(prettyPrint()),
+                        preprocessResponse(prettyPrint()),
+                        requestHeaders(
+                                headerWithName(HttpHeaders.AUTHORIZATION).description("Bearer {accessToken}")
+                        ),
+                        queryParameters(
+                                parameterWithName("q").description("검색어(handle/name)"),
+                                parameterWithName("cursor").optional().description("페이지 커서(rank|followerCount|handle|userId). 없으면 첫 페이지"),
+                                parameterWithName("size").optional().description("페이지 크기(기본 20, 최대 50)")
+                        ),
+                        responseFields(
+                                fieldWithPath("items").description("검색 결과 목록"),
+                                fieldWithPath("items[].userId").description("유저 ID(UUID)"),
+                                fieldWithPath("items[].handle").description("유저 핸들(@아이디)"),
+                                fieldWithPath("items[].name").description("유저 이름"),
+                                fieldWithPath("items[].followerCount").description("팔로워 수"),
+                                fieldWithPath("items[].rank").description("정렬 랭크(0=prefix, 1=contains)"),
+                                fieldWithPath("items[].isFollowing").description("내가 해당 유저를 팔로우 중인지 여부"),
+                                fieldWithPath("nextCursor").optional().description("다음 페이지 커서(없으면 null)"),
+                                fieldWithPath("hasNext").description("다음 페이지 존재 여부")
+                        )
                 ));
     }
 }
