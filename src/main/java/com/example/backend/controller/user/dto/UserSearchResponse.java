@@ -13,7 +13,8 @@ public record UserSearchResponse(
             String handle,
             String name,
             long followerCount,
-            int rank
+            int rank,
+            boolean isFollowing
     ) {}
 
     public record Cursor(int rank, long followerCount, String handle, UUID userId) {

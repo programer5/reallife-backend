@@ -93,6 +93,7 @@ class UserSearchControllerDocsTest {
                                 fieldWithPath("items[].name").description("유저 이름"),
                                 fieldWithPath("items[].followerCount").description("팔로워 수"),
                                 fieldWithPath("items[].rank").description("정렬 랭크(0=prefix, 1=contains)"),
+                                fieldWithPath("items[].isFollowing").description("내가 해당 유저를 팔로우 중인지 여부"),
                                 fieldWithPath("nextCursor").optional().description("다음 페이지 커서(없으면 null)"),
                                 fieldWithPath("hasNext").description("다음 페이지 존재 여부")
                         )
@@ -148,6 +149,7 @@ class UserSearchControllerDocsTest {
                                 fieldWithPath("items[].name").description("유저 이름"),
                                 fieldWithPath("items[].followerCount").description("팔로워 수"),
                                 fieldWithPath("items[].rank").description("정렬 랭크(0=prefix, 1=contains)"),
+                                fieldWithPath("items[].isFollowing").description("내가 해당 유저를 팔로우 중인지 여부"),
                                 fieldWithPath("nextCursor").optional().description("다음 페이지 커서(없으면 null)"),
                                 fieldWithPath("hasNext").description("다음 페이지 존재 여부")
                         )
