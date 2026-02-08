@@ -1,24 +1,39 @@
 name: CI
 
 on:
-  pull_request:
   push:
-    branches: [ "main" ]
+    branches: [ "**" ]
+  pull_request:
 
 jobs:
-  build:
+  build-test:
     runs-on: ubuntu-latest
+
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout
+        uses: actions/checkout@v4
 
       - name: Set up JDK 17
         uses: actions/setup-java@v4
         with:
           distribution: temurin
           java-version: "17"
+          cache: gradle
 
       - name: Grant execute permission for gradlew
-        run: chmod +x gradlew
+        run: chmod +x ./gradlew
 
-      - name: Build (includes tests + restdocs + asciidoctor)
-        run: ./gradlew clean build
+      # ✅ 테스트 실행 + snippets 생성
+      - name: Test (generate REST Docs snippets)
+        run: ./gradlew test
+
+      # ✅ asciidoctor 문서 생성 (build/docs/asciidoc)
+      - name: Asciidoctor (generate docs)
+        run: ./gradlew asciidoctor
+
+      # (선택) 결과물 아티팩트로 업로드해서 CI에서 바로 확인 가능
+      - name: Upload docs artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: restdocs
+          path: build/docs/asciidoc
