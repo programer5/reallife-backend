@@ -93,7 +93,7 @@ Content-Type: application/json
 Content-Length: 140
 Host: localhost:8080
 
-{"password":"password1234","name":"테스트유저","handle":"user_a2036cbd","email":"signup+e3c84420-c87b-47f7-8b30-48a38270ec62@test.com"}</code></pre>
+{"password":"password1234","name":"테스트유저","handle":"user_2d4a2bad","email":"signup+d309ec9f-c35f-40c7-ad21-4f61a6188861@test.com"}</code></pre>
 </div>
 </div>
 <table class="tableblock frame-all grid-all stretch">
@@ -141,7 +141,7 @@ Host: localhost:8080
 Content-Type: application/json
 Content-Length: 158
 
-{"id":"70e2f22c-6b62-473f-9618-f7a5cdd006bf","email":"signup+e3c84420-c87b-47f7-8b30-48a38270ec62@test.com","handle":"user_a2036cbd","name":"테스트유저"}</code></pre>
+{"id":"d19bcb43-2412-4fb3-a056-224e19c45c2a","email":"signup+d309ec9f-c35f-40c7-ad21-4f61a6188861@test.com","handle":"user_2d4a2bad","name":"테스트유저"}</code></pre>
 </div>
 </div>
 <table class="tableblock frame-all grid-all stretch">
@@ -191,7 +191,7 @@ Content-Length: 158
 Content-Type: application/json
 Content-Length: 208
 
-{"code":"COMMON_INVALID_REQUEST","message":"요청이 올바르지 않습니다.","timestamp":"2026-02-08T20:58:28.9561353","path":"/api/users","fieldErrors":[{"field":"handle","reason":"must not be blank"}]}</code></pre>
+{"code":"COMMON_INVALID_REQUEST","message":"요청이 올바르지 않습니다.","timestamp":"2026-02-08T21:07:48.8838365","path":"/api/users","fieldErrors":[{"field":"handle","reason":"must not be blank"}]}</code></pre>
 </div>
 </div>
 <table class="tableblock frame-all grid-all stretch">
@@ -254,7 +254,7 @@ Content-Length: 208
 Content-Type: application/json
 Content-Length: 161
 
-{"code":"USER_DUPLICATE_EMAIL","message":"이미 가입된 이메일입니다.","timestamp":"2026-02-08T20:58:29.0860586","path":"/api/users","fieldErrors":null}</code></pre>
+{"code":"USER_DUPLICATE_EMAIL","message":"이미 가입된 이메일입니다.","timestamp":"2026-02-08T21:07:49.0017691","path":"/api/users","fieldErrors":null}</code></pre>
 </div>
 </div>
 <table class="tableblock frame-all grid-all stretch">
@@ -306,7 +306,7 @@ Content-Length: 161
 <div class="listingblock">
 <div class="content">
 <pre class="highlight nowrap"><code class="language-http" data-lang="http">GET /api/users/search?q=kim&amp;size=2 HTTP/1.1
-Authorization: Bearer eyJhbGciOiJIUzM4NCJ9.eyJzdWIiOiI2ZjhiNjYxMC1iMWRiLTQyYmItOGI0Yy01MDI4YmY2ZDc2MzUiLCJlbWFpbCI6InNlYXJjaG1lKzk1ODlkMDkxLTVmOTUtNDA1Yy1hNTFlLTBjMDQyZThlNGJjN0B0ZXN0LmNvbSIsImlhdCI6MTc3MDU1MTkwOSwiZXhwIjoxNzcwNTU1NTA5fQ.no59Uzneftqps4NAMZrzFAfF_Wv15TzJw79EG8Jza1YfpPdq-mHAaFGI8UsnPj8R
+Authorization: Bearer eyJhbGciOiJIUzM4NCJ9.eyJzdWIiOiIzNWJiY2ZmZC05YmYzLTRiYWQtODRkMC00YzMxNWM2M2Y4MGMiLCJlbWFpbCI6InNlYXJjaG1lK2U2NTJjNzU5LWUyOTQtNDM1My05ZTBhLTFiNTEzZjU4OTNjYkB0ZXN0LmNvbSIsImlhdCI6MTc3MDU1MjQ2OSwiZXhwIjoxNzcwNTU2MDY5fQ.ofV9Tc_vZq4NrE7P57QUiOsVxSuhaUWdwGQdeFg8EzTpPSU_cPPo2muld90xlL5F
 Host: localhost:8080</code></pre>
 </div>
 </div>
@@ -368,21 +368,21 @@ Content-Length: 478
 
 {
   "items" : [ {
-    "userId" : "491f1cd8-8b5c-4751-84d5-5d8aa994edb2",
+    "userId" : "a91fc07f-195e-4106-b746-bc836b40a6a7",
     "handle" : "kim",
     "name" : "김철수",
     "followerCount" : 0,
     "rank" : 0,
     "isFollowing" : false
   }, {
-    "userId" : "7f88d13f-3123-455b-8e02-4b9b649a0613",
+    "userId" : "1d07ea6f-45ac-4320-8580-fe48b3e70782",
     "handle" : "kimchi",
     "name" : "김치",
     "followerCount" : 0,
     "rank" : 0,
     "isFollowing" : false
   } ],
-  "nextCursor" : "0|0|kimchi|7f88d13f-3123-455b-8e02-4b9b649a0613",
+  "nextCursor" : "0|0|kimchi|1d07ea6f-45ac-4320-8580-fe48b3e70782",
   "hasNext" : true
 }</code></pre>
 </div>
@@ -455,7 +455,7 @@ Content-Length: 478
 <div class="listingblock">
 <div class="content">
 <pre class="highlight nowrap"><code class="language-http" data-lang="http">GET /api/users/search?q=+++ HTTP/1.1
-Authorization: Bearer eyJhbGciOiJIUzM4NCJ9.eyJzdWIiOiJkNmUzODkyNS02ZGMzLTQ2ZWItOTFiZi0zNjA3YWNlZTFjZDkiLCJlbWFpbCI6InNlYXJjaG1lKzRmNDE3YTgwLTIwODctNDJiYS1hNDM2LWEyMmY5OTAzNDJlY0B0ZXN0LmNvbSIsImlhdCI6MTc3MDU1MTkwOSwiZXhwIjoxNzcwNTU1NTA5fQ.keWOilWDFRuBg-cyaHH4S69HlJWui_FrYaF0HCCgz_DxTVPI6kOjJEhPgPwZIsC0
+Authorization: Bearer eyJhbGciOiJIUzM4NCJ9.eyJzdWIiOiI2NDM1ZDc0Ny0xNWVkLTRkMWEtODlmYy0xOTlhNTM0ZmQxZWEiLCJlbWFpbCI6InNlYXJjaG1lK2E0MjAzMGUxLTNhY2ItNDdkNC05ZGFlLTZiOGJjN2NkZjMxMUB0ZXN0LmNvbSIsImlhdCI6MTc3MDU1MjQ2OSwiZXhwIjoxNzcwNTU2MDY5fQ.R1EvlmMEXC-HIPScn12J73aWvpjAQoWU_3EYC4HpTcVolJnSaZiM2wtEY7qYcqHo
 Host: localhost:8080</code></pre>
 </div>
 </div>
@@ -518,7 +518,7 @@ Content-Length: 202
 {
   "code" : "COMMON_INVALID_REQUEST",
   "message" : "요청이 올바르지 않습니다.",
-  "timestamp" : "2026-02-08T20:58:29.3069337",
+  "timestamp" : "2026-02-08T21:07:49.2276381",
   "path" : "/api/users/search",
   "fieldErrors" : null
 }</code></pre>
@@ -571,7 +571,7 @@ Content-Length: 202
 <div class="listingblock">
 <div class="content">
 <pre class="highlight nowrap"><code class="language-http" data-lang="http">GET /api/users/search?q=kim&amp;size=999 HTTP/1.1
-Authorization: Bearer eyJhbGciOiJIUzM4NCJ9.eyJzdWIiOiJkMDUxOWQ5Mi0wYjE4LTQ5MDctYWE0ZC0yM2U2YmEwNTNhMWEiLCJlbWFpbCI6InNlYXJjaG1lKzE4YzA5MjcxLWMzNDItNDgzMC05YjNiLTQ5ZTllNjkwYjBiNkB0ZXN0LmNvbSIsImlhdCI6MTc3MDU1MTkwOSwiZXhwIjoxNzcwNTU1NTA5fQ.d7oCfFh0_iYPXv6ZMHC8qhBAoZJ29cDGjYhzkNGbi27JQEA8aAPBGDKRWpxrDktL
+Authorization: Bearer eyJhbGciOiJIUzM4NCJ9.eyJzdWIiOiJhNjhkNmZiZC01ZGE5LTRiZTEtYmQxYi0wYzk1ZjQ4MzM5NDgiLCJlbWFpbCI6InNlYXJjaG1lKzIxYzc3NTc1LWE3NGEtNGYxNC05ZWRkLTMxNzUwNTQ2Y2ZhMkB0ZXN0LmNvbSIsImlhdCI6MTc3MDU1MjQ2OSwiZXhwIjoxNzcwNTU2MDY5fQ.vUaOErCGL61WdJVu-ZWOVqFUR_kTmwtV0OdaxXEEyBe6Bgv_Afivd7AA80yDvyf_
 Host: localhost:8080</code></pre>
 </div>
 </div>
@@ -634,7 +634,7 @@ Content-Length: 202
 {
   "code" : "COMMON_INVALID_REQUEST",
   "message" : "요청이 올바르지 않습니다.",
-  "timestamp" : "2026-02-08T20:58:29.1330336",
+  "timestamp" : "2026-02-08T21:07:49.0427462",
   "path" : "/api/users/search",
   "fieldErrors" : null
 }</code></pre>
@@ -687,8 +687,8 @@ Content-Length: 202
 <h4 id="_다음_페이지_조회_예시"><a class="anchor" href="#_다음_페이지_조회_예시"></a><a class="link" href="#_다음_페이지_조회_예시">다음 페이지 조회 예시</a></h4>
 <div class="listingblock">
 <div class="content">
-<pre class="highlight nowrap"><code class="language-http" data-lang="http">GET /api/users/search?q=kim&amp;size=2&amp;cursor=0%7C0%7Ckimchi%7Cba2eae98-ee67-4e3b-81d4-f36858e10098 HTTP/1.1
-Authorization: Bearer eyJhbGciOiJIUzM4NCJ9.eyJzdWIiOiIzYjNjZTZkNS0yY2QyLTQzY2EtOTc0Yy03OGIxMWYwZjA2MDUiLCJlbWFpbCI6InNlYXJjaG1lKzA2YjdlMTc5LTc0MzctNDUyYi05OTNkLWU1MTdlYmE4ZTVhN0B0ZXN0LmNvbSIsImlhdCI6MTc3MDU1MTkwOSwiZXhwIjoxNzcwNTU1NTA5fQ.3jtbPnTTEm6bTJj8t_vkXleDHVXfNMLxOLYVcbcLV3de9vHThCC7J6ougZmq7e5X
+<pre class="highlight nowrap"><code class="language-http" data-lang="http">GET /api/users/search?q=kim&amp;size=2&amp;cursor=0%7C0%7Ckimchi%7C01610890-d297-4bf7-b999-31de83515c6e HTTP/1.1
+Authorization: Bearer eyJhbGciOiJIUzM4NCJ9.eyJzdWIiOiJlMzVhMjM4Yi0yNWMwLTRlMmUtODBkZS0yZWU2N2M2Zjc4ZWEiLCJlbWFpbCI6InNlYXJjaG1lKzAxNWJlMTdlLTEwMmEtNGZhNy1hMTcwLWY0ZGE2OWQ5NTEyZkB0ZXN0LmNvbSIsImlhdCI6MTc3MDU1MjQ2OSwiZXhwIjoxNzcwNTU2MDY5fQ.5-v2oqZgMs_Xtb3zlVhcRTZgPniMMErAFWRYXDgclwSTJP4dCfDwI5T8O3bVBGbd
 Host: localhost:8080</code></pre>
 </div>
 </div>
@@ -750,14 +750,14 @@ Content-Length: 431
 
 {
   "items" : [ {
-    "userId" : "04054f80-48bd-4f41-9784-4fa733415863",
+    "userId" : "5355d39f-534a-4868-8161-c7cfc9dd5f04",
     "handle" : "xx",
     "name" : "kim영희",
     "followerCount" : 0,
     "rank" : 0,
     "isFollowing" : false
   }, {
-    "userId" : "eba42760-d540-421b-9039-c8a95b9498e6",
+    "userId" : "00785990-fa4b-4853-91f6-8442778cf177",
     "handle" : "akim",
     "name" : "아킴",
     "followerCount" : 0,
@@ -836,7 +836,7 @@ Content-Length: 431
 <div class="listingblock">
 <div class="content">
 <pre class="highlight nowrap"><code class="language-http" data-lang="http">GET /api/users/search?q=kim&amp;size=10 HTTP/1.1
-Authorization: Bearer eyJhbGciOiJIUzM4NCJ9.eyJzdWIiOiI1YWE1YmU0Yy01NDg2LTQ5OWQtYjE2MS1iNTBkNGRkYmZkOGEiLCJlbWFpbCI6InNlYXJjaG1lK2IwMDZhMWMyLTJkZWItNGExYi05MDI2LTgwODViNmVlN2NiZEB0ZXN0LmNvbSIsImlhdCI6MTc3MDU1MTkwOSwiZXhwIjoxNzcwNTU1NTA5fQ.SBayR3aWvMgUHp1ZCx9qFvGShmbesPblGA6rqVwBc14vs6D0ifeETzHAg06Q9AAL
+Authorization: Bearer eyJhbGciOiJIUzM4NCJ9.eyJzdWIiOiI1YmQ4ZjgzOC0wYmU3LTQxZjktODI1OS1kODBmN2U2ZjdmYWMiLCJlbWFpbCI6InNlYXJjaG1lKzlhMTg0YzNlLTU1YzEtNGUyMy1hNTNjLTE3MWVmMjViZGExNEB0ZXN0LmNvbSIsImlhdCI6MTc3MDU1MjQ2OSwiZXhwIjoxNzcwNTU2MDY5fQ.A9q72BLRG30S0y3PrsgcSRWLEgtHySTPNjeT6nkkb1P7H5itvljBTDLiqPpdOfbd
 Host: localhost:8080</code></pre>
 </div>
 </div>
@@ -898,14 +898,14 @@ Content-Length: 433
 
 {
   "items" : [ {
-    "userId" : "8c8eda85-6f4a-4b05-967b-76263a16d99b",
+    "userId" : "56a710d4-0e6b-42b9-b296-ce64f972f730",
     "handle" : "kim",
     "name" : "김철수",
     "followerCount" : 0,
     "rank" : 0,
     "isFollowing" : true
   }, {
-    "userId" : "efeb0917-0a29-4a59-8616-e8ea099604e3",
+    "userId" : "63a64c75-bce0-4866-83d0-be0c016cff88",
     "handle" : "kimchi",
     "name" : "김치",
     "followerCount" : 0,
@@ -992,7 +992,7 @@ Content-Length: 433
 <div class="listingblock">
 <div class="content">
 <pre class="highlight nowrap"><code class="language-http" data-lang="http">GET /api/me HTTP/1.1
-Authorization: Bearer eyJhbGciOiJIUzM4NCJ9.eyJzdWIiOiI1OTBjYjNlMS1lMDFmLTQzMTgtODk0ZC1kNWY0ZGU0OGU5NDgiLCJlbWFpbCI6Im1lKzkzMWNlYzEzLWVjMzEtNDQ1OS05MTdiLTU3OTQ0MTgwODI5OUB0ZXN0LmNvbSIsImlhdCI6MTc3MDU1MTkwOCwiZXhwIjoxNzcwNTU1NTA4fQ.l5tILg1Jisd0wbYMPvCeQAbrTtSFQzPAYISxu8t4GXAieYTRoQ_CTmc8gss7HcSG
+Authorization: Bearer eyJhbGciOiJIUzM4NCJ9.eyJzdWIiOiJjMzU2NjBkMy03ZDFjLTQwNTItYTM4YS0wNGM3MmE0ZmNkZDgiLCJlbWFpbCI6Im1lKzI2ZDEwNTJkLWQxYmEtNDZmOS1iMWIyLTNlMTdjZmE1NTE2YkB0ZXN0LmNvbSIsImlhdCI6MTc3MDU1MjQ2OCwiZXhwIjoxNzcwNTU2MDY4fQ.D2vfbIHdB00640IcCfktSvJKeNIoGV96XyT_opcK1GtGfzWq_floHvEGpOv3ORHh
 Host: localhost:8080</code></pre>
 </div>
 </div>
@@ -1026,7 +1026,7 @@ Expires: 0
 X-Frame-Options: DENY
 Content-Length: 181
 
-{"id":"590cb3e1-e01f-4318-894d-d5f4de48e948","email":"me+931cec13-ec31-4459-917b-579441808299@test.com","handle":"me_56b54a9f","name":"시드유저","followerCount":0,"tier":"NONE"}</code></pre>
+{"id":"c35660d3-7d1c-4052-a38a-04c72a4fcdd8","email":"me+26d1052d-d1ba-46f9-b1b2-3e17cfa5516b@test.com","handle":"me_5642ca95","name":"시드유저","followerCount":0,"tier":"NONE"}</code></pre>
 </div>
 </div>
 <table class="tableblock frame-all grid-all stretch">
@@ -1094,9 +1094,9 @@ Cache-Control: no-cache, no-store, max-age=0, must-revalidate
 Pragma: no-cache
 Expires: 0
 X-Frame-Options: DENY
-Content-Length: 145
+Content-Length: 144
 
-{"code":"AUTH_UNAUTHORIZED","message":"인증이 필요합니다.","timestamp":[2026,2,8,20,58,28,519389200],"path":"/api/me","fieldErrors":null}</code></pre>
+{"code":"AUTH_UNAUTHORIZED","message":"인증이 필요합니다.","timestamp":[2026,2,8,21,7,48,526047800],"path":"/api/me","fieldErrors":null}</code></pre>
 </div>
 </div>
 </div>
@@ -1114,7 +1114,7 @@ Content-Length: 145
 <div class="content">
 <pre class="highlight nowrap"><code class="language-http" data-lang="http">POST /api/posts HTTP/1.1
 Content-Type: application/json
-Authorization: Bearer eyJhbGciOiJIUzM4NCJ9.eyJzdWIiOiI0YTFjYmEzNy1hZDlhLTQ4MjEtODk4Ni1kMmU4NGEzMzFjMTYiLCJlbWFpbCI6InBvc3QrMzYwNjA5MTctYzk5Zi00MmExLThkYzEtZjE0NzQxMjVkMWU2QHRlc3QuY29tIiwiaWF0IjoxNzcwNTUxOTA4LCJleHAiOjE3NzA1NTU1MDh9.sWAEG7HDfg9JvbUAYEGRLdnye4w2Bdp2MJ2GVKKVU5sxOCXjogxlimFluzsjCBKr
+Authorization: Bearer eyJhbGciOiJIUzM4NCJ9.eyJzdWIiOiJmMjMzOTRkZS1kMDFjLTRjODAtYmJiYy0zZGMzODkxZDFjYmYiLCJlbWFpbCI6InBvc3QrZmI2NTcxZTEtODQxZC00ODFiLTkxYjUtZjY5N2JhNWU3Y2I2QHRlc3QuY29tIiwiaWF0IjoxNzcwNTUyNDY4LCJleHAiOjE3NzA1NTYwNjh9.5l1ON4_h-Z17gKY6ytdzcAx8Ar7znHkMO7idSc7-oVxal63qPgxli4lTwBzrRggW
 Content-Length: 125
 Host: localhost:8080
 
@@ -1185,7 +1185,7 @@ Expires: 0
 X-Frame-Options: DENY
 Content-Length: 265
 
-{"postId":"18558b56-0f80-4182-9e81-0edf0aa6a538","authorId":"4a1cba37-ad9a-4821-8986-d2e84a331c16","content":"팔로워에게만 공유합니다 🙂","imageUrls":["https://example.com/image1.jpg"],"visibility":"FOLLOWERS","createdAt":"2026-02-08T20:58:28.2635367"}</code></pre>
+{"postId":"ae9cccc6-cdf2-4e20-b83d-1e097fb05b5e","authorId":"f23394de-d01c-4c80-bbbc-3dc3891d1cbf","content":"팔로워에게만 공유합니다 🙂","imageUrls":["https://example.com/image1.jpg"],"visibility":"FOLLOWERS","createdAt":"2026-02-08T21:07:48.3071721"}</code></pre>
 </div>
 </div>
 <table class="tableblock frame-all grid-all stretch">
@@ -1242,8 +1242,8 @@ Content-Length: 265
 <h4 id="_request_3"><a class="anchor" href="#_request_3"></a><a class="link" href="#_request_3">Request</a></h4>
 <div class="listingblock">
 <div class="content">
-<pre class="highlight nowrap"><code class="language-http" data-lang="http">GET /api/posts/4e4fc7e8-5c67-4874-935b-4bfcc5c36ee2 HTTP/1.1
-Authorization: Bearer eyJhbGciOiJIUzM4NCJ9.eyJzdWIiOiI1MTZmZmI0NC1iYzcyLTQ2YmMtYTNiZC03N2FiYjY5YjQ1YzUiLCJlbWFpbCI6ImRldGFpbCs0YzRkY2Q1MS1lYWFiLTRhMDMtYTNkMC1mODNjMWYzYWIzYzZAdGVzdC5jb20iLCJpYXQiOjE3NzA1NTE5MDgsImV4cCI6MTc3MDU1NTUwOH0.WLCcP3xH9RGH4wrCVd5sDeL9Ms1XvLb24-cjlpuuo0oBNLjNQ7wfeSXAGHjtOYXq
+<pre class="highlight nowrap"><code class="language-http" data-lang="http">GET /api/posts/7c55df62-e2a1-442f-9913-bc6158d34d9f HTTP/1.1
+Authorization: Bearer eyJhbGciOiJIUzM4NCJ9.eyJzdWIiOiIxMzEyMmM5YS0xMTA3LTQ3ZGMtODc5Ny0zYWYxZmJhNTI1MzYiLCJlbWFpbCI6ImRldGFpbCs5NjgxMDVhZi04YWRmLTQxOWYtODlmNS00NjhjZDZhNGYwMGNAdGVzdC5jb20iLCJpYXQiOjE3NzA1NTI0NjgsImV4cCI6MTc3MDU1NjA2OH0.KQiHpMcMNSBYsle29wgTH-ulg3Y26dxB6bSAbxX8MrF1L2kqK8r6JsKEgKCTfeex
 Host: localhost:8080</code></pre>
 </div>
 </div>
@@ -1278,9 +1278,9 @@ Cache-Control: no-cache, no-store, max-age=0, must-revalidate
 Pragma: no-cache
 Expires: 0
 X-Frame-Options: DENY
-Content-Length: 247
+Content-Length: 248
 
-{"postId":"4e4fc7e8-5c67-4874-935b-4bfcc5c36ee2","authorId":"516ffb44-bc72-46bc-a3bd-77abb69b45c5","content":"상세조회 테스트","imageUrls":["https://example.com/image1.jpg"],"visibility":"FOLLOWERS","createdAt":"2026-02-08T20:58:28.387465"}</code></pre>
+{"postId":"7c55df62-e2a1-442f-9913-bc6158d34d9f","authorId":"13122c9a-1107-47dc-8797-3af1fba52536","content":"상세조회 테스트","imageUrls":["https://example.com/image1.jpg"],"visibility":"FOLLOWERS","createdAt":"2026-02-08T21:07:48.4101131"}</code></pre>
 </div>
 </div>
 <table class="tableblock frame-all grid-all stretch">
@@ -1338,7 +1338,7 @@ Content-Length: 247
 <div class="listingblock">
 <div class="content">
 <pre class="highlight nowrap"><code class="language-http" data-lang="http">GET /api/feed?size=2 HTTP/1.1
-Authorization: Bearer eyJhbGciOiJIUzM4NCJ9.eyJzdWIiOiI0YzhlNWZiMS1jOWJhLTQ1ZTYtOTNiNi1jZDg3NWE3NmY2ZGUiLCJlbWFpbCI6ImZlZWRtZSsyOWQzYjU5Zi02N2VmLTQwMTctYmMxZC1iOGUwOGVlYjM4NjZAdGVzdC5jb20iLCJpYXQiOjE3NzA1NTE5MDYsImV4cCI6MTc3MDU1NTUwNn0.-gBy4n7hjIOatxj8mI7nlEOc0xxAZB-TffabHv7FwrGXlGT9qkYGe2wJDtkzeX6l
+Authorization: Bearer eyJhbGciOiJIUzM4NCJ9.eyJzdWIiOiJhOWIxN2QwYy02MDY0LTQxZDEtYmZjYS03Mzk0OTc0OTkzOTciLCJlbWFpbCI6ImZlZWRtZSswYWQ3Y2I3My03Mzg2LTQ4YzAtYmE5My00OGMzOTdlNjc5YzdAdGVzdC5jb20iLCJpYXQiOjE3NzA1NTI0NjYsImV4cCI6MTc3MDU1NjA2Nn0.1quLUCO6TNA9yJcunT54KlA295hf4Zdhk0bN3GGBDNhcg-Cac6ks24bHkvQ3BFRc
 Host: localhost:8080</code></pre>
 </div>
 </div>
@@ -1399,25 +1399,25 @@ Content-Length: 802
 
 {
   "items" : [ {
-    "postId" : "b94a4089-16e9-436b-951d-2ff0705fb1c0",
-    "authorId" : "b7e55bae-76b8-42d8-b9d7-fa7594fb2635",
-    "authorHandle" : "feedtarget_5d01c071",
+    "postId" : "226a99f7-2440-4ff1-8502-a5d080aed74c",
+    "authorId" : "4b2cbb57-46aa-42f9-a17d-14a5750bbfe3",
+    "authorHandle" : "feedtarget_3df25e8a",
     "authorName" : "타겟유저",
     "content" : "팔로잉 글 3",
     "imageUrls" : [ ],
     "visibility" : "ALL",
-    "createdAt" : "2026-02-08T20:58:26.871433"
+    "createdAt" : "2026-02-08T21:07:46.773058"
   }, {
-    "postId" : "1339a183-44e3-4eaf-9e96-9bf4aa58261f",
-    "authorId" : "b7e55bae-76b8-42d8-b9d7-fa7594fb2635",
-    "authorHandle" : "feedtarget_5d01c071",
+    "postId" : "97cd61e1-cc25-4af7-8bb7-65bafa5e45c6",
+    "authorId" : "4b2cbb57-46aa-42f9-a17d-14a5750bbfe3",
+    "authorHandle" : "feedtarget_3df25e8a",
     "authorName" : "타겟유저",
     "content" : "팔로잉 글 2",
     "imageUrls" : [ ],
     "visibility" : "ALL",
-    "createdAt" : "2026-02-08T20:58:26.867444"
+    "createdAt" : "2026-02-08T21:07:46.768062"
   } ],
-  "nextCursor" : "2026-02-08T20:58:26.867444|1339a183-44e3-4eaf-9e96-9bf4aa58261f",
+  "nextCursor" : "2026-02-08T21:07:46.768062|97cd61e1-cc25-4af7-8bb7-65bafa5e45c6",
   "hasNext" : true
 }</code></pre>
 </div>
@@ -1498,8 +1498,8 @@ Content-Length: 802
 <h4 id="_다음_페이지_조회_예시_2"><a class="anchor" href="#_다음_페이지_조회_예시_2"></a><a class="link" href="#_다음_페이지_조회_예시_2">다음 페이지 조회 예시</a></h4>
 <div class="listingblock">
 <div class="content">
-<pre class="highlight nowrap"><code class="language-http" data-lang="http">GET /api/feed?size=2&amp;cursor=2026-02-08T20%3A58%3A26.114135%7Cce383bc0-8d37-45ca-a969-68c1b6d1b04b HTTP/1.1
-Authorization: Bearer eyJhbGciOiJIUzM4NCJ9.eyJzdWIiOiJhZTllYTc5Yy1kNTRlLTRlZjYtOTVhOC1mMTU5MzliY2ZmZmQiLCJlbWFpbCI6ImZlZWRtZStlNTc1NjRiNi02MjUwLTQyNDEtYjNiZS1hNWIzMGU0Y2QzYTlAdGVzdC5jb20iLCJpYXQiOjE3NzA1NTE5MDUsImV4cCI6MTc3MDU1NTUwNX0.O1nllz7l8eOiM62ZBX7awQnqTKtagIlr4XCSfHiRpzb_BNzPMEojG_m5cnk6jWDS
+<pre class="highlight nowrap"><code class="language-http" data-lang="http">GET /api/feed?size=2&amp;cursor=2026-02-08T21%3A07%3A45.873578%7C1a49ce1b-60ec-46ff-b25a-ae958123ee3d HTTP/1.1
+Authorization: Bearer eyJhbGciOiJIUzM4NCJ9.eyJzdWIiOiJiZGM1YWJiNS1hYzhjLTQ1MzktOTA0Ny04ZDFlZDRiZDhmZTQiLCJlbWFpbCI6ImZlZWRtZStmYjIzYTU2NC1hZWY3LTQ5YzUtYTMxOC1jYTZhNzFlYjRmNjVAdGVzdC5jb20iLCJpYXQiOjE3NzA1NTI0NjUsImV4cCI6MTc3MDU1NjA2NX0.yiumDz-34P8NgnrWgPbQYNkL-HJ1hwUhVIPMIZVqVLUx8K-YXm-NeO0s3T9tUwMH
 Host: localhost:8080</code></pre>
 </div>
 </div>
@@ -1557,14 +1557,14 @@ Content-Length: 404
 
 {
   "items" : [ {
-    "postId" : "382da07b-99a7-4800-8a71-28467d4ba6b9",
-    "authorId" : "ae2db42a-f51d-4336-9255-3f32a9006c72",
-    "authorHandle" : "feedtarget_f635f475",
+    "postId" : "dcf3669b-23fb-4c30-9b39-a849c728e7b2",
+    "authorId" : "b17616d3-4d70-40cd-811a-f66f393fdf95",
+    "authorHandle" : "feedtarget_0ac986c3",
     "authorName" : "타겟유저",
     "content" : "팔로잉 글 1",
     "imageUrls" : [ ],
     "visibility" : "ALL",
-    "createdAt" : "2026-02-08T20:58:26.093147"
+    "createdAt" : "2026-02-08T21:07:45.851592"
   } ],
   "nextCursor" : null,
   "hasNext" : false
@@ -1650,8 +1650,8 @@ Content-Length: 404
 <h4 id="_request_5"><a class="anchor" href="#_request_5"></a><a class="link" href="#_request_5">Request</a></h4>
 <div class="listingblock">
 <div class="content">
-<pre class="highlight nowrap"><code class="language-http" data-lang="http">DELETE /api/posts/35d187ec-3214-439d-8c73-9a267c79425e HTTP/1.1
-Authorization: Bearer eyJhbGciOiJIUzM4NCJ9.eyJzdWIiOiI2ODMwODRjNy1jMjA4LTQ3NzItYTRlMi01MTQ4ZjQxN2UwYWUiLCJlbWFpbCI6ImRlbCthYjNiYjI2OC0wOWExLTRjMTQtYmYxNi04MDY2MTE5MmVkNWNAdGVzdC5jb20iLCJpYXQiOjE3NzA1NTE5MDgsImV4cCI6MTc3MDU1NTUwOH0.Rkj393xov7E6N7R_r09kIedW_8uRdjmFkYdj-Oodxgy3lKcGj5-vltTG0gFBkGxw
+<pre class="highlight nowrap"><code class="language-http" data-lang="http">DELETE /api/posts/bcad3eca-caa5-4cbd-a6e0-9fa845f25384 HTTP/1.1
+Authorization: Bearer eyJhbGciOiJIUzM4NCJ9.eyJzdWIiOiI2ZDdiZTg1ZC0wMTllLTQ2MTYtYTZiMi1kNzQ3NzM5NWFjZjQiLCJlbWFpbCI6ImRlbCszZGJjNTNkNS1jYTBlLTRmYTItOGJhMC02ZjcwNzZkZTI0ZjZAdGVzdC5jb20iLCJpYXQiOjE3NzA1NTI0NjgsImV4cCI6MTc3MDU1NjA2OH0.3nsmED0Sp37ttG9XP8jF1xM_ufr5XKkQT1yhcY8DB9Mpgd15DkT5JbnNQ0g-Ai4y
 Host: localhost:8080</code></pre>
 </div>
 </div>
@@ -1698,8 +1698,8 @@ X-Frame-Options: DENY</code></pre>
 <h3 id="_팔로우"><a class="anchor" href="#_팔로우"></a><a class="link" href="#_팔로우">팔로우</a></h3>
 <div class="listingblock">
 <div class="content">
-<pre class="highlight nowrap"><code class="language-http" data-lang="http">POST /api/follows/f391bcfc-249f-446a-80dd-980e42a0cc3e HTTP/1.1
-Authorization: Bearer eyJhbGciOiJIUzM4NCJ9.eyJzdWIiOiJkZjc0NmQyNS01ZTQ3LTRmMjItOTI4OS0xNDFlNWVkM2EyN2QiLCJlbWFpbCI6ImZvbGxvd21lK2FlYjJlYTZlLTgyNDMtNDBmNC05ZDAyLTdiZTE5MGU0Mzg2ZkB0ZXN0LmNvbSIsImlhdCI6MTc3MDU1MTkwNywiZXhwIjoxNzcwNTU1NTA3fQ.gNzbuP-cVBzHxZPVR6klRfc8Ef836tLPwuobtl82HaaeyrQjf4_dlkNyaT4xHl47
+<pre class="highlight nowrap"><code class="language-http" data-lang="http">POST /api/follows/5a67dd77-6fc1-455c-ad02-419d8c42f1a0 HTTP/1.1
+Authorization: Bearer eyJhbGciOiJIUzM4NCJ9.eyJzdWIiOiIyOTgxMDI2NC02NjdhLTRkYWItYmQ3Mi03NGYwY2Q4NTNjOTQiLCJlbWFpbCI6ImZvbGxvd21lKzllMTEyYmE3LTI5OWEtNDZhYS1iMDM3LTM0ZDQwYzk3OGUyNkB0ZXN0LmNvbSIsImlhdCI6MTc3MDU1MjQ2NywiZXhwIjoxNzcwNTU2MDY3fQ.ndKcMNHkeSL5m8n1klSsM-sJ7Ayo06WfSs3K462E6d6LV_lv7KIZMbjFDVn8gkAA
 Host: localhost:8080
 Content-Type: application/x-www-form-urlencoded</code></pre>
 </div>
@@ -1762,8 +1762,8 @@ X-Frame-Options: DENY</code></pre>
 <h3 id="_좋아요"><a class="anchor" href="#_좋아요"></a><a class="link" href="#_좋아요">좋아요</a></h3>
 <div class="listingblock">
 <div class="content">
-<pre class="highlight nowrap"><code class="language-http" data-lang="http">POST /api/posts/999b78de-054a-4044-8048-551047203226/likes HTTP/1.1
-Authorization: Bearer eyJhbGciOiJIUzM4NCJ9.eyJzdWIiOiJjNDY3NTU3Yy0zODhkLTRjZWEtODBlYi0yMTc0NWFiMGI2NDYiLCJlbWFpbCI6Imxpa2UrODFlZmYyMjAtODhiNy00MGNlLWJmYjUtMGFhMzQ0ZGRiNTUxQHRlc3QuY29tIiwiaWF0IjoxNzcwNTUxOTA3LCJleHAiOjE3NzA1NTU1MDd9.W7PCIMNmjiRljGQA-DVmAAdKUkqLU0YBdF-FrMLVXEdYjUUowiJDV8MNnJzjtjBi
+<pre class="highlight nowrap"><code class="language-http" data-lang="http">POST /api/posts/25b6deca-8cb0-4570-a27f-2515423f6d0c/likes HTTP/1.1
+Authorization: Bearer eyJhbGciOiJIUzM4NCJ9.eyJzdWIiOiJkNmUyNGFmOS03N2ZmLTQ1OWUtOThjNC1mZGYyYzc4MTYyNjciLCJlbWFpbCI6Imxpa2UrYTA2YmM5MWQtYTQ0ZC00OTk5LTk4OTgtOTI1NTBkOWRmZDU2QHRlc3QuY29tIiwiaWF0IjoxNzcwNTUyNDY3LCJleHAiOjE3NzA1NTYwNjd9.gHIpjHUPyEAxPtWZ67ISA_QEo0zqHpKsjim9QwsSVVgiP8xpv9YoKnAKl-CaBNeQ
 Host: localhost:8080
 Content-Type: application/x-www-form-urlencoded</code></pre>
 </div>
@@ -1821,8 +1821,8 @@ X-Frame-Options: DENY</code></pre>
 <h3 id="_좋아요_취소"><a class="anchor" href="#_좋아요_취소"></a><a class="link" href="#_좋아요_취소">좋아요 취소</a></h3>
 <div class="listingblock">
 <div class="content">
-<pre class="highlight nowrap"><code class="language-http" data-lang="http">DELETE /api/posts/10abd726-fd64-4ca8-b545-2983e128f537/likes HTTP/1.1
-Authorization: Bearer eyJhbGciOiJIUzM4NCJ9.eyJzdWIiOiJjMjdiMmYxNC1lYzk3LTRlYzMtOGUxOS0zZjRiZWUwOWRiMjciLCJlbWFpbCI6InVubGlrZSswMGI2YjFkNy05NDMyLTRlMTEtODg2Yy01Njk2ODBhZGVjYjlAdGVzdC5jb20iLCJpYXQiOjE3NzA1NTE5MDcsImV4cCI6MTc3MDU1NTUwN30.mg1R4A8V1cRQI3sGu7TI5QfWJjiRxFs40QDB0zoMkGUZelF18LnV91egTBPGM-lf
+<pre class="highlight nowrap"><code class="language-http" data-lang="http">DELETE /api/posts/07f0a3aa-5968-4635-bdb4-237d3df425a4/likes HTTP/1.1
+Authorization: Bearer eyJhbGciOiJIUzM4NCJ9.eyJzdWIiOiI4YTM3NjkzMS1mYWM1LTRiZTYtYTM4ZC0xMmI5YTY1ZmZmMmIiLCJlbWFpbCI6InVubGlrZSsyMDI3YmU4OS03OTI3LTRhMjEtOWJkZC0xYTA3M2JlOTdiN2FAdGVzdC5jb20iLCJpYXQiOjE3NzA1NTI0NjcsImV4cCI6MTc3MDU1NjA2N30.oKNW7cfTTbBfpPgguJPNiGdPXFnf25qjHID5OPDFDNY5hUUeGaEvsz7ZbUURanZL
 Host: localhost:8080</code></pre>
 </div>
 </div>
@@ -1885,7 +1885,7 @@ X-Frame-Options: DENY</code></pre>
 <div class="listingblock">
 <div class="content">
 <pre class="highlight nowrap"><code class="language-http" data-lang="http">GET /api/notifications?size=2 HTTP/1.1
-Authorization: Bearer eyJhbGciOiJIUzM4NCJ9.eyJzdWIiOiIyYTRkZjcwZi01YzY4LTQxZDYtOTYyZS03YjI5M2IzZTA1YzciLCJlbWFpbCI6Im5vdGkrOWI2ODc4NTctNjYzOC00NWU5LWEwN2QtYzA1NDU2ZWQwY2I2QHRlc3QuY29tIiwiaWF0IjoxNzcwNTUxOTA3LCJleHAiOjE3NzA1NTU1MDd9.PN7vCLbU052VIZ9V5ggC7n3_PtkvXHN6W6vkRWZimKthKZmzjc_34V5h9D9LqkX6
+Authorization: Bearer eyJhbGciOiJIUzM4NCJ9.eyJzdWIiOiI0ZTJmYWVmNC03MTcyLTQzZjEtYjM5Mi1mNWQ5ZDk2MTM3ODAiLCJlbWFpbCI6Im5vdGkrNDcwZTQ3NGQtMDM1OS00ZmJkLWI4YTAtODViN2ZkNGE5MTVjQHRlc3QuY29tIiwiaWF0IjoxNzcwNTUyNDY3LCJleHAiOjE3NzA1NTYwNjd9.W0dhRtIewmZG685SEO9zHhvgboohCwZRxxSbXzFDBdkndtxtTo8Lwux1TC5PGskV
 Host: localhost:8080</code></pre>
 </div>
 </div>
@@ -1943,19 +1943,19 @@ Content-Length: 532
 
 {
   "items" : [ {
-    "id" : "7e5956e1-fbf7-4013-b268-3667251c4ba8",
+    "id" : "113a4713-8c36-41f7-ad80-971ebd1c009c",
     "type" : "MESSAGE_RECEIVED",
-    "body" : "알림 2",
+    "body" : "알림 3",
     "read" : false,
-    "createdAt" : "2026-02-08T20:58:27.8407819"
+    "createdAt" : "2026-02-08T21:07:47.9333868"
   }, {
-    "id" : "5728a9cb-7f85-4e6b-9624-edfa2d928509",
+    "id" : "b81d7a28-3b30-46a7-822c-6e0b3d75461a",
     "type" : "MESSAGE_RECEIVED",
     "body" : "알림 1",
     "read" : false,
-    "createdAt" : "2026-02-08T20:58:27.8407819"
+    "createdAt" : "2026-02-08T21:07:47.9323874"
   } ],
-  "nextCursor" : "2026-02-08T20:58:27.840781900|5728a9cb-7f85-4e6b-9624-edfa2d928509",
+  "nextCursor" : "2026-02-08T21:07:47.932387400|b81d7a28-3b30-46a7-822c-6e0b3d75461a",
   "hasNext" : true,
   "hasUnread" : true
 }</code></pre>
@@ -2026,8 +2026,8 @@ Content-Length: 532
 <h4 id="_다음_페이지_조회_예시_3"><a class="anchor" href="#_다음_페이지_조회_예시_3"></a><a class="link" href="#_다음_페이지_조회_예시_3">다음 페이지 조회 예시</a></h4>
 <div class="listingblock">
 <div class="content">
-<pre class="highlight nowrap"><code class="language-http" data-lang="http">GET /api/notifications?size=2&amp;cursor=2026-02-08T20%3A58%3A27.920735800%7C4bfaaf99-ae59-49eb-92b0-5fe9962be669 HTTP/1.1
-Authorization: Bearer eyJhbGciOiJIUzM4NCJ9.eyJzdWIiOiJkMTM5NjNmZC1kNDFkLTQ5ZDEtYTZlNS1kZTc3MWMxZDUyZDciLCJlbWFpbCI6Im5vdGkrZjUxZjVlM2YtYTMwYS00NDg1LTljZTAtY2QxYWJhMDlkY2YyQHRlc3QuY29tIiwiaWF0IjoxNzcwNTUxOTA3LCJleHAiOjE3NzA1NTU1MDd9.D0nIJQOgD6X5UBxZACuSvjmXJt7GmpY_YjcaBEyg8pQIT6sp_9fmAkgukLtzve0a
+<pre class="highlight nowrap"><code class="language-http" data-lang="http">GET /api/notifications?size=2&amp;cursor=2026-02-08T21%3A07%3A48.000348800%7C0941d942-0777-4c6d-9cf7-c4f4ca0cdfab HTTP/1.1
+Authorization: Bearer eyJhbGciOiJIUzM4NCJ9.eyJzdWIiOiIzYmJmOTljNy1hOWE2LTQ0MDktYjkxNS1lM2I4NjYzMTYzZTQiLCJlbWFpbCI6Im5vdGkrZmE5ZTI5MTMtMWY0MC00Mjk0LTg2ZWYtZTdhYWQwNzMxZjkzQHRlc3QuY29tIiwiaWF0IjoxNzcwNTUyNDY3LCJleHAiOjE3NzA1NTYwNjd9.1i9Y7570NokNCsrKY34OHO4jM7K6HA557uWcLEDOZUvmJW_c9oLM0ZrDdOb800HU
 Host: localhost:8080</code></pre>
 </div>
 </div>
@@ -2085,11 +2085,11 @@ Content-Length: 279
 
 {
   "items" : [ {
-    "id" : "1a731835-f628-43d1-94cc-2007e03db0c2",
+    "id" : "622af306-7aea-49e8-8a23-283287ab00ed",
     "type" : "MESSAGE_RECEIVED",
     "body" : "알림 1",
     "read" : false,
-    "createdAt" : "2026-02-08T20:58:27.9197369"
+    "createdAt" : "2026-02-08T21:07:47.9993497"
   } ],
   "nextCursor" : null,
   "hasNext" : false,
@@ -2164,9 +2164,9 @@ Content-Length: 279
 <h3 id="_알림_단건_읽음_처리"><a class="anchor" href="#_알림_단건_읽음_처리"></a><a class="link" href="#_알림_단건_읽음_처리">알림 단건 읽음 처리</a></h3>
 <div class="listingblock">
 <div class="content">
-<pre class="highlight nowrap"><code class="language-http" data-lang="http">POST /api/notifications/7814834e-0b57-4934-9f48-7efbdccfc5f3/read HTTP/1.1
+<pre class="highlight nowrap"><code class="language-http" data-lang="http">POST /api/notifications/98975206-8709-4fc8-b851-ecce4fb65389/read HTTP/1.1
 Content-Type: application/json
-Authorization: Bearer eyJhbGciOiJIUzM4NCJ9.eyJzdWIiOiIzZWVmMzE4OS02MjJlLTQyMmUtYjc3OS1jYzJmYTgyOGFkOWEiLCJlbWFpbCI6Im5vdGkrYWJhOTk4YzUtZjM2YS00ZjA3LWEyZTUtZDliOWQ5NGM0MGYwQHRlc3QuY29tIiwiaWF0IjoxNzcwNTUxOTA3LCJleHAiOjE3NzA1NTU1MDd9.yHj9Sa8OBYKacKJbOuq3f0oLNc4uDo0pHEpnNtQNl03K9aqIsh8OHT-t8bTxm0TT
+Authorization: Bearer eyJhbGciOiJIUzM4NCJ9.eyJzdWIiOiJiNWZlMmMzNy0yY2FjLTRiNTctOTA4My0xNmUwYjI3ZDdlOTYiLCJlbWFpbCI6Im5vdGkrZDJmODk0YWYtOGUxMy00ZjljLTk0NmQtOGM3NTMwNzIzODkyQHRlc3QuY29tIiwiaWF0IjoxNzcwNTUyNDY4LCJleHAiOjE3NzA1NTYwNjh9.sDPjcdIueaR3bVlLEE_uye83fdlhBEi3Mm2l8ovOSSP0nHeBM4deUmnxxJMM_2Tq
 Host: localhost:8080</code></pre>
 </div>
 </div>
@@ -2225,7 +2225,7 @@ X-Frame-Options: DENY</code></pre>
 <div class="content">
 <pre class="highlight nowrap"><code class="language-http" data-lang="http">POST /api/notifications/read-all HTTP/1.1
 Content-Type: application/json
-Authorization: Bearer eyJhbGciOiJIUzM4NCJ9.eyJzdWIiOiJlZTkzMjEwMS1hNjFkLTRiMTEtYmZmNi1mOWQ0ZDdhM2JjOWIiLCJlbWFpbCI6Im5vdGkrOGRjNGE0MDgtOTgxMC00Mzc4LTk1MjctNDA5ZjY4YzljNTc3QHRlc3QuY29tIiwiaWF0IjoxNzcwNTUxOTA3LCJleHAiOjE3NzA1NTU1MDd9.Y0EpHJEHJT4za3s6B2uBr15ITxzHS-rdd16-ZJ6M5fmYRbGOa-8OyZoP07yXVeHf
+Authorization: Bearer eyJhbGciOiJIUzM4NCJ9.eyJzdWIiOiJiNWYzOWQ1Yy0zYzhjLTQ1NjUtYmNmOC1lNDJkMzI0NWY5ZWIiLCJlbWFpbCI6Im5vdGkrMWZjMzdmZGMtOGYxNC00OTEzLWFjYmItYjE4MjNiNzAyNTEzQHRlc3QuY29tIiwiaWF0IjoxNzcwNTUyNDY3LCJleHAiOjE3NzA1NTYwNjd9.Jm_SBswKk4hBe_JY7dAsaPZqUIFcUkSmUZQ7B7i7zRGNoIiw75LU24NT7G13tq18
 Host: localhost:8080</code></pre>
 </div>
 </div>
@@ -2291,7 +2291,7 @@ Content-Length: 26
 <div class="listingblock">
 <div class="content">
 <pre class="highlight nowrap"><code class="language-http" data-lang="http">DELETE /api/notifications/read HTTP/1.1
-Authorization: Bearer eyJhbGciOiJIUzM4NCJ9.eyJzdWIiOiIwOTdmN2VjOS00ZjZiLTQwMTMtODI1OC1mMGMyNTgyZmI1MDUiLCJlbWFpbCI6Im5vdGkrNmYxZTE1MjctMDcwMS00YzMxLTg2MWYtNmQ4YTc5ZDZjMzg5QHRlc3QuY29tIiwiaWF0IjoxNzcwNTUxOTA4LCJleHAiOjE3NzA1NTU1MDh9.MEywvV0Mck_k_d6rUhUpio1jbVlkRXSxnaEbbBLck0T74yqpvNXEsOXxI41JwArC
+Authorization: Bearer eyJhbGciOiJIUzM4NCJ9.eyJzdWIiOiI5MzQ5YjdhMC0wYzQ3LTRlNzUtOTY5MC02YTAzNjEzODJjZmMiLCJlbWFpbCI6Im5vdGkrNmU2MWU1OGItOWMzYS00YjkzLWJkNzUtMGY1M2IyNTdjY2M3QHRlc3QuY29tIiwiaWF0IjoxNzcwNTUyNDY4LCJleHAiOjE3NzA1NTYwNjh9.b-oHIqRGiVP_txCDbGnYWWBt9DytX6l0v-b9415V_TF7DD6gUHNwlzjubvAy8S0A
 Host: localhost:8080</code></pre>
 </div>
 </div>
@@ -2363,8 +2363,8 @@ Content-Length: 26
 <h4 id="_request_6"><a class="anchor" href="#_request_6"></a><a class="link" href="#_request_6">Request</a></h4>
 <div class="listingblock">
 <div class="content">
-<pre class="highlight nowrap"><code class="language-http" data-lang="http">GET /api/conversations/ca35f687-8c1e-43b0-b8d1-021c2e06df91/messages?size=2 HTTP/1.1
-Authorization: Bearer eyJhbGciOiJIUzM4NCJ9.eyJzdWIiOiIzZTdkYmRmNS1lYzM2LTRiNTEtYWI2MC02MDc2ZDJhMjMzM2QiLCJlbWFpbCI6Im1zZ21lK2I5MGNlZTZkLWE4M2QtNGFlMC05NGIyLWFiZWNlYjc5MTU3YkB0ZXN0LmNvbSIsImlhdCI6MTc3MDU1MTkwNywiZXhwIjoxNzcwNTU1NTA3fQ.WJSKG2Z-arqhmJWVE7KPpac3WZlV_DCJpbrobq3x5kojDFq3hztbmzzb0vk5G53v
+<pre class="highlight nowrap"><code class="language-http" data-lang="http">GET /api/conversations/7a5caf44-2296-46bf-9905-dd69eafe96b5/messages?size=2 HTTP/1.1
+Authorization: Bearer eyJhbGciOiJIUzM4NCJ9.eyJzdWIiOiIxZWZjYzFkNy1kZGVlLTQzMWUtOTUzZS02ZmYzMTI0OTU0ZGIiLCJlbWFpbCI6Im1zZ21lKzQ3MDM0MjZmLWJlYjEtNDBjNy05YjE5LTliMDI5MmFmMjc1MUB0ZXN0LmNvbSIsImlhdCI6MTc3MDU1MjQ2NywiZXhwIjoxNzcwNTU2MDY3fQ.OkLzNIO6AKcDKQV495yrVOGul50Pzf5aLrTvVCq38lfCB7sGvbVoDFip3lVzTWJh
 Host: localhost:8080</code></pre>
 </div>
 </div>
@@ -2444,19 +2444,19 @@ Content-Length: 593
 
 {
   "items" : [ {
-    "messageId" : "aa24f96f-dbab-4141-95b8-a6e7148d80f9",
-    "senderId" : "3e7dbdf5-ec36-4b51-ab60-6076d2a2333d",
+    "messageId" : "1d36c0fe-e86a-494c-abc4-a150fc464101",
+    "senderId" : "1efcc1d7-ddee-431e-953e-6ff3124954db",
     "content" : "메시지 3",
-    "createdAt" : "2026-02-08T20:58:27.5030658",
+    "createdAt" : "2026-02-08T21:07:47.5685982",
     "attachments" : [ ]
   }, {
-    "messageId" : "7da0c3a4-64a2-403f-a7b7-5a73287f19c6",
-    "senderId" : "3e7dbdf5-ec36-4b51-ab60-6076d2a2333d",
+    "messageId" : "b99ca3f4-1720-4f0e-916b-b2009c7937d5",
+    "senderId" : "1efcc1d7-ddee-431e-953e-6ff3124954db",
     "content" : "메시지 2",
-    "createdAt" : "2026-02-08T20:58:27.4990665",
+    "createdAt" : "2026-02-08T21:07:47.5646005",
     "attachments" : [ ]
   } ],
-  "nextCursor" : "2026-02-08T20:58:27.499066500|7da0c3a4-64a2-403f-a7b7-5a73287f19c6",
+  "nextCursor" : "2026-02-08T21:07:47.564600500|b99ca3f4-1720-4f0e-916b-b2009c7937d5",
   "hasNext" : true
 }</code></pre>
 </div>
@@ -2547,8 +2547,8 @@ Content-Length: 593
 <h4 id="_다음_페이지_조회_예시_4"><a class="anchor" href="#_다음_페이지_조회_예시_4"></a><a class="link" href="#_다음_페이지_조회_예시_4">다음 페이지 조회 예시</a></h4>
 <div class="listingblock">
 <div class="content">
-<pre class="highlight nowrap"><code class="language-http" data-lang="http">GET /api/conversations/baa34059-ac1b-4576-ae27-c1a55a2bc37a/messages?size=2&amp;cursor=2026-02-08T20%3A58%3A27.633990700%7C905c03f6-4ca5-418e-9ced-ebea6b6130e6 HTTP/1.1
-Authorization: Bearer eyJhbGciOiJIUzM4NCJ9.eyJzdWIiOiI0NmM0YjkxYi1mMDVjLTRjZWUtYmNiZS05NTA0ODk3MjI4OTAiLCJlbWFpbCI6Im1zZ21lKzQ5MDc2MGY5LTQzODktNGZlZC05NDgwLTcyODQzM2FmMWQ3M0B0ZXN0LmNvbSIsImlhdCI6MTc3MDU1MTkwNywiZXhwIjoxNzcwNTU1NTA3fQ.Bukv0WsCmJUZoqyHxyHzUP9M7MIBeejV-RgxfFhCNzUx4Xzet8hnHwFvVGltwsBx
+<pre class="highlight nowrap"><code class="language-http" data-lang="http">GET /api/conversations/d5718ce2-e4e8-4073-9bcb-dd0958514332/messages?size=2&amp;cursor=2026-02-08T21%3A07%3A47.707517900%7Cfe08d9b3-cf96-4081-a8b9-c57aeb1b3855 HTTP/1.1
+Authorization: Bearer eyJhbGciOiJIUzM4NCJ9.eyJzdWIiOiI5ODgzNmU2Mi0wMTc0LTQ4ZDYtOTQwNS1lOTYyNWY5NGE4MTgiLCJlbWFpbCI6Im1zZ21lKzhiOGE1MjczLTA2Y2QtNGQxYy04NmExLWFjNDMwYmY0NWY4N0B0ZXN0LmNvbSIsImlhdCI6MTc3MDU1MjQ2NywiZXhwIjoxNzcwNTU2MDY3fQ.cd6sSqHINFJr-HAd9QwHJ1Ia3ZJd4Qk_9Bm1UpQhFaoWbwkEGdLurb7NFJml2PBF
 Host: localhost:8080</code></pre>
 </div>
 </div>
@@ -2621,14 +2621,14 @@ Cache-Control: no-cache, no-store, max-age=0, must-revalidate
 Pragma: no-cache
 Expires: 0
 X-Frame-Options: DENY
-Content-Length: 298
+Content-Length: 297
 
 {
   "items" : [ {
-    "messageId" : "8ff00626-7386-43d3-ac10-251137abf9db",
-    "senderId" : "46c4b91b-f05c-4cee-bcbe-950489722890",
+    "messageId" : "39ce95f0-3714-442a-815d-00bc11e40eeb",
+    "senderId" : "98836e62-0174-48d6-9405-e9625f94a818",
     "content" : "메시지 1",
-    "createdAt" : "2026-02-08T20:58:27.6299929",
+    "createdAt" : "2026-02-08T21:07:47.703521",
     "attachments" : [ ]
   } ],
   "nextCursor" : null,
