@@ -77,8 +77,12 @@ dependencies {
 
 tasks.named('test') {
 	useJUnitPlatform()
-	systemProperty "spring.profiles.active", "test"
 	outputs.dir snippetsDir
+
+	// ✅ CI/로컬 모두 테스트는 test 프로필로 고정(옵션으로 덮어쓸 수도 있게)
+	systemProperty "spring.profiles.active",
+			System.getProperty("spring.profiles.active",
+					System.getenv().getOrDefault("SPRING_PROFILES_ACTIVE", "test"))
 }
 
 tasks.named('asciidoctor') {

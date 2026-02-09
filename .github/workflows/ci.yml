@@ -23,8 +23,12 @@ jobs:
       - name: Grant execute permission for gradlew
         run: chmod +x ./gradlew
 
-      # ✅ CI에서 가장 안전한 방식
-      - name: Test
-        env:
-          TZ: Asia/Seoul
-        run: ./gradlew -Dspring.profiles.active=test clean test
+      # ✅ test 프로필은 build.gradle에서 강제했으니 명령 단순화
+      - name: Test & Asciidoctor
+        run: ./gradlew clean test asciidoctor
+
+      - name: Upload docs artifact (optional)
+        uses: actions/upload-artifact@v4
+        with:
+          name: restdocs
+          path: build/docs/asciidoc
