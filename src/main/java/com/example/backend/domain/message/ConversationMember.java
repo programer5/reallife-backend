@@ -20,7 +20,7 @@ import static lombok.AccessLevel.PROTECTED;
         },
         indexes = {
                 @Index(name = "idx_conv_id", columnList = "conversation_id"),
-                @Index(name = "idx_user_id", columnList = "user_id")
+                @Index(name = "idx_conv_member_user_id", columnList = "user_id")
         }
 )
 public class ConversationMember extends BaseEntity {

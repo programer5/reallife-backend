@@ -1,7 +1,6 @@
 package com.example.backend.controller.comment;
 
 import com.example.backend.controller.DocsTestSupport;
-import com.example.backend.controller.DocsTestSupport.*;
 import com.example.backend.domain.user.User;
 import com.example.backend.restdocs.ErrorResponseSnippet;
 import org.junit.jupiter.api.Test;
@@ -11,6 +10,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.HttpHeaders;
 import org.springframework.restdocs.RestDocumentationContextProvider;
 import org.springframework.restdocs.RestDocumentationExtension;
+import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
@@ -28,9 +28,11 @@ import static org.springframework.restdocs.payload.PayloadDocumentation.*;
 import static org.springframework.restdocs.request.RequestDocumentation.*;
 import static org.springframework.security.test.web.servlet.setup.SecurityMockMvcConfigurers.springSecurity;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
+import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @SpringBootTest
+@ActiveProfiles("test")
 @ExtendWith({RestDocumentationExtension.class, SpringExtension.class})
 @Transactional
 class CommentControllerDocsTest {
@@ -61,6 +63,7 @@ class CommentControllerDocsTest {
                                 }
                                 """)
                         .header(HttpHeaders.AUTHORIZATION, DocsTestSupport.auth(token)))
+                .andDo(print())
                 .andExpect(status().isCreated())
                 .andDo(document("comments-create-201",
                         preprocessRequest(prettyPrint()),
@@ -95,6 +98,7 @@ class CommentControllerDocsTest {
                 .perform(get("/api/posts/{postId}/comments", postId)
                         .param("size", "10")
                         .header(HttpHeaders.AUTHORIZATION, DocsTestSupport.auth(token)))
+                .andDo(print())
                 .andExpect(status().isOk())
                 .andDo(document("comments-list-200",
                         preprocessRequest(prettyPrint()),
@@ -133,6 +137,7 @@ class CommentControllerDocsTest {
         mockMvc(restDocumentation)
                 .perform(delete("/api/comments/{commentId}", commentId)
                         .header(HttpHeaders.AUTHORIZATION, DocsTestSupport.auth(token)))
+                .andDo(print())
                 .andExpect(status().isNoContent())
                 .andDo(document("comments-delete-204",
                         preprocessRequest(prettyPrint()),
@@ -162,6 +167,7 @@ class CommentControllerDocsTest {
                                 }
                                 """)
                         .header(HttpHeaders.AUTHORIZATION, DocsTestSupport.auth(token)))
+                .andDo(print())
                 .andExpect(status().isBadRequest())
                 .andDo(document("comments-create-400-content-blank",
                         preprocessRequest(prettyPrint()),
