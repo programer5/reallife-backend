@@ -78,6 +78,9 @@ dependencies {
 tasks.named('test') {
 	useJUnitPlatform()
 	outputs.dir snippetsDir
+
+	// ✅ 로컬/CI 어디서든 ./gradlew test 만 치면 test 프로필로 돌게 고정
+	systemProperty "spring.profiles.active", "test"
 }
 
 tasks.named('asciidoctor') {
