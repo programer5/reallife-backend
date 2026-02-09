@@ -17,6 +17,8 @@ import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.context.WebApplicationContext;
 
+import java.util.UUID;
+
 import static org.springframework.restdocs.headers.HeaderDocumentation.headerWithName;
 import static org.springframework.restdocs.headers.HeaderDocumentation.requestHeaders;
 import static org.springframework.restdocs.mockmvc.MockMvcRestDocumentation.document;
@@ -48,10 +50,7 @@ class CommentControllerDocsTest {
         User me = docs.saveUser("commenter", "댓글러");
         String token = docs.issueTokenFor(me);
 
-        // TODO: 게시글 생성 helper가 있으면 사용 / 없으면 postId를 만드는 fixture를 준비해야 함
-        // long postId = docs.savePost(me, "hello", null).getId();
-
-        long postId = 1L; // 임시: 구현하면서 실제 postId 픽스처로 교체
+        UUID postId = docs.savePost(me.getId(), "post for comment").getId();
 
         mockMvc(restDocumentation)
                 .perform(post("/api/posts/{postId}/comments", postId)
@@ -90,7 +89,7 @@ class CommentControllerDocsTest {
         User me = docs.saveUser("reader", "리더");
         String token = docs.issueTokenFor(me);
 
-        long postId = 1L; // 임시: 구현하면서 실제 postId 픽스처로 교체
+        UUID postId = docs.savePost(me.getId(), "post for comment").getId();
 
         mockMvc(restDocumentation)
                 .perform(get("/api/posts/{postId}/comments", postId)
@@ -152,7 +151,7 @@ class CommentControllerDocsTest {
         User me = docs.saveUser("commenter2", "댓글러2");
         String token = docs.issueTokenFor(me);
 
-        long postId = 1L;
+        UUID postId = docs.savePost(me.getId(), "post for comment").getId();
 
         mockMvc(restDocumentation)
                 .perform(post("/api/posts/{postId}/comments", postId)
