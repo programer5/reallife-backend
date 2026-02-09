@@ -17,6 +17,8 @@ concurrency:
 jobs:
   build-docs:
     runs-on: ubuntu-latest
+    env:
+      SPRING_PROFILES_ACTIVE: test
 
     steps:
       - name: Checkout
@@ -32,11 +34,9 @@ jobs:
       - name: Grant execute permission for gradlew
         run: chmod +x ./gradlew
 
-      # ✅ REST Docs 스니펫 생성 + Asciidoctor 문서 생성
       - name: Build REST Docs (test + asciidoctor)
-        run: ./gradlew clean test asciidoctor -Dspring.profiles.active=test
+        run: ./gradlew clean test asciidoctor
 
-      # ✅ Pages로 올릴 산출물 업로드 (index.html 포함 폴더)
       - name: Upload Pages artifact
         uses: actions/upload-pages-artifact@v3
         with:
