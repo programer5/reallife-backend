@@ -4,15 +4,17 @@ spring:
     driver-class-name: org.h2.Driver
     username: sa
     password:
-
   jpa:
     hibernate:
       ddl-auto: create-drop
     properties:
       hibernate:
         format_sql: true
+        dialect: org.hibernate.dialect.H2Dialect
+    open-in-view: false
 
 jwt:
-  # CI/테스트에서만 쓰는 값 (최소 32자 권장)
-  secret: "test-secret-key-please-change-32chars!!"
-  accessTokenExpMinutes: 60
+  # 테스트용 더미 시크릿 (충분히 길게)
+  secret: "test-secret-key-please-change-this-to-a-very-long-string-1234567890"
+  accessTokenExpirationMs: 3600000
+  refreshTokenExpirationMs: 1209600000
