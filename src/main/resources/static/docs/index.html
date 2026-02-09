@@ -20,6 +20,7 @@
 <li><a href="#_users">Users</a>
 <ul class="sectlevel2">
 <li><a href="#_회원가입">회원가입</a></li>
+<li><a href="#_사용자_검색_cursor_paging">사용자 검색 (Cursor Paging)</a></li>
 </ul>
 </li>
 <li><a href="#_auth">Auth</a>
@@ -52,6 +53,11 @@
 <li><a href="#_알림_단건_읽음_처리">알림 단건 읽음 처리</a></li>
 <li><a href="#_내_미읽음_알림_전체_읽음_처리">내 미읽음 알림 전체 읽음 처리</a></li>
 <li><a href="#_읽은_알림_일괄_삭제soft_delete">읽은 알림 일괄 삭제(soft delete)</a></li>
+</ul>
+</li>
+<li><a href="#_messages">Messages</a>
+<ul class="sectlevel2">
+<li><a href="#_대화방_메시지_목록_조회_커서_페이징">대화방 메시지 목록 조회 (커서 페이징)</a></li>
 </ul>
 </li>
 </ul>
@@ -87,7 +93,7 @@ Content-Type: application/json
 Content-Length: 140
 Host: localhost:8080
 
-{"password":"password1234","name":"테스트유저","handle":"user_e1ed4239","email":"signup+64d2547b-2bc6-49ba-9727-6850836b1e7c@test.com"}</code></pre>
+{"password":"password1234","name":"테스트유저","handle":"user_a37c8b90","email":"signup+4df96b87-473a-486a-b86f-32970e6a9f57@test.com"}</code></pre>
 </div>
 </div>
 <table class="tableblock frame-all grid-all stretch">
@@ -135,7 +141,7 @@ Host: localhost:8080
 Content-Type: application/json
 Content-Length: 158
 
-{"id":"db6edecb-56ff-4a67-be12-d7c2c2e675d1","email":"signup+64d2547b-2bc6-49ba-9727-6850836b1e7c@test.com","handle":"user_e1ed4239","name":"테스트유저"}</code></pre>
+{"id":"d8ded273-f633-49bd-b2dc-0b8ce77e7948","email":"signup+4df96b87-473a-486a-b86f-32970e6a9f57@test.com","handle":"user_a37c8b90","name":"테스트유저"}</code></pre>
 </div>
 </div>
 <table class="tableblock frame-all grid-all stretch">
@@ -185,7 +191,7 @@ Content-Length: 158
 Content-Type: application/json
 Content-Length: 208
 
-{"code":"COMMON_INVALID_REQUEST","message":"요청이 올바르지 않습니다.","timestamp":"2026-02-06T10:23:20.9199753","path":"/api/users","fieldErrors":[{"field":"handle","reason":"must not be blank"}]}</code></pre>
+{"code":"COMMON_INVALID_REQUEST","message":"요청이 올바르지 않습니다.","timestamp":"2026-02-08T21:26:01.8043119","path":"/api/users","fieldErrors":[{"field":"handle","reason":"must not be blank"}]}</code></pre>
 </div>
 </div>
 <table class="tableblock frame-all grid-all stretch">
@@ -248,7 +254,7 @@ Content-Length: 208
 Content-Type: application/json
 Content-Length: 161
 
-{"code":"USER_DUPLICATE_EMAIL","message":"이미 가입된 이메일입니다.","timestamp":"2026-02-06T10:23:21.0369101","path":"/api/users","fieldErrors":null}</code></pre>
+{"code":"USER_DUPLICATE_EMAIL","message":"이미 가입된 이메일입니다.","timestamp":"2026-02-08T21:26:01.9132461","path":"/api/users","fieldErrors":null}</code></pre>
 </div>
 </div>
 <table class="tableblock frame-all grid-all stretch">
@@ -295,6 +301,685 @@ Content-Length: 161
 </div>
 </div>
 </div>
+<div class="sect2">
+<h3 id="_사용자_검색_cursor_paging"><a class="anchor" href="#_사용자_검색_cursor_paging"></a><a class="link" href="#_사용자_검색_cursor_paging">사용자 검색 (Cursor Paging)</a></h3>
+<div class="listingblock">
+<div class="content">
+<pre class="highlight nowrap"><code class="language-http" data-lang="http">GET /api/users/search?q=kim&amp;size=2 HTTP/1.1
+Authorization: Bearer eyJhbGciOiJIUzM4NCJ9.eyJzdWIiOiI1OTIyNWQ0NS05Zjc2LTRlOWEtOGZlMi0wN2ZjMDIxZWVhY2UiLCJlbWFpbCI6InNlYXJjaG1lKzM4OTJmOWExLWI1MDgtNDUyMy04MTE0LTM2MzVkOTZhN2Y5N0B0ZXN0LmNvbSIsImlhdCI6MTc3MDU1MzU2MSwiZXhwIjoxNzcwNTU3MTYxfQ.OrBCd5OBZIoHYkoy4oZm_rmFkAS-NVYzYOiFz00_dqY-PkqLEBCAmeytMKOuWr57
+Host: localhost:8080</code></pre>
+</div>
+</div>
+<table class="tableblock frame-all grid-all stretch">
+<colgroup>
+<col style="width: 50%;">
+<col style="width: 50%;">
+</colgroup>
+<thead>
+<tr>
+<th class="tableblock halign-left valign-top">Name</th>
+<th class="tableblock halign-left valign-top">Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>Authorization</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Bearer {accessToken}</p></td>
+</tr>
+</tbody>
+</table>
+<table class="tableblock frame-all grid-all stretch">
+<colgroup>
+<col style="width: 50%;">
+<col style="width: 50%;">
+</colgroup>
+<thead>
+<tr>
+<th class="tableblock halign-left valign-top">Parameter</th>
+<th class="tableblock halign-left valign-top">Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>q</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">검색어(handle/name)</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>cursor</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">페이지 커서(rank|followerCount|handle|userId). 없으면 첫 페이지</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>size</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">페이지 크기(기본 20, 최대 50)</p></td>
+</tr>
+</tbody>
+</table>
+<div class="listingblock">
+<div class="content">
+<pre class="highlight nowrap"><code class="language-http" data-lang="http">HTTP/1.1 200 OK
+Content-Type: application/json
+X-Content-Type-Options: nosniff
+X-XSS-Protection: 0
+Cache-Control: no-cache, no-store, max-age=0, must-revalidate
+Pragma: no-cache
+Expires: 0
+X-Frame-Options: DENY
+Content-Length: 478
+
+{
+  "items" : [ {
+    "userId" : "bddaf744-bcef-47ba-96c8-8eb4c1b2d9eb",
+    "handle" : "kim",
+    "name" : "김철수",
+    "followerCount" : 0,
+    "rank" : 0,
+    "isFollowing" : false
+  }, {
+    "userId" : "b2e96866-b0c7-42b1-812d-4192c84e7764",
+    "handle" : "kimchi",
+    "name" : "김치",
+    "followerCount" : 0,
+    "rank" : 0,
+    "isFollowing" : false
+  } ],
+  "nextCursor" : "0|0|kimchi|b2e96866-b0c7-42b1-812d-4192c84e7764",
+  "hasNext" : true
+}</code></pre>
+</div>
+</div>
+<table class="tableblock frame-all grid-all stretch">
+<colgroup>
+<col style="width: 33.3333%;">
+<col style="width: 33.3333%;">
+<col style="width: 33.3334%;">
+</colgroup>
+<thead>
+<tr>
+<th class="tableblock halign-left valign-top">Path</th>
+<th class="tableblock halign-left valign-top">Type</th>
+<th class="tableblock halign-left valign-top">Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>items</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>Array</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">검색 결과 목록</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>items[].userId</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>String</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">유저 ID(UUID)</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>items[].handle</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>String</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">유저 핸들(@아이디)</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>items[].name</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>String</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">유저 이름</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>items[].followerCount</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>Number</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">팔로워 수</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>items[].rank</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>Number</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">정렬 랭크(0=prefix, 1=contains)</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>items[].isFollowing</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>Boolean</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">내가 해당 유저를 팔로우 중인지 여부</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>nextCursor</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>String</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">다음 페이지 커서(없으면 null)</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>hasNext</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>Boolean</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">다음 페이지 존재 여부</p></td>
+</tr>
+</tbody>
+</table>
+<div class="sect3">
+<h4 id="_다음_페이지_조회_예시"><a class="anchor" href="#_다음_페이지_조회_예시"></a><a class="link" href="#_다음_페이지_조회_예시">다음 페이지 조회 예시</a></h4>
+<div class="listingblock">
+<div class="content">
+<pre class="highlight nowrap"><code class="language-http" data-lang="http">GET /api/users/search?q=kim&amp;size=2&amp;cursor=0%7C0%7Ckimchi%7C6de47b44-5fbc-417b-9785-2e6586daa451 HTTP/1.1
+Authorization: Bearer eyJhbGciOiJIUzM4NCJ9.eyJzdWIiOiI2NmQ4MjJiMi1kNGZmLTRkM2EtOTRjNy1iYzhkNjg2YjhmNjAiLCJlbWFpbCI6InNlYXJjaG1lKzZiYmNjZGE0LTE1NTQtNDc2OS1hMzA1LWE4MDE2YjUzOTIxZkB0ZXN0LmNvbSIsImlhdCI6MTc3MDU1MzU2MiwiZXhwIjoxNzcwNTU3MTYyfQ.icodchcqu67aGZCygBQ7CCzLDD3DxPMt9duAvYAi18BCVoUExMJ3h4s8_bCcJaWC
+Host: localhost:8080</code></pre>
+</div>
+</div>
+<table class="tableblock frame-all grid-all stretch">
+<colgroup>
+<col style="width: 50%;">
+<col style="width: 50%;">
+</colgroup>
+<thead>
+<tr>
+<th class="tableblock halign-left valign-top">Name</th>
+<th class="tableblock halign-left valign-top">Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>Authorization</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Bearer {accessToken}</p></td>
+</tr>
+</tbody>
+</table>
+<table class="tableblock frame-all grid-all stretch">
+<colgroup>
+<col style="width: 50%;">
+<col style="width: 50%;">
+</colgroup>
+<thead>
+<tr>
+<th class="tableblock halign-left valign-top">Parameter</th>
+<th class="tableblock halign-left valign-top">Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>q</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">검색어(handle/name)</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>cursor</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">페이지 커서(rank|followerCount|handle|userId). 없으면 첫 페이지</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>size</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">페이지 크기(기본 20, 최대 50)</p></td>
+</tr>
+</tbody>
+</table>
+<div class="listingblock">
+<div class="content">
+<pre class="highlight nowrap"><code class="language-http" data-lang="http">HTTP/1.1 200 OK
+Content-Type: application/json
+X-Content-Type-Options: nosniff
+X-XSS-Protection: 0
+Cache-Control: no-cache, no-store, max-age=0, must-revalidate
+Pragma: no-cache
+Expires: 0
+X-Frame-Options: DENY
+Content-Length: 431
+
+{
+  "items" : [ {
+    "userId" : "3a792a72-182a-4ae1-8b02-42a2645d2416",
+    "handle" : "xx",
+    "name" : "kim영희",
+    "followerCount" : 0,
+    "rank" : 0,
+    "isFollowing" : false
+  }, {
+    "userId" : "1dd7e694-bf82-4229-993c-d905307ab72f",
+    "handle" : "akim",
+    "name" : "아킴",
+    "followerCount" : 0,
+    "rank" : 1,
+    "isFollowing" : false
+  } ],
+  "nextCursor" : null,
+  "hasNext" : false
+}</code></pre>
+</div>
+</div>
+<table class="tableblock frame-all grid-all stretch">
+<colgroup>
+<col style="width: 33.3333%;">
+<col style="width: 33.3333%;">
+<col style="width: 33.3334%;">
+</colgroup>
+<thead>
+<tr>
+<th class="tableblock halign-left valign-top">Path</th>
+<th class="tableblock halign-left valign-top">Type</th>
+<th class="tableblock halign-left valign-top">Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>items</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>Array</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">검색 결과 목록</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>items[].userId</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>String</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">유저 ID(UUID)</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>items[].handle</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>String</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">유저 핸들(@아이디)</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>items[].name</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>String</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">유저 이름</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>items[].followerCount</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>Number</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">팔로워 수</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>items[].rank</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>Number</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">정렬 랭크(0=prefix, 1=contains)</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>items[].isFollowing</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>Boolean</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">내가 해당 유저를 팔로우 중인지 여부</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>nextCursor</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>Null</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">다음 페이지 커서(없으면 null)</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>hasNext</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>Boolean</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">다음 페이지 존재 여부</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="sect3">
+<h4 id="_실패_응답_2"><a class="anchor" href="#_실패_응답_2"></a><a class="link" href="#_실패_응답_2">실패 응답</a></h4>
+<div class="sect4">
+<h5 id="_400_bad_request_q_blank"><a class="anchor" href="#_400_bad_request_q_blank"></a><a class="link" href="#_400_bad_request_q_blank">400 Bad Request (q blank)</a></h5>
+<div class="listingblock">
+<div class="content">
+<pre class="highlight nowrap"><code class="language-http" data-lang="http">GET /api/users/search?q=+++ HTTP/1.1
+Authorization: Bearer eyJhbGciOiJIUzM4NCJ9.eyJzdWIiOiJmYmJhNjk5Yi0yMzIyLTQ4ZjktYjJlZi0wMWNjMmE2YmU3OTMiLCJlbWFpbCI6InNlYXJjaG1lKzliZWQxNDRmLTNkMWYtNGRiMi04ZjFiLTlmMGM0YjQ5OGFjYkB0ZXN0LmNvbSIsImlhdCI6MTc3MDU1MzU2MiwiZXhwIjoxNzcwNTU3MTYyfQ.ASogzyZEePyt9c25S4Ur6NgNDLXniSC2Eeqfepb_3XzFzXA1HJUJiDSv4HRma6q-
+Host: localhost:8080</code></pre>
+</div>
+</div>
+<table class="tableblock frame-all grid-all stretch">
+<colgroup>
+<col style="width: 50%;">
+<col style="width: 50%;">
+</colgroup>
+<thead>
+<tr>
+<th class="tableblock halign-left valign-top">Name</th>
+<th class="tableblock halign-left valign-top">Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>Authorization</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Bearer {accessToken}</p></td>
+</tr>
+</tbody>
+</table>
+<table class="tableblock frame-all grid-all stretch">
+<colgroup>
+<col style="width: 50%;">
+<col style="width: 50%;">
+</colgroup>
+<thead>
+<tr>
+<th class="tableblock halign-left valign-top">Parameter</th>
+<th class="tableblock halign-left valign-top">Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>q</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">검색어(handle/name) (blank 불가)</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>cursor</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">페이지 커서(rank|followerCount|handle|userId). 없으면 첫 페이지</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>size</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">페이지 크기(기본 20, 최대 50)</p></td>
+</tr>
+</tbody>
+</table>
+<div class="listingblock">
+<div class="content">
+<pre class="highlight nowrap"><code class="language-http" data-lang="http">HTTP/1.1 400 Bad Request
+Content-Type: application/json
+X-Content-Type-Options: nosniff
+X-XSS-Protection: 0
+Cache-Control: no-cache, no-store, max-age=0, must-revalidate
+Pragma: no-cache
+Expires: 0
+X-Frame-Options: DENY
+Content-Length: 202
+
+{
+  "code" : "COMMON_INVALID_REQUEST",
+  "message" : "요청이 올바르지 않습니다.",
+  "timestamp" : "2026-02-08T21:26:02.1081564",
+  "path" : "/api/users/search",
+  "fieldErrors" : null
+}</code></pre>
+</div>
+</div>
+<table class="tableblock frame-all grid-all stretch">
+<colgroup>
+<col style="width: 33.3333%;">
+<col style="width: 33.3333%;">
+<col style="width: 33.3334%;">
+</colgroup>
+<thead>
+<tr>
+<th class="tableblock halign-left valign-top">Path</th>
+<th class="tableblock halign-left valign-top">Type</th>
+<th class="tableblock halign-left valign-top">Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>code</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>String</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">에러 코드</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>message</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>String</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">에러 메시지</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>timestamp</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>String</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">에러 발생 시각</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>path</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>String</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">요청 경로</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>fieldErrors</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>Null</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">필드 검증 오류 목록 (검증 오류일 때만 존재)</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="sect4">
+<h5 id="_400_bad_request_size_out_of_range"><a class="anchor" href="#_400_bad_request_size_out_of_range"></a><a class="link" href="#_400_bad_request_size_out_of_range">400 Bad Request (size out of range)</a></h5>
+<div class="listingblock">
+<div class="content">
+<pre class="highlight nowrap"><code class="language-http" data-lang="http">GET /api/users/search?q=kim&amp;size=999 HTTP/1.1
+Authorization: Bearer eyJhbGciOiJIUzM4NCJ9.eyJzdWIiOiJjNjdhZmQxNC03OGYxLTRlYTUtOGJjOS1iMzE4ZTU5NDZkYzAiLCJlbWFpbCI6InNlYXJjaG1lK2I3MGE0YzgyLTQ4MDItNDRlNy04OTJjLThkNzdlYzFlNDZkMkB0ZXN0LmNvbSIsImlhdCI6MTc3MDU1MzU2MSwiZXhwIjoxNzcwNTU3MTYxfQ.l-OvZJR_Ru042Lk92cfE2jG63QmiFrhIWXXlSK2VRJZwQkz1XSaZlMAUvh86TVT5
+Host: localhost:8080</code></pre>
+</div>
+</div>
+<table class="tableblock frame-all grid-all stretch">
+<colgroup>
+<col style="width: 50%;">
+<col style="width: 50%;">
+</colgroup>
+<thead>
+<tr>
+<th class="tableblock halign-left valign-top">Name</th>
+<th class="tableblock halign-left valign-top">Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>Authorization</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Bearer {accessToken}</p></td>
+</tr>
+</tbody>
+</table>
+<table class="tableblock frame-all grid-all stretch">
+<colgroup>
+<col style="width: 50%;">
+<col style="width: 50%;">
+</colgroup>
+<thead>
+<tr>
+<th class="tableblock halign-left valign-top">Parameter</th>
+<th class="tableblock halign-left valign-top">Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>q</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">검색어(handle/name)</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>cursor</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">페이지 커서(rank|followerCount|handle|userId). 없으면 첫 페이지</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>size</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">페이지 크기(1~50)</p></td>
+</tr>
+</tbody>
+</table>
+<div class="listingblock">
+<div class="content">
+<pre class="highlight nowrap"><code class="language-http" data-lang="http">HTTP/1.1 400 Bad Request
+Content-Type: application/json
+X-Content-Type-Options: nosniff
+X-XSS-Protection: 0
+Cache-Control: no-cache, no-store, max-age=0, must-revalidate
+Pragma: no-cache
+Expires: 0
+X-Frame-Options: DENY
+Content-Length: 202
+
+{
+  "code" : "COMMON_INVALID_REQUEST",
+  "message" : "요청이 올바르지 않습니다.",
+  "timestamp" : "2026-02-08T21:26:01.9532231",
+  "path" : "/api/users/search",
+  "fieldErrors" : null
+}</code></pre>
+</div>
+</div>
+<table class="tableblock frame-all grid-all stretch">
+<colgroup>
+<col style="width: 33.3333%;">
+<col style="width: 33.3333%;">
+<col style="width: 33.3334%;">
+</colgroup>
+<thead>
+<tr>
+<th class="tableblock halign-left valign-top">Path</th>
+<th class="tableblock halign-left valign-top">Type</th>
+<th class="tableblock halign-left valign-top">Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>code</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>String</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">에러 코드</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>message</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>String</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">에러 메시지</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>timestamp</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>String</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">에러 발생 시각</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>path</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>String</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">요청 경로</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>fieldErrors</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>Null</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">필드 검증 오류 목록 (검증 오류일 때만 존재)</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+<div class="sect3">
+<h4 id="_팔로우_여부_표시_예시_isfollowing"><a class="anchor" href="#_팔로우_여부_표시_예시_isfollowing"></a><a class="link" href="#_팔로우_여부_표시_예시_isfollowing">팔로우 여부 표시 예시 (isFollowing)</a></h4>
+<div class="listingblock">
+<div class="content">
+<pre class="highlight nowrap"><code class="language-http" data-lang="http">GET /api/users/search?q=kim&amp;size=10 HTTP/1.1
+Authorization: Bearer eyJhbGciOiJIUzM4NCJ9.eyJzdWIiOiJiYWYzMjVhZi1lNTQ4LTQyYjEtYjJmMi05YWUzYTAwOWFjNDgiLCJlbWFpbCI6InNlYXJjaG1lK2UwMTVjMjgwLTM5OTctNGE5ZC04Mjk4LWUxNjgyYWFlOTQ2NkB0ZXN0LmNvbSIsImlhdCI6MTc3MDU1MzU2MiwiZXhwIjoxNzcwNTU3MTYyfQ.yi1uRXHe81zWkW02H10bDl2LXHQ2Nx8m-G6uYOz5XM5GYBKkveMAySjIpw88YRGn
+Host: localhost:8080</code></pre>
+</div>
+</div>
+<table class="tableblock frame-all grid-all stretch">
+<colgroup>
+<col style="width: 50%;">
+<col style="width: 50%;">
+</colgroup>
+<thead>
+<tr>
+<th class="tableblock halign-left valign-top">Name</th>
+<th class="tableblock halign-left valign-top">Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>Authorization</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Bearer {accessToken}</p></td>
+</tr>
+</tbody>
+</table>
+<table class="tableblock frame-all grid-all stretch">
+<colgroup>
+<col style="width: 50%;">
+<col style="width: 50%;">
+</colgroup>
+<thead>
+<tr>
+<th class="tableblock halign-left valign-top">Parameter</th>
+<th class="tableblock halign-left valign-top">Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>q</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">검색어(handle/name)</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>cursor</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">페이지 커서(rank|followerCount|handle|userId). 없으면 첫 페이지</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>size</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">페이지 크기(기본 20, 최대 50)</p></td>
+</tr>
+</tbody>
+</table>
+<div class="listingblock">
+<div class="content">
+<pre class="highlight nowrap"><code class="language-http" data-lang="http">HTTP/1.1 200 OK
+Content-Type: application/json
+X-Content-Type-Options: nosniff
+X-XSS-Protection: 0
+Cache-Control: no-cache, no-store, max-age=0, must-revalidate
+Pragma: no-cache
+Expires: 0
+X-Frame-Options: DENY
+Content-Length: 433
+
+{
+  "items" : [ {
+    "userId" : "999579a9-2425-423c-868d-03f7eb018383",
+    "handle" : "kim",
+    "name" : "김철수",
+    "followerCount" : 0,
+    "rank" : 0,
+    "isFollowing" : true
+  }, {
+    "userId" : "3c6f23da-9bd5-4b90-a8b6-14fbb5a2fabb",
+    "handle" : "kimchi",
+    "name" : "김치",
+    "followerCount" : 0,
+    "rank" : 0,
+    "isFollowing" : false
+  } ],
+  "nextCursor" : null,
+  "hasNext" : false
+}</code></pre>
+</div>
+</div>
+<table class="tableblock frame-all grid-all stretch">
+<colgroup>
+<col style="width: 33.3333%;">
+<col style="width: 33.3333%;">
+<col style="width: 33.3334%;">
+</colgroup>
+<thead>
+<tr>
+<th class="tableblock halign-left valign-top">Path</th>
+<th class="tableblock halign-left valign-top">Type</th>
+<th class="tableblock halign-left valign-top">Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>items</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>Array</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">검색 결과 목록</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>items[].userId</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>String</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">유저 ID(UUID)</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>items[].handle</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>String</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">유저 핸들(@아이디)</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>items[].name</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>String</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">유저 이름</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>items[].followerCount</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>Number</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">팔로워 수</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>items[].rank</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>Number</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">정렬 랭크(0=prefix, 1=contains)</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>items[].isFollowing</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>Boolean</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">내가 해당 유저를 팔로우 중인지 여부</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>nextCursor</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>Null</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">다음 페이지 커서(없으면 null)</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>hasNext</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>Boolean</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">다음 페이지 존재 여부</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
 </div>
 </div>
 <div class="sect1">
@@ -307,7 +992,7 @@ Content-Length: 161
 <div class="listingblock">
 <div class="content">
 <pre class="highlight nowrap"><code class="language-http" data-lang="http">GET /api/me HTTP/1.1
-Authorization: Bearer eyJhbGciOiJIUzM4NCJ9.eyJzdWIiOiJkY2Y5YTMzOC05NzA1LTQ2YWItOTM1My04ZTk1YWMxOTQ5ZmIiLCJlbWFpbCI6Im1lK2ViMjcwNTNhLTJjNTQtNDhkMy04ODg4LTQ2ZWQ1ZTRhNjgzY0B0ZXN0LmNvbSIsImlhdCI6MTc3MDM0MTAwMCwiZXhwIjoxNzcwMzQ0NjAwfQ.ypvfeZyR-qH1bZkLxOHI5p9FoRO6ydIkwln2M8JfGAQ0DIy_C1B-HSI91gse2N13
+Authorization: Bearer eyJhbGciOiJIUzM4NCJ9.eyJzdWIiOiIzMTM5ODFlOS03MTY3LTQ3MjktYjA5OS1hNDcyNDMzYzBmN2QiLCJlbWFpbCI6Im1lKzdkMDU2YjhiLTliYjAtNDkwNi1iM2U2LTliYjY3OTkyZTljNEB0ZXN0LmNvbSIsImlhdCI6MTc3MDU1MzU2MSwiZXhwIjoxNzcwNTU3MTYxfQ.tOre-FWzkDF2r2axgX6h4NA2_6VE_s_6fgEDJzvBRtJbYGWq0AxTxuYdu0aXeo1h
 Host: localhost:8080</code></pre>
 </div>
 </div>
@@ -341,7 +1026,7 @@ Expires: 0
 X-Frame-Options: DENY
 Content-Length: 181
 
-{"id":"dcf9a338-9705-46ab-9353-8e95ac1949fb","email":"me+eb27053a-2c54-48d3-8888-46ed5e4a683c@test.com","handle":"me_4eaf3dfb","name":"시드유저","followerCount":0,"tier":"NONE"}</code></pre>
+{"id":"313981e9-7167-4729-b099-a472433c0f7d","email":"me+7d056b8b-9bb0-4906-b3e6-9bb67992e9c4@test.com","handle":"me_ce319dee","name":"시드유저","followerCount":0,"tier":"NONE"}</code></pre>
 </div>
 </div>
 <table class="tableblock frame-all grid-all stretch">
@@ -409,9 +1094,9 @@ Cache-Control: no-cache, no-store, max-age=0, must-revalidate
 Pragma: no-cache
 Expires: 0
 X-Frame-Options: DENY
-Content-Length: 145
+Content-Length: 144
 
-{"code":"AUTH_UNAUTHORIZED","message":"인증이 필요합니다.","timestamp":[2026,2,6,10,23,20,570177000],"path":"/api/me","fieldErrors":null}</code></pre>
+{"code":"AUTH_UNAUTHORIZED","message":"인증이 필요합니다.","timestamp":[2026,2,8,21,26,1,461507300],"path":"/api/me","fieldErrors":null}</code></pre>
 </div>
 </div>
 </div>
@@ -429,7 +1114,7 @@ Content-Length: 145
 <div class="content">
 <pre class="highlight nowrap"><code class="language-http" data-lang="http">POST /api/posts HTTP/1.1
 Content-Type: application/json
-Authorization: Bearer eyJhbGciOiJIUzM4NCJ9.eyJzdWIiOiI0Yjc1MGE2Zi0zNmFlLTRlNTAtYTQyMy02ZTU4NWIyZjY1OGEiLCJlbWFpbCI6InBvc3QrNmFjYzgyNjUtNDYxMC00YTk1LTkxZjItZjJlZTY1NDcxYzRhQHRlc3QuY29tIiwiaWF0IjoxNzcwMzQxMDAwLCJleHAiOjE3NzAzNDQ2MDB9.UUAX0UCI2PumU1O31bouCm9ZUILxsaAS985e6Q03FvOeQred1Iyaawd23yS0E2Uw
+Authorization: Bearer eyJhbGciOiJIUzM4NCJ9.eyJzdWIiOiIyYjQxMDQzMi1iMGMzLTQ5MWEtOWM0ZC00YWVmOWNjMzI4ZGIiLCJlbWFpbCI6InBvc3QrZmQwOTU5YjItNTJkZC00Y2E2LTg4NzAtMzM4MTA4MWUzODcwQHRlc3QuY29tIiwiaWF0IjoxNzcwNTUzNTYxLCJleHAiOjE3NzA1NTcxNjF9.Nh-uJfixMuVmRCfaxLgUD8z5ESayOD94fxLiaOKqj1p0wypLHpf4pHzF3ampo0CK
 Content-Length: 125
 Host: localhost:8080
 
@@ -500,7 +1185,7 @@ Expires: 0
 X-Frame-Options: DENY
 Content-Length: 265
 
-{"postId":"c860a1cf-d8d9-4744-b86a-425840b82a5b","authorId":"4b750a6f-36ae-4e50-a423-6e585b2f658a","content":"팔로워에게만 공유합니다 🙂","imageUrls":["https://example.com/image1.jpg"],"visibility":"FOLLOWERS","createdAt":"2026-02-06T10:23:20.3303138"}</code></pre>
+{"postId":"ecec8b15-4f47-40f9-aa68-3e948a74130e","authorId":"2b410432-b0c3-491a-9c4d-4aef9cc328db","content":"팔로워에게만 공유합니다 🙂","imageUrls":["https://example.com/image1.jpg"],"visibility":"FOLLOWERS","createdAt":"2026-02-08T21:26:01.2216454"}</code></pre>
 </div>
 </div>
 <table class="tableblock frame-all grid-all stretch">
@@ -557,8 +1242,8 @@ Content-Length: 265
 <h4 id="_request_3"><a class="anchor" href="#_request_3"></a><a class="link" href="#_request_3">Request</a></h4>
 <div class="listingblock">
 <div class="content">
-<pre class="highlight nowrap"><code class="language-http" data-lang="http">GET /api/posts/4248933b-dfe6-4d6b-abd7-c15fddd87cec HTTP/1.1
-Authorization: Bearer eyJhbGciOiJIUzM4NCJ9.eyJzdWIiOiJkNDBjNmI5Ni03MzQ2LTQ3YjgtYWVhMC01MDI0NWRmNWI0NzMiLCJlbWFpbCI6ImRldGFpbCs3ZTFkMDMxNi1kODAzLTQ0ODYtYTgxZS03ZmI1ZWZiNzZhMzJAdGVzdC5jb20iLCJpYXQiOjE3NzAzNDEwMDAsImV4cCI6MTc3MDM0NDYwMH0.PNisOPGxIeEh415IJVxhjf8nwq7vkNuA6HXCOIkeXM3-WhYh4UaKXYmICl5JEFvs
+<pre class="highlight nowrap"><code class="language-http" data-lang="http">GET /api/posts/573cf45f-b4e8-4352-8066-6137a532b2d3 HTTP/1.1
+Authorization: Bearer eyJhbGciOiJIUzM4NCJ9.eyJzdWIiOiJlZmFlOTNmMS04ZmFlLTRjMmEtODM2Ni1hOWVlMDU2OGY1ZmYiLCJlbWFpbCI6ImRldGFpbCs0ZWU1YTNhMC1kYTM4LTQ5YzEtODIzZS1hMWVlMzJmNTk4YjdAdGVzdC5jb20iLCJpYXQiOjE3NzA1NTM1NjEsImV4cCI6MTc3MDU1NzE2MX0.tOuiOg5d12ZQicA4KD86yZ5ErnyzilSM1vlU-RRQ3_bo75R8wZU3KYNRj5trrhHb
 Host: localhost:8080</code></pre>
 </div>
 </div>
@@ -593,9 +1278,9 @@ Cache-Control: no-cache, no-store, max-age=0, must-revalidate
 Pragma: no-cache
 Expires: 0
 X-Frame-Options: DENY
-Content-Length: 247
+Content-Length: 248
 
-{"postId":"4248933b-dfe6-4d6b-abd7-c15fddd87cec","authorId":"d40c6b96-7346-47b8-aea0-50245df5b473","content":"상세조회 테스트","imageUrls":["https://example.com/image1.jpg"],"visibility":"FOLLOWERS","createdAt":"2026-02-06T10:23:20.439251"}</code></pre>
+{"postId":"573cf45f-b4e8-4352-8066-6137a532b2d3","authorId":"efae93f1-8fae-4c2a-8366-a9ee0568f5ff","content":"상세조회 테스트","imageUrls":["https://example.com/image1.jpg"],"visibility":"FOLLOWERS","createdAt":"2026-02-08T21:26:01.3305825"}</code></pre>
 </div>
 </div>
 <table class="tableblock frame-all grid-all stretch">
@@ -652,8 +1337,8 @@ Content-Length: 247
 <h4 id="_request_4"><a class="anchor" href="#_request_4"></a><a class="link" href="#_request_4">Request</a></h4>
 <div class="listingblock">
 <div class="content">
-<pre class="highlight nowrap"><code class="language-http" data-lang="http">GET /api/feed?cursor=&amp;size=20 HTTP/1.1
-Authorization: Bearer eyJhbGciOiJIUzM4NCJ9.eyJzdWIiOiJmNGZiZjk3OS1iZDU4LTQyNzUtYmYwNy1jYzkyYThhZWIxMDEiLCJlbWFpbCI6ImZlZWRtZSs1MjA3NjZiNy1iOGMxLTRhOWItODU5NS1jZWQ0MGViZGVkZGZAdGVzdC5jb20iLCJpYXQiOjE3NzAzNDA5OTgsImV4cCI6MTc3MDM0NDU5OH0.8pYVWxiHw3HTcJPIk-WPznLf6O4e_Fpcr_ExtruVEeTL9l3uOItfAjdacZodCEh7
+<pre class="highlight nowrap"><code class="language-http" data-lang="http">GET /api/feed?size=2 HTTP/1.1
+Authorization: Bearer eyJhbGciOiJIUzM4NCJ9.eyJzdWIiOiIzNzgwOTgyNS0wNGFjLTRmZmEtOTU1Ny03NzZmMWE5NjFiZTUiLCJlbWFpbCI6ImZlZWRtZSs1MWNlODY4Yi1mYTEyLTRkOWMtYWYwZC0xYmI5NmE2MjUwNjFAdGVzdC5jb20iLCJpYXQiOjE3NzA1NTM1NTksImV4cCI6MTc3MDU1NzE1OX0.iQWa2o2QVy2NUoahlYPBhEVr9w_VYomueL6i-Ou3HM8LnhwiNx6Vmz3k2golXQmA
 Host: localhost:8080</code></pre>
 </div>
 </div>
@@ -689,11 +1374,11 @@ Host: localhost:8080</code></pre>
 <tbody>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><code>cursor</code></p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">다음 페이지 커서(없으면 첫 페이지)</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">페이지 커서(createdAt|id). 없으면 첫 페이지</p></td>
 </tr>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><code>size</code></p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">페이지 크기(기본값/최대값은 서버 정책)</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">페이지 크기(기본 20, 최대 50)</p></td>
 </tr>
 </tbody>
 </table>
@@ -710,9 +1395,31 @@ Cache-Control: no-cache, no-store, max-age=0, must-revalidate
 Pragma: no-cache
 Expires: 0
 X-Frame-Options: DENY
-Content-Length: 311
+Content-Length: 802
 
-{"items":[{"postId":"3279eae6-5288-460e-aa4a-d5520ca3d30d","authorId":"db182c9b-340b-48cd-bf46-2d0e15348a6a","authorHandle":"feedtarget_1cd0e168","authorName":"타겟유저","content":"팔로잉 글","imageUrls":[],"visibility":"ALL","createdAt":"2026-02-06T10:23:18.643774"}],"nextCursor":null,"hasNext":false}</code></pre>
+{
+  "items" : [ {
+    "postId" : "e4eaecd9-6fcb-4310-9f1b-e5852913cbf9",
+    "authorId" : "5067ee7d-56e5-48ef-9b0e-74fec0869ba3",
+    "authorHandle" : "feedtarget_ed6d1cd3",
+    "authorName" : "타겟유저",
+    "content" : "팔로잉 글 3",
+    "imageUrls" : [ ],
+    "visibility" : "ALL",
+    "createdAt" : "2026-02-08T21:25:59.922395"
+  }, {
+    "postId" : "d2b00232-82fe-4db6-a99d-9c1ce7377e2a",
+    "authorId" : "5067ee7d-56e5-48ef-9b0e-74fec0869ba3",
+    "authorHandle" : "feedtarget_ed6d1cd3",
+    "authorName" : "타겟유저",
+    "content" : "팔로잉 글 2",
+    "imageUrls" : [ ],
+    "visibility" : "ALL",
+    "createdAt" : "2026-02-08T21:25:59.918397"
+  } ],
+  "nextCursor" : "2026-02-08T21:25:59.918397|d2b00232-82fe-4db6-a99d-9c1ce7377e2a",
+  "hasNext" : true
+}</code></pre>
 </div>
 </div>
 <table class="tableblock frame-all grid-all stretch">
@@ -732,7 +1439,7 @@ Content-Length: 311
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><code>items</code></p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><code>Array</code></p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">피드 아이템 목록</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">피드 아이템 목록(최신순)</p></td>
 </tr>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><code>items[].postId</code></p></td>
@@ -776,7 +1483,156 @@ Content-Length: 311
 </tr>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><code>nextCursor</code></p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><code>Null</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>String</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">다음 페이지 커서(없으면 null)</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>hasNext</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>Boolean</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">다음 페이지 존재 여부</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="sect3">
+<h4 id="_다음_페이지_조회_예시_2"><a class="anchor" href="#_다음_페이지_조회_예시_2"></a><a class="link" href="#_다음_페이지_조회_예시_2">다음 페이지 조회 예시</a></h4>
+<div class="listingblock">
+<div class="content">
+<pre class="highlight nowrap"><code class="language-http" data-lang="http">GET /api/feed?size=2&amp;cursor=2026-02-08T21%3A25%3A59.185586%7Cb4eaa548-7aec-42b3-8a6e-b7f9182311e8 HTTP/1.1
+Authorization: Bearer eyJhbGciOiJIUzM4NCJ9.eyJzdWIiOiI5YzAyMjBkOS0xMDg4LTQ2OTEtYmY3Yi0wMzY2OTZlNDIwZGUiLCJlbWFpbCI6ImZlZWRtZSs3YWE3ODJmZi0xYTk2LTQ1OTctYjY5Mi1hMGZkM2YxMDNhNjNAdGVzdC5jb20iLCJpYXQiOjE3NzA1NTM1NTgsImV4cCI6MTc3MDU1NzE1OH0.SAC0biGW6xmzO5-4LmWveVGtB3eIw5F8A3m79a_1wcWe8CYvOgY4MnG2YpKrGZXm
+Host: localhost:8080</code></pre>
+</div>
+</div>
+<table class="tableblock frame-all grid-all stretch">
+<colgroup>
+<col style="width: 50%;">
+<col style="width: 50%;">
+</colgroup>
+<thead>
+<tr>
+<th class="tableblock halign-left valign-top">Name</th>
+<th class="tableblock halign-left valign-top">Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>Authorization</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Bearer {accessToken}</p></td>
+</tr>
+</tbody>
+</table>
+<table class="tableblock frame-all grid-all stretch">
+<colgroup>
+<col style="width: 50%;">
+<col style="width: 50%;">
+</colgroup>
+<thead>
+<tr>
+<th class="tableblock halign-left valign-top">Parameter</th>
+<th class="tableblock halign-left valign-top">Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>cursor</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">페이지 커서(createdAt|id)</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>size</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">페이지 크기(기본 20, 최대 50)</p></td>
+</tr>
+</tbody>
+</table>
+<div class="listingblock">
+<div class="content">
+<pre class="highlight nowrap"><code class="language-http" data-lang="http">HTTP/1.1 200 OK
+Content-Type: application/json
+X-Content-Type-Options: nosniff
+X-XSS-Protection: 0
+Cache-Control: no-cache, no-store, max-age=0, must-revalidate
+Pragma: no-cache
+Expires: 0
+X-Frame-Options: DENY
+Content-Length: 404
+
+{
+  "items" : [ {
+    "postId" : "c5b36fec-7059-4c5f-90a1-c4abe47da1a4",
+    "authorId" : "fa17694b-4d2a-434c-adea-3dd09f3db6d6",
+    "authorHandle" : "feedtarget_ea7a44b8",
+    "authorName" : "타겟유저",
+    "content" : "팔로잉 글 1",
+    "imageUrls" : [ ],
+    "visibility" : "ALL",
+    "createdAt" : "2026-02-08T21:25:59.161601"
+  } ],
+  "nextCursor" : null,
+  "hasNext" : false
+}</code></pre>
+</div>
+</div>
+<table class="tableblock frame-all grid-all stretch">
+<colgroup>
+<col style="width: 33.3333%;">
+<col style="width: 33.3333%;">
+<col style="width: 33.3334%;">
+</colgroup>
+<thead>
+<tr>
+<th class="tableblock halign-left valign-top">Path</th>
+<th class="tableblock halign-left valign-top">Type</th>
+<th class="tableblock halign-left valign-top">Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>items</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>Array</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">피드 아이템 목록(최신순)</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>items[].postId</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>String</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">게시글 ID</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>items[].authorId</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>String</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">작성자 ID</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>items[].authorHandle</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>String</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">작성자 핸들</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>items[].authorName</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>String</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">작성자 이름</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>items[].content</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>String</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">내용</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>items[].imageUrls</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>Array</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">이미지 URL 목록</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>items[].visibility</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>String</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">공개범위</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>items[].createdAt</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>String</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">생성시각</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>nextCursor</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>String</code></p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">다음 페이지 커서(없으면 null)</p></td>
 </tr>
 <tr>
@@ -794,8 +1650,8 @@ Content-Length: 311
 <h4 id="_request_5"><a class="anchor" href="#_request_5"></a><a class="link" href="#_request_5">Request</a></h4>
 <div class="listingblock">
 <div class="content">
-<pre class="highlight nowrap"><code class="language-http" data-lang="http">DELETE /api/posts/ddf50efc-d056-463f-83d6-9e26ae5f422d HTTP/1.1
-Authorization: Bearer eyJhbGciOiJIUzM4NCJ9.eyJzdWIiOiJlY2EyNGYzNy0xMzkyLTQ0MGYtODliMi0wNDJiZWY0MzkzOTgiLCJlbWFpbCI6ImRlbCs3OGE3ZTRhNS1lYjg1LTRhYjUtOGI1OS1lZTFmZTlkM2E4ZTNAdGVzdC5jb20iLCJpYXQiOjE3NzAzNDEwMDAsImV4cCI6MTc3MDM0NDYwMH0.BrvKlEfNomiAKLp255apjOs36-diXW4cs3_Vgys7VCAU2f7XRchDqb5z5PdjLKDn
+<pre class="highlight nowrap"><code class="language-http" data-lang="http">DELETE /api/posts/6f4f5e63-d1a6-4434-887b-8e711221f847 HTTP/1.1
+Authorization: Bearer eyJhbGciOiJIUzM4NCJ9.eyJzdWIiOiI3ZWRmNmUyMi01YzFlLTQ0MTItODFmMi01ZmQ2Y2Q0OGYzZmQiLCJlbWFpbCI6ImRlbCtlNjY4ZGE3My04NGUwLTQ3ODktYjNmNS1lNGVkNWQ1YjU5ZjVAdGVzdC5jb20iLCJpYXQiOjE3NzA1NTM1NjEsImV4cCI6MTc3MDU1NzE2MX0.8XqZteHEa2lrBQrym9QIqYSM-hn2IcaTN4OAYxOG9th9VR_nrpuEGKk0qchaOOhR
 Host: localhost:8080</code></pre>
 </div>
 </div>
@@ -842,8 +1698,8 @@ X-Frame-Options: DENY</code></pre>
 <h3 id="_팔로우"><a class="anchor" href="#_팔로우"></a><a class="link" href="#_팔로우">팔로우</a></h3>
 <div class="listingblock">
 <div class="content">
-<pre class="highlight nowrap"><code class="language-http" data-lang="http">POST /api/follows/247e7120-f537-4ea1-a0cd-5111aa23f048 HTTP/1.1
-Authorization: Bearer eyJhbGciOiJIUzM4NCJ9.eyJzdWIiOiI3NDdlM2RiNy05NDVmLTRlNmMtODkzZi1iYTJkMGU3NGNkZjYiLCJlbWFpbCI6ImZvbGxvd21lKzg4MmM4ZWE4LWNiN2YtNGY3ZC04ODQ4LTAzNjZmZDU3YWM3YkB0ZXN0LmNvbSIsImlhdCI6MTc3MDM0MDk5OSwiZXhwIjoxNzcwMzQ0NTk5fQ.XAqDGJSzEbdcNXiWk7xffhaheOnPVhDdX-DDzDc3xGgO3m2akVoFQoKAFVXVeGTt
+<pre class="highlight nowrap"><code class="language-http" data-lang="http">POST /api/follows/ead60e40-032d-4dac-bf4b-d12f196319a8 HTTP/1.1
+Authorization: Bearer eyJhbGciOiJIUzM4NCJ9.eyJzdWIiOiJiMWJlYWVjMy0zNTk5LTQwMzAtODViNS00YjNmODBiNDUxOGIiLCJlbWFpbCI6ImZvbGxvd21lK2Q2NTA5MmNhLWE0ODYtNGI5NC04MzVkLTA1YjI4NGNhZmU5NkB0ZXN0LmNvbSIsImlhdCI6MTc3MDU1MzU2MCwiZXhwIjoxNzcwNTU3MTYwfQ.oMxRMHyNndZyoD7jCzNv-Rwsh-Ctg5oMFqMnb8eq8drYXT9VTMMJtQSO3GAlQUev
 Host: localhost:8080
 Content-Type: application/x-www-form-urlencoded</code></pre>
 </div>
@@ -906,8 +1762,8 @@ X-Frame-Options: DENY</code></pre>
 <h3 id="_좋아요"><a class="anchor" href="#_좋아요"></a><a class="link" href="#_좋아요">좋아요</a></h3>
 <div class="listingblock">
 <div class="content">
-<pre class="highlight nowrap"><code class="language-http" data-lang="http">POST /api/posts/d67da84c-8e54-414f-aa31-fee42e028cfa/likes HTTP/1.1
-Authorization: Bearer eyJhbGciOiJIUzM4NCJ9.eyJzdWIiOiJlNzY3ZDRlYS02YWY4LTQ0NzgtYTZiNi1kMDE2NWViYzQ0MGEiLCJlbWFpbCI6Imxpa2UrZWQ3NmRkOTUtNzUxYy00MDJjLThmYmItYWViMGM2ZWYwYWJkQHRlc3QuY29tIiwiaWF0IjoxNzcwMzQwOTk5LCJleHAiOjE3NzAzNDQ1OTl9.48H9uvcWsJgYY02es0oiixd-15eCelIYwcurBTI3f-YTDp340plYMug_Zj-ewpaF
+<pre class="highlight nowrap"><code class="language-http" data-lang="http">POST /api/posts/8af20170-ac35-4cae-b6d2-9a7850a5ab93/likes HTTP/1.1
+Authorization: Bearer eyJhbGciOiJIUzM4NCJ9.eyJzdWIiOiJjNmVjNDgzZS0yYzcwLTRlNWEtOWVmNC1lYjIwNTM3NmFjNjgiLCJlbWFpbCI6Imxpa2UrNWJlOWVlZjctZDVkZS00ZThjLWE5MjEtZmNmYzQxZjg0YWY2QHRlc3QuY29tIiwiaWF0IjoxNzcwNTUzNTYwLCJleHAiOjE3NzA1NTcxNjB9.uuOu0T1EoJUS03USoMCL0kdjpm4WV29sC6L8o-ZL-WitVQuQNE33vD4cvU5nAgA1
 Host: localhost:8080
 Content-Type: application/x-www-form-urlencoded</code></pre>
 </div>
@@ -965,10 +1821,9 @@ X-Frame-Options: DENY</code></pre>
 <h3 id="_좋아요_취소"><a class="anchor" href="#_좋아요_취소"></a><a class="link" href="#_좋아요_취소">좋아요 취소</a></h3>
 <div class="listingblock">
 <div class="content">
-<pre class="highlight nowrap"><code class="language-http" data-lang="http">POST /api/posts/d67da84c-8e54-414f-aa31-fee42e028cfa/likes HTTP/1.1
-Authorization: Bearer eyJhbGciOiJIUzM4NCJ9.eyJzdWIiOiJlNzY3ZDRlYS02YWY4LTQ0NzgtYTZiNi1kMDE2NWViYzQ0MGEiLCJlbWFpbCI6Imxpa2UrZWQ3NmRkOTUtNzUxYy00MDJjLThmYmItYWViMGM2ZWYwYWJkQHRlc3QuY29tIiwiaWF0IjoxNzcwMzQwOTk5LCJleHAiOjE3NzAzNDQ1OTl9.48H9uvcWsJgYY02es0oiixd-15eCelIYwcurBTI3f-YTDp340plYMug_Zj-ewpaF
-Host: localhost:8080
-Content-Type: application/x-www-form-urlencoded</code></pre>
+<pre class="highlight nowrap"><code class="language-http" data-lang="http">DELETE /api/posts/e415fce0-d9fd-43f7-af5a-d92d1414db94/likes HTTP/1.1
+Authorization: Bearer eyJhbGciOiJIUzM4NCJ9.eyJzdWIiOiIwMjU1NDUzYS0wNTU5LTQ4ZGQtOWE0YS03YmVlNzY4N2ZjYjgiLCJlbWFpbCI6InVubGlrZSsxOTZjMzhiYi1lMGU0LTQyOTQtYWQ1OS03NmQzY2ZiMjQzNjNAdGVzdC5jb20iLCJpYXQiOjE3NzA1NTM1NjAsImV4cCI6MTc3MDU1NzE2MH0.pcye4SI_1_AGqo9vQ_J9yHxwGJqJ7zBDKvcRQ5Dqgqmom5XAF3Hppd-1xFmuXSzi
+Host: localhost:8080</code></pre>
 </div>
 </div>
 <table class="tableblock frame-all grid-all stretch">
@@ -1030,7 +1885,7 @@ X-Frame-Options: DENY</code></pre>
 <div class="listingblock">
 <div class="content">
 <pre class="highlight nowrap"><code class="language-http" data-lang="http">GET /api/notifications?size=2 HTTP/1.1
-Authorization: Bearer eyJhbGciOiJIUzM4NCJ9.eyJzdWIiOiIzNTY2OGE1MS1jZDk4LTRkYTYtYWMzZS02YWUzNjIxZjIwMWMiLCJlbWFpbCI6Im5vdGkrN2M1NWMzNGUtYzYxNi00ZmZhLTkwNmYtMDA0YmZiOWVjZTRiQHRlc3QuY29tIiwiaWF0IjoxNzcwMzQwOTk5LCJleHAiOjE3NzAzNDQ1OTl9.VQbhUCTxSTDt0Y2f1c-z_gJXARja0E1ivlqufQKgPFOkvLd7-DiD0YK-sJkE3hsn
+Authorization: Bearer eyJhbGciOiJIUzM4NCJ9.eyJzdWIiOiI0NDhjODFjZS00ZDIwLTQ3NTktODcyMC0zZTBhODQ0ZjdjMDQiLCJlbWFpbCI6Im5vdGkrYmU1Y2M3YjgtNWNmZi00YTAxLWI4ZDItNThjODUwZDgxM2U3QHRlc3QuY29tIiwiaWF0IjoxNzcwNTUzNTYwLCJleHAiOjE3NzA1NTcxNjB9.S8hZZDj3b6Y2iikzODRLHLvgWyXAnAB638E_ftMG_SxAktB_UluskNiBccIVy78_
 Host: localhost:8080</code></pre>
 </div>
 </div>
@@ -1088,19 +1943,19 @@ Content-Length: 532
 
 {
   "items" : [ {
-    "id" : "d25c5c40-d2b5-4e07-a02f-7af74bb7dbbb",
+    "id" : "faa47e9d-23da-4357-a6f4-8e85a7b3cff2",
+    "type" : "MESSAGE_RECEIVED",
+    "body" : "알림 2",
+    "read" : false,
+    "createdAt" : "2026-02-08T21:26:00.8748455"
+  }, {
+    "id" : "5d1d634d-56a2-4da8-8a51-de2434e87d26",
     "type" : "MESSAGE_RECEIVED",
     "body" : "알림 3",
     "read" : false,
-    "createdAt" : "2026-02-06T10:23:19.9150714"
-  }, {
-    "id" : "bd7ca61f-0b75-4cf7-8812-d4cd31095b1a",
-    "type" : "MESSAGE_RECEIVED",
-    "body" : "알림 1",
-    "read" : false,
-    "createdAt" : "2026-02-06T10:23:19.9150714"
+    "createdAt" : "2026-02-08T21:26:00.8748455"
   } ],
-  "nextCursor" : "2026-02-06T10:23:19.915071400|bd7ca61f-0b75-4cf7-8812-d4cd31095b1a",
+  "nextCursor" : "2026-02-08T21:26:00.874845500|5d1d634d-56a2-4da8-8a51-de2434e87d26",
   "hasNext" : true,
   "hasUnread" : true
 }</code></pre>
@@ -1168,11 +2023,11 @@ Content-Length: 532
 </tbody>
 </table>
 <div class="sect3">
-<h4 id="_다음_페이지_조회_예시"><a class="anchor" href="#_다음_페이지_조회_예시"></a><a class="link" href="#_다음_페이지_조회_예시">다음 페이지 조회 예시</a></h4>
+<h4 id="_다음_페이지_조회_예시_3"><a class="anchor" href="#_다음_페이지_조회_예시_3"></a><a class="link" href="#_다음_페이지_조회_예시_3">다음 페이지 조회 예시</a></h4>
 <div class="listingblock">
 <div class="content">
-<pre class="highlight nowrap"><code class="language-http" data-lang="http">GET /api/notifications?size=2&amp;cursor=2026-02-06T10%3A23%3A19.988029900%7C6407319f-d8ae-4c92-b32f-5703040edef4 HTTP/1.1
-Authorization: Bearer eyJhbGciOiJIUzM4NCJ9.eyJzdWIiOiJiM2Q3ZTVhOS0xMTQ4LTQ0NDItYTFiOS01MzBjZDEzNjI2Y2YiLCJlbWFpbCI6Im5vdGkrZTFmMmVjMGYtYmVmMi00YzkyLTlkNzMtMjEzZjdjNDBiY2I4QHRlc3QuY29tIiwiaWF0IjoxNzcwMzQwOTk5LCJleHAiOjE3NzAzNDQ1OTl9.QaPDvLaRkNl_vvLao-7ueIDMDWwbIiPWOlpwVUeuC0id2lOJrLoc_B7-jQi49xz4
+<pre class="highlight nowrap"><code class="language-http" data-lang="http">GET /api/notifications?size=2&amp;cursor=2026-02-08T21%3A26%3A00.937808900%7Ccd6dba4a-011a-40d2-8cdc-e50f0c20f2d1 HTTP/1.1
+Authorization: Bearer eyJhbGciOiJIUzM4NCJ9.eyJzdWIiOiI5YzA4OTg1ZS03NjI0LTRkYzktYjIxYS1iNjczODBiNGYzNDkiLCJlbWFpbCI6Im5vdGkrN2Q3ZDQ3ZDQtZjg0MS00ZDEzLTkxMzYtM2E4ZmUwYzQ3Yjg0QHRlc3QuY29tIiwiaWF0IjoxNzcwNTUzNTYwLCJleHAiOjE3NzA1NTcxNjB9.zYZX5CkPXUzSg5Edm7FuWlIiGiUkLi-SpHjeca7OriHtU86Z-LtdDEgsKDpJ4z5q
 Host: localhost:8080</code></pre>
 </div>
 </div>
@@ -1226,15 +2081,15 @@ Cache-Control: no-cache, no-store, max-age=0, must-revalidate
 Pragma: no-cache
 Expires: 0
 X-Frame-Options: DENY
-Content-Length: 278
+Content-Length: 279
 
 {
   "items" : [ {
-    "id" : "a432ec58-8373-4b70-91f3-1f4870870da8",
+    "id" : "3007b638-949a-42d2-96f5-90f01e10d3aa",
     "type" : "MESSAGE_RECEIVED",
     "body" : "알림 1",
     "read" : false,
-    "createdAt" : "2026-02-06T10:23:19.987031"
+    "createdAt" : "2026-02-08T21:26:00.9378089"
   } ],
   "nextCursor" : null,
   "hasNext" : false,
@@ -1288,7 +2143,7 @@ Content-Length: 278
 </tr>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><code>nextCursor</code></p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><code>Null</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>String</code></p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">다음 페이지 커서(없으면 null)</p></td>
 </tr>
 <tr>
@@ -1309,9 +2164,9 @@ Content-Length: 278
 <h3 id="_알림_단건_읽음_처리"><a class="anchor" href="#_알림_단건_읽음_처리"></a><a class="link" href="#_알림_단건_읽음_처리">알림 단건 읽음 처리</a></h3>
 <div class="listingblock">
 <div class="content">
-<pre class="highlight nowrap"><code class="language-http" data-lang="http">POST /api/notifications/7f6c2efd-89f7-423d-81de-bbb9a5c5bcc6/read HTTP/1.1
+<pre class="highlight nowrap"><code class="language-http" data-lang="http">POST /api/notifications/ec8f8cea-47ba-487f-b528-d7c84324a955/read HTTP/1.1
 Content-Type: application/json
-Authorization: Bearer eyJhbGciOiJIUzM4NCJ9.eyJzdWIiOiI5MTMwNzY5OC03Mzg5LTQ2NTgtOWQwNi00MTcwZTljMzBhYjYiLCJlbWFpbCI6Im5vdGkrYzYwNTZlYzUtNGU0Zi00MzgwLWIzN2ItMGU3NjFhZTU5MGNhQHRlc3QuY29tIiwiaWF0IjoxNzcwMzQxMDAwLCJleHAiOjE3NzAzNDQ2MDB9.UR3m5GyfhDtix6VqiKenDCceHJ_O9Fqm_Gl7Q2FdCSCi_ParKJo8tx3hcQKG7ljK
+Authorization: Bearer eyJhbGciOiJIUzM4NCJ9.eyJzdWIiOiJkOGY5NTRkZi02NWYwLTRjZjAtOGU4Zi03MjhkYWI2ZjNjZDUiLCJlbWFpbCI6Im5vdGkrODZlYjZkYTQtMjg4Ni00NmU0LWIxMzctYzRlMTU5YzdiOTdjQHRlc3QuY29tIiwiaWF0IjoxNzcwNTUzNTYxLCJleHAiOjE3NzA1NTcxNjF9.T_F1JVuxSIWXvXtwb1cj_d-jC3S92fE0qdkOsJ-cgG9-cgPElMfVsXSelxTDafXJ
 Host: localhost:8080</code></pre>
 </div>
 </div>
@@ -1370,7 +2225,7 @@ X-Frame-Options: DENY</code></pre>
 <div class="content">
 <pre class="highlight nowrap"><code class="language-http" data-lang="http">POST /api/notifications/read-all HTTP/1.1
 Content-Type: application/json
-Authorization: Bearer eyJhbGciOiJIUzM4NCJ9.eyJzdWIiOiJiYzE4NjM3MS1iMjk5LTQzMzgtOTQ4NC04ZjFjZDI5MzM3ODYiLCJlbWFpbCI6Im5vdGkrYmU0MjY1NGEtNWUwNS00NzJhLTg0MTYtNDVhMjQ1MDQ1MmU3QHRlc3QuY29tIiwiaWF0IjoxNzcwMzQwOTk5LCJleHAiOjE3NzAzNDQ1OTl9.d4FyVDcvDH9uZfELdLKB0WhBuP2MMSpkzCUJoyBLJUenfs6ncJXqBA878hZJNHKH
+Authorization: Bearer eyJhbGciOiJIUzM4NCJ9.eyJzdWIiOiJjN2MwNzNjNy0wYTAxLTRiNjktOGRhYS1kZWM4MTMwM2M4ZWQiLCJlbWFpbCI6Im5vdGkrYTM0NWRjMDMtNTllYi00YjAwLWJiNWUtNmU4YTljNWY2MTA0QHRlc3QuY29tIiwiaWF0IjoxNzcwNTUzNTYwLCJleHAiOjE3NzA1NTcxNjB9.w0gthO2LZ5R-3wVgSw_jaSrGRJ5RbXiLBeN5b_APB9hrGpIfj3zHqR7-Cb7jbBk7
 Host: localhost:8080</code></pre>
 </div>
 </div>
@@ -1436,7 +2291,7 @@ Content-Length: 26
 <div class="listingblock">
 <div class="content">
 <pre class="highlight nowrap"><code class="language-http" data-lang="http">DELETE /api/notifications/read HTTP/1.1
-Authorization: Bearer eyJhbGciOiJIUzM4NCJ9.eyJzdWIiOiJmMTg4MTc4Zi00Nzk4LTRjY2UtYmZhZC0xMjliY2Q3OGI1ZjgiLCJlbWFpbCI6Im5vdGkrNjU0YTVkYjYtY2ExZS00NTZiLThiODEtZWUzYWNiZTQ1NDM2QHRlc3QuY29tIiwiaWF0IjoxNzcwMzQxMDAwLCJleHAiOjE3NzAzNDQ2MDB9.rnS4BC5Bp5dfogY__i-77EdO-p_KM8LLO6Pq5Dh-2ajFoqpi02E86WobdeHFFtW9
+Authorization: Bearer eyJhbGciOiJIUzM4NCJ9.eyJzdWIiOiIxZGJiMWQxYi1lZGRkLTQ3MDUtYjYzZC0zN2QzZDQ5OWQwNTAiLCJlbWFpbCI6Im5vdGkrNWY0NDk5MTQtOWY5NS00MmVkLWEzZTctNGM2MzA0ZTU1OWQwQHRlc3QuY29tIiwiaWF0IjoxNzcwNTUzNTYxLCJleHAiOjE3NzA1NTcxNjF9.y1QRv7WuvA_udj5hGhJsAKN2rkyDwVi0tRN4SVvZJ76-xVhnDQoWfLM6cIWLySPe
 Host: localhost:8080</code></pre>
 </div>
 </div>
@@ -1499,11 +2354,378 @@ Content-Length: 26
 </div>
 </div>
 </div>
+<div class="sect1">
+<h2 id="_messages"><a class="anchor" href="#_messages"></a><a class="link" href="#_messages">Messages</a></h2>
+<div class="sectionbody">
+<div class="sect2">
+<h3 id="_대화방_메시지_목록_조회_커서_페이징"><a class="anchor" href="#_대화방_메시지_목록_조회_커서_페이징"></a><a class="link" href="#_대화방_메시지_목록_조회_커서_페이징">대화방 메시지 목록 조회 (커서 페이징)</a></h3>
+<div class="sect3">
+<h4 id="_request_6"><a class="anchor" href="#_request_6"></a><a class="link" href="#_request_6">Request</a></h4>
+<div class="listingblock">
+<div class="content">
+<pre class="highlight nowrap"><code class="language-http" data-lang="http">GET /api/conversations/a1946120-136d-4cbb-b918-27f7ddb4f24d/messages?size=2 HTTP/1.1
+Authorization: Bearer eyJhbGciOiJIUzM4NCJ9.eyJzdWIiOiI4Y2EwYmVkNi0xZjI0LTRjZjItOTMzNC1iNmYzZDgwMjlmMGIiLCJlbWFpbCI6Im1zZ21lKzViMGMzZWJhLTU5ZDItNGEzNS04Y2YyLTE0ZDcwOTIzMGUyN0B0ZXN0LmNvbSIsImlhdCI6MTc3MDU1MzU2MCwiZXhwIjoxNzcwNTU3MTYwfQ.uzWCdpA3kDGxU-u1gDJpeceJ5iSBVAMpedi4y0xguwRAnA1mDCmsRyCqNsFBS6pi
+Host: localhost:8080</code></pre>
+</div>
+</div>
+<table class="tableblock frame-all grid-all stretch">
+<colgroup>
+<col style="width: 50%;">
+<col style="width: 50%;">
+</colgroup>
+<thead>
+<tr>
+<th class="tableblock halign-left valign-top">Name</th>
+<th class="tableblock halign-left valign-top">Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>Authorization</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Bearer {accessToken}</p></td>
+</tr>
+</tbody>
+</table>
+<table class="tableblock frame-all grid-all stretch">
+<caption class="title">Table 5. /api/conversations/{conversationId}/messages</caption>
+<colgroup>
+<col style="width: 50%;">
+<col style="width: 50%;">
+</colgroup>
+<thead>
+<tr>
+<th class="tableblock halign-left valign-top">Parameter</th>
+<th class="tableblock halign-left valign-top">Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>conversationId</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">대화방 ID(UUID)</p></td>
+</tr>
+</tbody>
+</table>
+<table class="tableblock frame-all grid-all stretch">
+<colgroup>
+<col style="width: 50%;">
+<col style="width: 50%;">
+</colgroup>
+<thead>
+<tr>
+<th class="tableblock halign-left valign-top">Parameter</th>
+<th class="tableblock halign-left valign-top">Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>cursor</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">페이지 커서(createdAt|id). 없으면 첫 페이지</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>size</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">페이지 크기(기본 20, 최대 50)</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="sect3">
+<h4 id="_response_6"><a class="anchor" href="#_response_6"></a><a class="link" href="#_response_6">Response</a></h4>
+<div class="listingblock">
+<div class="content">
+<pre class="highlight nowrap"><code class="language-http" data-lang="http">HTTP/1.1 200 OK
+Content-Type: application/json
+X-Content-Type-Options: nosniff
+X-XSS-Protection: 0
+Cache-Control: no-cache, no-store, max-age=0, must-revalidate
+Pragma: no-cache
+Expires: 0
+X-Frame-Options: DENY
+Content-Length: 593
+
+{
+  "items" : [ {
+    "messageId" : "694ac57a-aedb-4f64-b9f8-964990ff5e00",
+    "senderId" : "8ca0bed6-1f24-4cf2-9334-b6f3d8029f0b",
+    "content" : "메시지 3",
+    "createdAt" : "2026-02-08T21:26:00.5560298",
+    "attachments" : [ ]
+  }, {
+    "messageId" : "3caeaac9-97b1-4dac-bda0-c932527742df",
+    "senderId" : "8ca0bed6-1f24-4cf2-9334-b6f3d8029f0b",
+    "content" : "메시지 2",
+    "createdAt" : "2026-02-08T21:26:00.5510332",
+    "attachments" : [ ]
+  } ],
+  "nextCursor" : "2026-02-08T21:26:00.551033200|3caeaac9-97b1-4dac-bda0-c932527742df",
+  "hasNext" : true
+}</code></pre>
+</div>
+</div>
+<table class="tableblock frame-all grid-all stretch">
+<colgroup>
+<col style="width: 33.3333%;">
+<col style="width: 33.3333%;">
+<col style="width: 33.3334%;">
+</colgroup>
+<thead>
+<tr>
+<th class="tableblock halign-left valign-top">Path</th>
+<th class="tableblock halign-left valign-top">Type</th>
+<th class="tableblock halign-left valign-top">Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>items</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>Array</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">메시지 목록(최신순)</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>items[].messageId</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>String</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">메시지 ID</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>items[].senderId</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>String</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">보낸 사람 ID</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>items[].content</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>String</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">메시지 내용(없을 수 있음)</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>items[].createdAt</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>String</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">생성 시각</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>items[].attachments</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>Array</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">첨부 목록</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>items[].attachments[].fileId</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>String</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">파일 ID</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>items[].attachments[].url</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>String</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">다운로드 URL</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>items[].attachments[].originalFilename</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>String</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">원본 파일명</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>items[].attachments[].contentType</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>String</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">MIME 타입</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>items[].attachments[].size</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>Number</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">파일 크기(bytes)</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>nextCursor</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>String</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">다음 페이지 커서(없으면 null)</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>hasNext</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>Boolean</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">다음 페이지 존재 여부</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="sect3">
+<h4 id="_다음_페이지_조회_예시_4"><a class="anchor" href="#_다음_페이지_조회_예시_4"></a><a class="link" href="#_다음_페이지_조회_예시_4">다음 페이지 조회 예시</a></h4>
+<div class="listingblock">
+<div class="content">
+<pre class="highlight nowrap"><code class="language-http" data-lang="http">GET /api/conversations/038edc40-7ef7-4a9c-a901-117c55f03a92/messages?size=2&amp;cursor=2026-02-08T21%3A26%3A00.688953300%7Cfff72ad1-bda2-4541-82fa-9607fc1f2ff4 HTTP/1.1
+Authorization: Bearer eyJhbGciOiJIUzM4NCJ9.eyJzdWIiOiI5OTFiNDczNi1lNTBkLTQ4NDItODE0Ny1iMTI1MGVhNWVjZDAiLCJlbWFpbCI6Im1zZ21lK2ZmZDNlODk0LTQyZjQtNDdmNi05MzgyLTlhYWY2ZTcwNGRkN0B0ZXN0LmNvbSIsImlhdCI6MTc3MDU1MzU2MCwiZXhwIjoxNzcwNTU3MTYwfQ.tjdHzFGVwD66wq3T4mAbkzwspItmpuTLpidPvLy4Wx6mrHNcf4tAT1atUxotYeG7
+Host: localhost:8080</code></pre>
+</div>
+</div>
+<table class="tableblock frame-all grid-all stretch">
+<colgroup>
+<col style="width: 50%;">
+<col style="width: 50%;">
+</colgroup>
+<thead>
+<tr>
+<th class="tableblock halign-left valign-top">Name</th>
+<th class="tableblock halign-left valign-top">Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>Authorization</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Bearer {accessToken}</p></td>
+</tr>
+</tbody>
+</table>
+<table class="tableblock frame-all grid-all stretch">
+<caption class="title">Table 6. /api/conversations/{conversationId}/messages</caption>
+<colgroup>
+<col style="width: 50%;">
+<col style="width: 50%;">
+</colgroup>
+<thead>
+<tr>
+<th class="tableblock halign-left valign-top">Parameter</th>
+<th class="tableblock halign-left valign-top">Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>conversationId</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">대화방 ID(UUID)</p></td>
+</tr>
+</tbody>
+</table>
+<table class="tableblock frame-all grid-all stretch">
+<colgroup>
+<col style="width: 50%;">
+<col style="width: 50%;">
+</colgroup>
+<thead>
+<tr>
+<th class="tableblock halign-left valign-top">Parameter</th>
+<th class="tableblock halign-left valign-top">Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>cursor</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">페이지 커서(createdAt|id)</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>size</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">페이지 크기(기본 20, 최대 50)</p></td>
+</tr>
+</tbody>
+</table>
+<div class="listingblock">
+<div class="content">
+<pre class="highlight nowrap"><code class="language-http" data-lang="http">HTTP/1.1 200 OK
+Content-Type: application/json
+X-Content-Type-Options: nosniff
+X-XSS-Protection: 0
+Cache-Control: no-cache, no-store, max-age=0, must-revalidate
+Pragma: no-cache
+Expires: 0
+X-Frame-Options: DENY
+Content-Length: 298
+
+{
+  "items" : [ {
+    "messageId" : "327c69ac-daea-4e41-a77c-880ca75aa0e1",
+    "senderId" : "991b4736-e50d-4842-8147-b1250ea5ecd0",
+    "content" : "메시지 1",
+    "createdAt" : "2026-02-08T21:26:00.6859543",
+    "attachments" : [ ]
+  } ],
+  "nextCursor" : null,
+  "hasNext" : false
+}</code></pre>
+</div>
+</div>
+<table class="tableblock frame-all grid-all stretch">
+<colgroup>
+<col style="width: 33.3333%;">
+<col style="width: 33.3333%;">
+<col style="width: 33.3334%;">
+</colgroup>
+<thead>
+<tr>
+<th class="tableblock halign-left valign-top">Path</th>
+<th class="tableblock halign-left valign-top">Type</th>
+<th class="tableblock halign-left valign-top">Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>items</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>Array</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">메시지 목록(최신순)</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>items[].messageId</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>String</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">메시지 ID</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>items[].senderId</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>String</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">보낸 사람 ID</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>items[].content</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>String</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">메시지 내용(없을 수 있음)</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>items[].createdAt</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>String</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">생성 시각</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>items[].attachments</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>Array</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">첨부 목록</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>items[].attachments[].fileId</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>String</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">파일 ID</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>items[].attachments[].url</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>String</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">다운로드 URL</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>items[].attachments[].originalFilename</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>String</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">원본 파일명</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>items[].attachments[].contentType</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>String</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">MIME 타입</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>items[].attachments[].size</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>Number</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">파일 크기(bytes)</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>nextCursor</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>String</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">다음 페이지 커서(없으면 null)</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>hasNext</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>Boolean</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">다음 페이지 존재 여부</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+</div>
+</div>
 </div>
 <div id="footer">
 <div id="footer-text">
 Version 0.0.1-SNAPSHOT<br>
-Last updated 2026-02-06 10:22:48 +0900
+Last updated 2026-02-08 21:10:14 +0900
 </div>
 </div>
 </body>

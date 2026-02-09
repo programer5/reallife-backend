@@ -65,14 +65,13 @@ dependencies {
 	// ✅ 기본 테스트
 	testImplementation 'org.springframework.boot:spring-boot-starter-test'
 
-	// ✅ Boot 4에서 MockMvc 테스트 지원(필수)
-	testImplementation 'org.springframework.boot:spring-boot-starter-webmvc-test'  // ⭐ 추가 :contentReference[oaicite:1]{index=1}
-
-	// ✅ Boot 4에서 Security 테스트 지원(권장)
-	testImplementation 'org.springframework.boot:spring-boot-starter-security-test' // ⭐ 권장 :contentReference[oaicite:2]{index=2}
-
 	// ✅ REST Docs(MockMvc)
 	testImplementation 'org.springframework.restdocs:spring-restdocs-mockmvc'
+
+	// ✅ Security 테스트(필수급)
+	testImplementation 'org.springframework.security:spring-security-test'
+
+	testRuntimeOnly 'com.h2database:h2'
 
 }
 
@@ -103,4 +102,15 @@ tasks.register('copyRestDocs', Copy) {
 	dependsOn tasks.named('asciidoctor')
 	from layout.buildDirectory.dir("docs/asciidoc")
 	into layout.projectDirectory.dir("src/main/resources/static/docs")
+	duplicatesStrategy = DuplicatesStrategy.INCLUDE
+}
+
+// ✅ build 하면 REST Docs도 자동 생성 + static/docs로 복사
+tasks.named('build') {
+	dependsOn tasks.named('copyRestDocs')
+}
+
+// ✅ bootJar 만들 때도 docs가 포함되도록 보장 (선택이지만 강추)
+tasks.named('bootJar') {
+	dependsOn tasks.named('copyRestDocs')
 }

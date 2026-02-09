@@ -82,7 +82,7 @@ public class PostQueryRepositoryImpl implements PostQueryRepository {
                         cursorCond
                 )
                 .orderBy(p.createdAt.desc(), p.id.desc())
-                .limit(size + 1L) // ✅ hasNext 판별용
+                .limit(size)
                 .fetch();
     }
 

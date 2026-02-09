@@ -217,17 +217,29 @@ Phase 2 — SNS 기능 (진행/확장)
 - 좋아요 / 팔로우
 - 피드 조회 (팔로우 기반 + 최신순 + Cursor)
 
-Phase 2.1 — Messaging (진행/확장)
+Phase 2.1 — Messaging (완료)
 - DM(1:1) 대화방
 - 메시지 전송/조회(커서)
 - 파일 업로드/첨부(로컬 → S3 교체 가능)
-- (확장) 읽음 처리, 알림 이벤트
+- 메시지 조회 API REST Docs 문서화
 
-Phase 2.2 — Notification (진행/확장)
+Phase 2.2 — Notification (완료)
 - 이벤트 기반 알림 생성(MessageSentEvent 등)
 - 알림 조회/읽음/전체읽음/읽은알림 일괄삭제
-- (다음) 알림 목록 Cursor 기반 페이징 적용
-- (다음) 중복 알림 방지 고도화(동시성/DB 유니크 방어)
+- 중복 알림 방지 로직(존재 여부 체크 기반)
+
+Phase 2.2+ — Notification (다음)
+- 알림 목록 Cursor 기반 페이징 적용
+- 중복 알림 방지 고도화(동시성/DB 유니크 방어)
+
+Phase 2.3 — Search (계획 / 적정 타이밍에 진행)
+- 사용자 검색 (handle / name 기반)
+  - prefix match + 정렬(정확 일치/접두 우선)
+- 키워드 검색 (예: "맛집" → 관련 게시글/해시태그/유저)
+- (고도화) Elasticsearch/OpenSearch 도입
+  - 한국어 검색(분석기), 오타/유사어 대응
+  - 통합 검색(유저/게시글/해시태그) + 랭킹 튜닝(인기/최신/관련도)
+  - 색인 동기화 전략(이벤트 기반/배치 등)
 
 Phase 4 — DevOps / 운영
 - Docker / Docker Compose (MySQL 포함)
@@ -240,7 +252,7 @@ Phase 4 — DevOps / 운영
 - 운영 로그 / 모니터링
 - 공통 로그(MDC RequestId) + 요청/응답 시간 측정 + 에러 로깅 표준화
 
-Phase 6 — Product Expansion
+Phase 5 — Product Expansion
 - 실제 사용자 공개 베타
 - Android 앱 출시 (Google Play)
 - iOS 앱 출시 (Apple App Store)

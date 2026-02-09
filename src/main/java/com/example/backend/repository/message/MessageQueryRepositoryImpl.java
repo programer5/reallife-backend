@@ -43,7 +43,7 @@ public class MessageQueryRepositoryImpl implements MessageQueryRepository {
                         cursorCond
                 )
                 .orderBy(m.createdAt.desc(), m.id.desc())
-                .limit(size + 1L)
+                .limit(size)
                 .fetch();
 
         if (messageIds.isEmpty()) return List.of();

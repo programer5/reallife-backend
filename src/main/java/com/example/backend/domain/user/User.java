@@ -13,10 +13,16 @@ import static jakarta.persistence.EnumType.STRING;
 @Getter
 @NoArgsConstructor
 @Entity
-@Table(name = "users",
+@Table(
+        name = "users",
         uniqueConstraints = {
                 @UniqueConstraint(name = "uk_users_email", columnNames = "email"),
                 @UniqueConstraint(name = "uk_users_handle", columnNames = "handle")
+        },
+        indexes = {
+                @Index(name = "idx_users_handle_lower", columnList = "handle_lower"),
+                @Index(name = "idx_users_name_lower", columnList = "name_lower"),
+                @Index(name = "idx_users_handle_lower_id", columnList = "handle_lower, id")
         }
 )
 public class User extends BaseEntity {
@@ -30,9 +36,11 @@ public class User extends BaseEntity {
     @Column(nullable = false, length = 100)
     private String email;
 
-    // ✅ 인스타 아이디(핸들) — 고유, 노출용
     @Column(nullable = false, length = 30, unique = true)
     private String handle;
+
+    @Column(name = "handle_lower", nullable = false, length = 30)
+    private String handleLower;
 
     @Column(nullable = false, length = 60)
     private String password;
@@ -40,16 +48,16 @@ public class User extends BaseEntity {
     @Column(nullable = false, length = 30)
     private String name;
 
-    // ✅ OAuth 확장용 (지금은 LOCAL)
+    @Column(name = "name_lower", nullable = false, length = 30)
+    private String nameLower;
+
     @Enumerated(STRING)
     @Column(nullable = false, length = 20)
     private AuthProvider provider = AuthProvider.LOCAL;
 
-    // provider 계정의 고유 식별자(구글 sub 등). LOCAL이면 null.
     @Column(length = 100)
     private String providerId;
 
-    // ✅ 팔로워 수 (성능 위해 캐시)
     @Column(nullable = false)
     private long followerCount = 0;
 
@@ -59,6 +67,24 @@ public class User extends BaseEntity {
         this.password = password;
         this.name = name;
         this.provider = AuthProvider.LOCAL;
+
+        syncSearchFields(); // 생성자에서도 안전하게
+    }
+
+    // ✅ BaseEntity 훅에서 호출됨
+    @Override
+    protected void prePersist() {
+        syncSearchFields();
+    }
+
+    @Override
+    protected void preUpdate() {
+        syncSearchFields();
+    }
+
+    private void syncSearchFields() {
+        this.handleLower = (handle == null) ? "" : handle.toLowerCase();
+        this.nameLower = (name == null) ? "" : name.toLowerCase();
     }
 
     public void increaseFollowerCount() {

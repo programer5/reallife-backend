@@ -6,7 +6,7 @@ import java.util.UUID;
 
 public record FeedResponse(
         List<FeedItem> items,
-        Cursor nextCursor,
+        String nextCursor,
         boolean hasNext
 ) {
     public record FeedItem(
@@ -18,10 +18,5 @@ public record FeedResponse(
             List<String> imageUrls,
             String visibility,
             LocalDateTime createdAt
-    ) {}
-
-    public record Cursor(
-            LocalDateTime cursorCreatedAt,
-            UUID cursorPostId
     ) {}
 }
