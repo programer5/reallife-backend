@@ -33,6 +33,8 @@ jobs:
         run: chmod +x ./gradlew
 
       - name: Build REST Docs (test + asciidoctor)
+        env:
+          SPRING_PROFILES_ACTIVE: test
         run: ./gradlew clean test asciidoctor
 
       - name: Upload Pages artifact
