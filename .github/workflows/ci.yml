@@ -8,6 +8,8 @@ on:
 jobs:
   build-test:
     runs-on: ubuntu-latest
+    env:
+      SPRING_PROFILES_ACTIVE: test
 
     steps:
       - name: Checkout
@@ -23,17 +25,9 @@ jobs:
       - name: Grant execute permission for gradlew
         run: chmod +x ./gradlew
 
-      # ✅ 테스트(스니펫 생성)
-      - name: Test (generate REST Docs snippets)
-        env:
-          SPRING_PROFILES_ACTIVE: TEST
-        run: ./gradlew clean test
+      - name: Test & Asciidoctor (generate REST Docs)
+        run: ./gradlew clean test asciidoctor
 
-      # ✅ 문서 생성
-      - name: Asciidoctor (generate docs)
-        run: ./gradlew asciidoctor
-
-      # ✅ 결과물 확인용(선택)
       - name: Upload docs artifact
         uses: actions/upload-artifact@v4
         with:
