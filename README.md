@@ -36,6 +36,11 @@ JWT 인증, 테스트 기반 문서화(REST Docs), 실제 배포까지 고려한
 - Spring REST Docs (MockMvc)
 - QueryDSL
 
+### Testing & Docs
+- JUnit 5
+- Spring REST Docs (MockMvc)
+- H2 (Test Profile)
+
 ### Database
 - MySQL
 
@@ -97,10 +102,11 @@ JWT 인증, 테스트 기반 문서화(REST Docs), 실제 배포까지 고려한
 
 ## 📚 API Documentation
 
-- http://localhost:8080/docs
+- Local: http://localhost:8080/docs
+- GitHub Pages: https://programer5.github.io/vue-spring-backend/
 
 ```bash
-./gradlew clean test asciidoctor copyRestDocs
+./gradlew clean test asciidoctor -Dspring.profiles.active=test
 ```
 
 ---
@@ -126,7 +132,17 @@ src
 
 ---
 
-## ⚙️ Environment Setup
+```md
+## 🧩 Profiles
+
+```text
+- default : MySQL (local/dev)
+- test    : H2 in-memory DB + test JWT props (CI & REST Docs)
+```
+
+---
+
+## ⚙️ Local Environment Setup
 
 ### MySQL Database 생성
 
@@ -138,7 +154,9 @@ COLLATE utf8mb4_unicode_ci;
 
 ---
 
-## application.yml 설정 예시 (⚠️ 커밋 금지)
+### 1) Create `application-local.yml` (DO NOT COMMIT)
+
+`src/main/resources/application-local.yml`
 
 ```yml
 spring:
@@ -151,11 +169,10 @@ spring:
   jpa:
     hibernate:
       ddl-auto: update
-    show-sql: true
 
 jwt:
   secret: "CHANGE_ME_TO_A_LONG_RANDOM_SECRET_KEY_32_BYTES_MIN"
-  access-token-exp-minutes: 60
+  accessTokenExpMinutes: 60
 ```
 
 ---
@@ -163,15 +180,24 @@ jwt:
 ## 🚀 Run Application
 
 ```bash
-./gradlew bootRun
+./gradlew bootRun -Dspring.profiles.active=local
 ```
 
 ---
 
-## 🧪 Test
+```md
+## 🧪 Test & Documentation
 
 ```bash
-./gradlew test
+./gradlew clean test asciidoctor -Dspring.profiles.active=test
+```
+
+---
+
+```md
+## 🚀 Deployment
+
+- REST Docs is deployed automatically to GitHub Pages on every push to `main`.
 ```
 
 ---
