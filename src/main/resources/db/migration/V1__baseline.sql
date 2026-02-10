@@ -1,3 +1,22 @@
--- Flyway Baseline Migration
--- 기존에 이미 생성되어 있는 스키마를 "V1 기준점"으로 잡기 위한 파일입니다.
--- (운영/로컬 MySQL에 테이블이 이미 존재하므로 DDL을 재생성하지 않습니다.)
+-- V3__drop_comment_duplicate_index.sql
+-- Drop duplicate/overlapping index on comments if it exists
+-- Keep: idx_comments_post_created_id (post_id, created_at, id)
+-- Drop: idx_comment_post_created (post_id, created_at)
+
+SET @idx_exists := (
+  SELECT COUNT(*)
+  FROM information_schema.statistics
+  WHERE table_schema = DATABASE()
+    AND table_name = 'comments'
+    AND index_name = 'idx_comment_post_created'
+);
+
+SET @sql := IF(
+  @idx_exists > 0,
+  'DROP INDEX idx_comment_post_created ON comments',
+  'SELECT 1'
+);
+
+PREPARE stmt FROM @sql;
+EXECUTE stmt;
+DEALLOCATE PREPARE stmt;

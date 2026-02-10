@@ -1,32 +1,45 @@
-## 인덱스 정리 (Comments)
+# DB Runbook (MySQL) — Comments Cursor Index & Cleanup
 
-### 배경
-- 기존 인덱스: `idx_comment_post_created` (`post_id`, `created_at`)
-- 추가된 인덱스: `idx_comments_post_created_id` (`post_id`, `created_at`, `id`)
-
-EXPLAIN 분석 결과, 두 인덱스는 일반적인 댓글 목록 조회 쿼리에 대해
-동일한 실행 계획을 사용함:
-- `Using where; Backward index scan`
-- 조회 rows, Extra 항목에서 유의미한 차이 없음
-
-두 인덱스가 기능적으로 크게 겹치는 상태로 동시에 유지될 경우,
-다음과 같은 비용이 증가할 수 있음:
-- 쓰기 비용 증가 (INSERT / UPDATE / DELETE)
-- 디스크 저장 공간 사용 증가
+이 문서는 댓글 커서 페이징 성능을 위한 인덱스 추가/정리 작업을
+운영 환경에서도 안전하게 적용하기 위한 Runbook 입니다.
 
 ---
 
-### 권장 사항
-커서 페이징에서 사용하는 키 구조에 더 적합한 신규 인덱스만 유지하고,
-기존 인덱스는 제거하는 것을 권장함.
+## Background
 
-- ✅ 유지: `idx_comments_post_created_id` (`post_id`, `created_at`, `id`)
-- ❌ 제거: `idx_comment_post_created` (`post_id`, `created_at`)
+댓글 목록 조회는 아래 정렬/커서 조건을 사용합니다.
+
+- 정렬: `created_at DESC, id DESC`
+- 커서 조건:
+    - `created_at < cursorCreatedAt`
+    - 또는 `created_at = cursorCreatedAt AND id < cursorId`
+
+따라서 최적 인덱스는:
+
+✅ `idx_comments_post_created_id (post_id, created_at, id)`
+
+기존에 아래 인덱스가 이미 있을 수 있습니다.
+
+- `idx_comment_post_created (post_id, created_at)`  ← 중복/겹침 가능
+
+두 인덱스가 함께 있으면 쓰기 비용/저장 공간이 늘 수 있으므로,
+신규 인덱스 유지 + 기존 인덱스 제거를 권장합니다.
 
 ---
 
-### 적용 방법 (MySQL)
-운영 트래픽이 낮은 시간대에 실행하는 것을 권장함.
+## Files
+
+- `2026-02-10_add_comments_cursor_index_mysql.sql`
+    - 인덱스 추가 (없으면 생성)
+- `2026-02-10_drop_comment_duplicate_index_mysql.sql`
+    - 중복/겹치는 인덱스 조건부 제거(있으면 drop, 없으면 no-op)
+
+---
+
+## Preconditions (필수 확인)
 
 ```sql
-DROP INDEX idx_comment_post_created ON comments;
+SELECT DATABASE() AS current_db;
+SELECT VERSION() AS mysql_version;
+SHOW TABLES LIKE 'comments';
+SHOW TABLES LIKE 'flyway_schema_history';
