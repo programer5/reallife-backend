@@ -1,7 +1,9 @@
 package com.example.backend.controller.comment;
 
 import com.example.backend.controller.DocsTestSupport;
+import com.example.backend.domain.comment.Comment;
 import com.example.backend.domain.user.User;
+import com.example.backend.repository.comment.CommentRepository;
 import com.example.backend.restdocs.ErrorResponseSnippet;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -39,6 +41,7 @@ class CommentControllerDocsTest {
 
     @Autowired WebApplicationContext context;
     @Autowired DocsTestSupport docs;
+    @Autowired CommentRepository commentRepository;
 
     private MockMvc mockMvc(RestDocumentationContextProvider restDocumentation) {
         return MockMvcBuilders.webAppContextSetup(context)
@@ -94,6 +97,9 @@ class CommentControllerDocsTest {
 
         UUID postId = docs.savePost(me.getId(), "post for comment").getId();
 
+        // ✅ 문서/스니펫 생성을 위해 최소 1건의 댓글을 미리 생성
+        commentRepository.saveAndFlush(Comment.create(postId, me.getId(), "first comment"));
+
         mockMvc(restDocumentation)
                 .perform(get("/api/posts/{postId}/comments", postId)
                         .param("size", "10")
@@ -110,7 +116,9 @@ class CommentControllerDocsTest {
                                 parameterWithName("postId").description("게시글 ID")
                         ),
                         queryParameters(
-                                parameterWithName("cursor").optional().description("페이지 커서(예: createdAt|id 등). 없으면 첫 페이지"),
+                                parameterWithName("cursor")
+                                        .optional()
+                                        .description("페이지 커서(포맷: createdAt|commentId, 예: 2026-02-10T11:22:33|4b2d... ). 없으면 첫 페이지"),
                                 parameterWithName("size").optional().description("페이지 크기(기본 20, 최대 50)")
                         ),
                         responseFields(
@@ -132,7 +140,9 @@ class CommentControllerDocsTest {
         User me = docs.saveUser("deleter", "삭제러");
         String token = docs.issueTokenFor(me);
 
-        long commentId = 1L; // 임시: 구현하면서 실제 commentId 픽스처로 교체
+        // ✅ 실제 저장된 UUID commentId 사용
+        UUID postId = docs.savePost(me.getId(), "post for delete").getId();
+        UUID commentId = commentRepository.saveAndFlush(Comment.create(postId, me.getId(), "to delete")).getId();
 
         mockMvc(restDocumentation)
                 .perform(delete("/api/comments/{commentId}", commentId)
@@ -181,7 +191,8 @@ class CommentControllerDocsTest {
                         requestFields(
                                 fieldWithPath("content").description("댓글 내용(blank 불가)")
                         ),
-                        responseFields(ErrorResponseSnippet.common())
+                        // ✅ fieldErrors[].field / fieldErrors[].reason 까지 문서화
+                        responseFields(ErrorResponseSnippet.validation())
                 ));
     }
 }

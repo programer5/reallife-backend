@@ -1,7 +1,6 @@
 package com.example.backend.domain.comment;
 
 import com.example.backend.domain.BaseEntity;
-import com.example.backend.domain.post.Post;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -14,42 +13,38 @@ import static lombok.AccessLevel.PROTECTED;
 @Entity
 @Getter
 @NoArgsConstructor(access = PROTECTED)
-@Table(
-        name = "comments",
-        indexes = {
-                @Index(name = "idx_comment_post_created", columnList = "post_id, created_at"),
-                @Index(name = "idx_comment_author", columnList = "author_id")
-        }
-)
+@Table(name = "comments", indexes = {
+        @Index(name = "idx_comment_post_created", columnList = "post_id, created_at"),
+        @Index(name = "idx_comment_author", columnList = "author_id")
+})
 public class Comment extends BaseEntity {
 
     @Id
     @GeneratedValue
     @UuidGenerator
-    @Column(name = "id", updatable = false, nullable = false)
+    @Column(nullable = false, updatable = false)
     private UUID id;
 
-    @ManyToOne(fetch = FetchType.LAZY, optional = false)
-    @JoinColumn(name = "post_id", nullable = false, updatable = false)
-    private Post post;
+    @Column(name = "post_id", nullable = false)
+    private UUID postId;
 
-    @Column(name = "author_id", nullable = false, updatable = false)
+    @Column(name = "author_id", nullable = false)
     private UUID authorId;
 
     @Column(nullable = false, columnDefinition = "TEXT")
     private String content;
 
-    private Comment(Post post, UUID authorId, String content) {
-        this.post = post;
+    private Comment(UUID postId, UUID authorId, String content) {
+        this.postId = postId;
         this.authorId = authorId;
         this.content = content;
     }
 
-    public static Comment create(Post post, UUID authorId, String content) {
-        return new Comment(post, authorId, content);
+    public static Comment create(UUID postId, UUID authorId, String content) {
+        return new Comment(postId, authorId, content);
     }
 
     public void delete() {
-        markDeleted(); // BaseEntity soft-delete
+        markDeleted();
     }
 }
