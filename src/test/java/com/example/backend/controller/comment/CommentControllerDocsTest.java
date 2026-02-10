@@ -118,7 +118,7 @@ class CommentControllerDocsTest {
                         queryParameters(
                                 parameterWithName("cursor")
                                         .optional()
-                                        .description("페이지 커서(포맷: createdAt|commentId, 예: 2026-02-10T11:22:33|4b2d... ). 없으면 첫 페이지"),
+                                        .description("페이지 커서(opaque). 이전 응답의 nextCursor 값을 그대로 사용. 없으면 첫 페이지"),
                                 parameterWithName("size").optional().description("페이지 크기(기본 20, 최대 50)")
                         ),
                         responseFields(
@@ -285,7 +285,7 @@ class CommentControllerDocsTest {
                                 parameterWithName("postId").description("게시글 ID")
                         ),
                         queryParameters(
-                                parameterWithName("cursor").description("이전 응답의 nextCursor 값"),
+                                parameterWithName("cursor").description("이전 응답의 nextCursor 값(opaque)"),
                                 parameterWithName("size").optional().description("페이지 크기(기본 20, 최대 50)")
                         ),
                         responseFields(
@@ -299,6 +299,37 @@ class CommentControllerDocsTest {
                                 fieldWithPath("nextCursor").optional().description("다음 페이지 커서"),
                                 fieldWithPath("hasNext").description("다음 페이지 존재 여부")
                         )
+                ));
+    }
+
+    @Test
+    void 댓글목록_cursor_invalid_400(RestDocumentationContextProvider restDocumentation) throws Exception {
+        User me = docs.saveUser("badCursor", "리더");
+        String token = docs.issueTokenFor(me);
+
+        UUID postId = docs.savePost(me.getId(), "post for comment").getId();
+
+        mockMvc(restDocumentation)
+                .perform(get("/api/posts/{postId}/comments", postId)
+                        .param("cursor", "%%%invalid%%%")
+                        .param("size", "10")
+                        .header(HttpHeaders.AUTHORIZATION, DocsTestSupport.auth(token)))
+                .andDo(print())
+                .andExpect(status().isBadRequest())
+                .andDo(document("comments-list-400-invalid-cursor",
+                        preprocessRequest(prettyPrint()),
+                        preprocessResponse(prettyPrint()),
+                        requestHeaders(
+                                headerWithName(HttpHeaders.AUTHORIZATION).description("Bearer {accessToken}")
+                        ),
+                        pathParameters(
+                                parameterWithName("postId").description("게시글 ID")
+                        ),
+                        queryParameters(
+                                parameterWithName("cursor").description("페이지 커서(opaque). 유효하지 않으면 400"),
+                                parameterWithName("size").optional().description("페이지 크기(기본 20, 최대 50)")
+                        ),
+                        responseFields(ErrorResponseSnippet.common())
                 ));
     }
 }

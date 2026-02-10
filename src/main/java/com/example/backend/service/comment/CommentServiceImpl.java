@@ -16,7 +16,9 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.nio.charset.StandardCharsets;
 import java.time.LocalDateTime;
+import java.util.Base64;
 import java.util.List;
 import java.util.UUID;
 
@@ -43,33 +45,64 @@ public class CommentServiceImpl implements CommentService {
         postRepository.findById(postId)
                 .orElseThrow(() -> new BusinessException(ErrorCode.POST_NOT_FOUND));
 
-        Pageable pageable = PageRequest.of(0, size + 1); // hasNext 판단용
+        // size 검증이 이미 다른 곳(Controller @Validated 등)에 있으면 생략 가능
+        int pageSize = size <= 0 ? 20 : Math.min(size, 50);
 
-        CursorKey cursorKey = CursorKey.parse(cursor);
+        Pageable pageable = PageRequest.of(0, pageSize + 1); // hasNext 판별용 +1
+
+        CursorKey cursorKey = CursorKey.parseOpaque(cursor);
+
         List<CommentListItem> fetched = (cursorKey == null)
                 ? commentRepository.findFirstPage(postId, pageable)
                 : commentRepository.findNextPage(postId, cursorKey.createdAt(), cursorKey.commentId(), pageable);
 
-        boolean hasNext = fetched.size() > size;
-        List<CommentListItem> items = hasNext ? fetched.subList(0, size) : fetched;
+        boolean hasNext = fetched.size() > pageSize;
+        List<CommentListItem> items = hasNext ? fetched.subList(0, pageSize) : fetched;
 
         String nextCursor = null;
         if (hasNext && !items.isEmpty()) {
             CommentListItem last = items.get(items.size() - 1);
-            nextCursor = last.createdAt() + "|" + last.commentId();
+            String raw = last.createdAt() + "|" + last.commentId();
+            nextCursor = CursorKey.encodeOpaque(raw);
         }
 
         return new CommentListResponse(items, nextCursor, hasNext);
     }
 
+    /**
+     * 내부 커서 포맷: "createdAt|commentId"
+     * 외부 노출: Base64URL(무패딩)으로 인코딩된 opaque 문자열
+     */
     private record CursorKey(LocalDateTime createdAt, UUID commentId) {
-        static CursorKey parse(String cursor) {
+
+        static CursorKey parseOpaque(String cursor) {
             if (cursor == null || cursor.isBlank()) return null;
+
+            String raw = decodeOpaque(cursor);
+
             try {
-                String[] parts = cursor.split("\\|", 2);
-                return new CursorKey(LocalDateTime.parse(parts[0]), UUID.fromString(parts[1]));
+                String[] parts = raw.split("\\|", 2);
+                LocalDateTime createdAt = LocalDateTime.parse(parts[0]);
+                UUID id = UUID.fromString(parts[1]);
+                return new CursorKey(createdAt, id);
             } catch (Exception e) {
-                throw new BusinessException(ErrorCode.INVALID_REQUEST, "Invalid cursor");
+                // 포맷 불일치도 요청 오류(400)
+                throw new BusinessException(ErrorCode.INVALID_REQUEST);
+            }
+        }
+
+        static String encodeOpaque(String raw) {
+            return Base64.getUrlEncoder().withoutPadding()
+                    .encodeToString(raw.getBytes(StandardCharsets.UTF_8));
+        }
+
+        static String decodeOpaque(String cursor) {
+            try {
+                byte[] decoded = Base64.getUrlDecoder().decode(cursor);
+                return new String(decoded, StandardCharsets.UTF_8);
+            } catch (IllegalArgumentException e) {
+                // Base64 decode 실패도 요청 오류(400)
+                throw new BusinessException(ErrorCode.INVALID_REQUEST);
             }
         }
     }
