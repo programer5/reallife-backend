@@ -218,4 +218,87 @@ class CommentControllerDocsTest {
                         responseFields(ErrorResponseSnippet.common())
                 ));
     }
+
+    @Test
+    void 댓글목록_조회_200_next_page_example(RestDocumentationContextProvider restDocumentation) throws Exception {
+        User me = docs.saveUser("readerNext", "리더");
+        String token = docs.issueTokenFor(me);
+
+        UUID postId = docs.savePost(me.getId(), "post for comment").getId();
+
+        // ✅ 2개 이상 만들어서 size=1일 때 hasNext=true가 되도록
+        commentRepository.saveAndFlush(Comment.create(postId, me.getId(), "comment 1"));
+        commentRepository.saveAndFlush(Comment.create(postId, me.getId(), "comment 2"));
+
+        // 1) 첫 페이지 조회(size=1)
+        var first = mockMvc(restDocumentation)
+                .perform(get("/api/posts/{postId}/comments", postId)
+                        .param("size", "1")
+                        .header(HttpHeaders.AUTHORIZATION, DocsTestSupport.auth(token)))
+                .andDo(print())
+                .andExpect(status().isOk())
+                .andDo(document("comments-list-200-next-page",
+                        preprocessRequest(prettyPrint()),
+                        preprocessResponse(prettyPrint()),
+                        requestHeaders(
+                                headerWithName(HttpHeaders.AUTHORIZATION).description("Bearer {accessToken}")
+                        ),
+                        pathParameters(
+                                parameterWithName("postId").description("게시글 ID")
+                        ),
+                        queryParameters(
+                                parameterWithName("cursor").optional().description("페이지 커서(없으면 첫 페이지)"),
+                                parameterWithName("size").optional().description("페이지 크기(기본 20, 최대 50)")
+                        ),
+                        responseFields(
+                                fieldWithPath("items").description("댓글 목록"),
+                                fieldWithPath("items[].commentId").description("댓글 ID"),
+                                fieldWithPath("items[].userId").description("작성자 유저 ID(UUID)"),
+                                fieldWithPath("items[].handle").description("작성자 핸들"),
+                                fieldWithPath("items[].name").description("작성자 이름"),
+                                fieldWithPath("items[].content").description("댓글 내용"),
+                                fieldWithPath("items[].createdAt").description("작성 시간(ISO-8601)"),
+                                fieldWithPath("nextCursor").optional().description("다음 페이지 커서"),
+                                fieldWithPath("hasNext").description("다음 페이지 존재 여부")
+                        )
+                ))
+                .andReturn();
+
+        // 2) 응답 JSON에서 nextCursor 추출 후 다음 페이지 조회
+        String body = first.getResponse().getContentAsString();
+        String nextCursor = com.jayway.jsonpath.JsonPath.read(body, "$.nextCursor");
+
+        mockMvc(restDocumentation)
+                .perform(get("/api/posts/{postId}/comments", postId)
+                        .param("cursor", nextCursor)
+                        .param("size", "1")
+                        .header(HttpHeaders.AUTHORIZATION, DocsTestSupport.auth(token)))
+                .andDo(print())
+                .andExpect(status().isOk())
+                .andDo(document("comments-list-200-next-page-followup",
+                        preprocessRequest(prettyPrint()),
+                        preprocessResponse(prettyPrint()),
+                        requestHeaders(
+                                headerWithName(HttpHeaders.AUTHORIZATION).description("Bearer {accessToken}")
+                        ),
+                        pathParameters(
+                                parameterWithName("postId").description("게시글 ID")
+                        ),
+                        queryParameters(
+                                parameterWithName("cursor").description("이전 응답의 nextCursor 값"),
+                                parameterWithName("size").optional().description("페이지 크기(기본 20, 최대 50)")
+                        ),
+                        responseFields(
+                                fieldWithPath("items").description("댓글 목록"),
+                                fieldWithPath("items[].commentId").description("댓글 ID"),
+                                fieldWithPath("items[].userId").description("작성자 유저 ID(UUID)"),
+                                fieldWithPath("items[].handle").description("작성자 핸들"),
+                                fieldWithPath("items[].name").description("작성자 이름"),
+                                fieldWithPath("items[].content").description("댓글 내용"),
+                                fieldWithPath("items[].createdAt").description("작성 시간(ISO-8601)"),
+                                fieldWithPath("nextCursor").optional().description("다음 페이지 커서"),
+                                fieldWithPath("hasNext").description("다음 페이지 존재 여부")
+                        )
+                ));
+    }
 }
