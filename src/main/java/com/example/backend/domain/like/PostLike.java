@@ -20,7 +20,7 @@ import static lombok.AccessLevel.PROTECTED;
         },
         indexes = {
                 @Index(name = "idx_post_id", columnList = "post_id"),
-                @Index(name = "idx_user_id", columnList = "user_id")
+                @Index(name = "idx_post_like_user_id", columnList = "user_id")
         }
 )
 public class PostLike extends BaseEntity {

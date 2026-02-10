@@ -144,6 +144,69 @@ include::{snippets}/posts-delete/request-headers.adoc[]
 ==== Response
 include::{snippets}/posts-delete/http-response.adoc[]
 
+== Comments
+
+=== 댓글 생성
+
+==== Request
+include::{snippets}/comments-create-201/http-request.adoc[]
+include::{snippets}/comments-create-201/request-headers.adoc[]
+include::{snippets}/comments-create-201/path-parameters.adoc[]
+include::{snippets}/comments-create-201/request-fields.adoc[]
+
+==== Response
+include::{snippets}/comments-create-201/http-response.adoc[]
+include::{snippets}/comments-create-201/response-fields.adoc[]
+
+=== 댓글 목록 조회 (Cursor Paging)
+
+include::{snippets}/comments-list-200/http-request.adoc[]
+include::{snippets}/comments-list-200/request-headers.adoc[]
+include::{snippets}/comments-list-200/path-parameters.adoc[]
+include::{snippets}/comments-list-200/query-parameters.adoc[]
+include::{snippets}/comments-list-200/http-response.adoc[]
+include::{snippets}/comments-list-200/response-fields.adoc[]
+
+==== 다음 페이지 조회 예시
+
+include::{snippets}/comments-list-200-next-page/http-request.adoc[]
+include::{snippets}/comments-list-200-next-page/request-headers.adoc[]
+include::{snippets}/comments-list-200-next-page/path-parameters.adoc[]
+include::{snippets}/comments-list-200-next-page/query-parameters.adoc[]
+include::{snippets}/comments-list-200-next-page/http-response.adoc[]
+include::{snippets}/comments-list-200-next-page/response-fields.adoc[]
+
+include::{snippets}/comments-list-200-next-page-followup/http-request.adoc[]
+include::{snippets}/comments-list-200-next-page-followup/request-headers.adoc[]
+include::{snippets}/comments-list-200-next-page-followup/path-parameters.adoc[]
+include::{snippets}/comments-list-200-next-page-followup/query-parameters.adoc[]
+include::{snippets}/comments-list-200-next-page-followup/http-response.adoc[]
+include::{snippets}/comments-list-200-next-page-followup/response-fields.adoc[]
+
+=== 댓글 삭제
+
+include::{snippets}/comments-delete-204/http-request.adoc[]
+include::{snippets}/comments-delete-204/request-headers.adoc[]
+include::{snippets}/comments-delete-204/path-parameters.adoc[]
+include::{snippets}/comments-delete-204/http-response.adoc[]
+
+==== 실패 응답
+
+===== 400 Bad Request (invalid UUID)
+include::{snippets}/comments-delete-400-invalid-uuid/http-request.adoc[]
+include::{snippets}/comments-delete-400-invalid-uuid/request-headers.adoc[]
+include::{snippets}/comments-delete-400-invalid-uuid/path-parameters.adoc[]
+include::{snippets}/comments-delete-400-invalid-uuid/http-response.adoc[]
+include::{snippets}/comments-delete-400-invalid-uuid/response-fields.adoc[]
+
+===== 400 Validation Error (content blank)
+include::{snippets}/comments-create-400-content-blank/http-request.adoc[]
+include::{snippets}/comments-create-400-content-blank/request-headers.adoc[]
+include::{snippets}/comments-create-400-content-blank/path-parameters.adoc[]
+include::{snippets}/comments-create-400-content-blank/request-fields.adoc[]
+include::{snippets}/comments-create-400-content-blank/http-response.adoc[]
+include::{snippets}/comments-create-400-content-blank/response-fields.adoc[]
+
 == Follows
 
 === 팔로우

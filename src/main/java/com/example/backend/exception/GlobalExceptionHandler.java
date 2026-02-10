@@ -6,6 +6,7 @@ import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -60,6 +61,26 @@ public class GlobalExceptionHandler {
                 new ErrorResponse(
                         ec.code(),
                         e.getMessage() != null ? e.getMessage() : ec.message(),
+                        LocalDateTime.now(),
+                        req.getRequestURI(),
+                        null
+                )
+        );
+    }
+
+    @ExceptionHandler(MethodArgumentTypeMismatchException.class)
+    public ResponseEntity<ErrorResponse> handleTypeMismatch(
+            MethodArgumentTypeMismatchException e,
+            HttpServletRequest req
+    ) {
+        ErrorCode ec = ErrorCode.INVALID_REQUEST;
+
+        // e.getMessage()는 "Invalid UUID string: 1" 같이 내부 구현 메시지가 섞여서 길 수 있음
+        // → message는 공통 메시지로 통일하는 게 운영/보안/문서 측면에서 좋음
+        return ResponseEntity.status(ec.status()).body(
+                new ErrorResponse(
+                        ec.code(),
+                        ec.message(),
                         LocalDateTime.now(),
                         req.getRequestURI(),
                         null
