@@ -17,4 +17,4 @@
 
 #### Option A) mysql CLI로 실행 (추천)
 ```bash
-mysql -h <host> -u <user> -p <db_name> < src/docs/db/2026-02-10_add_comments_cursor_index_mysql.sql
+
