@@ -32,9 +32,8 @@ JWT 인증, 테스트 기반 문서화(REST Docs), 실제 배포까지 고려한
 - Spring Boot 4.0.2
 - Spring Security (Stateless)
 - Spring Data JPA (Hibernate)
+- QueryDSL (Cursor Paging / 검색 최적화)
 - JWT (Access Token)
-- Spring REST Docs (MockMvc)
-- QueryDSL
 
 ### Testing & Docs
 - JUnit 5
@@ -72,7 +71,8 @@ JWT 인증, 테스트 기반 문서화(REST Docs), 실제 배포까지 고려한
   - JWT 인증 필요
 
 ### SNS Core
-- 게시글 생성/조회/삭제
+- 게시글 생성 / 조회 / 삭제
+- 댓글 생성 / 목록 조회 / 삭제
 - 좋아요 / 좋아요 취소
 - 팔로우 / 언팔로우
 - 팔로우 기반 피드 조회 (**Cursor 기반 페이징**)
@@ -83,8 +83,8 @@ JWT 인증, 테스트 기반 문서화(REST Docs), 실제 배포까지 고려한
 - 커서 기반 메시지 페이징
 
 ### Notification
-- 메시지 전송 시 이벤트 발행 → 상대방에게 알림 생성
-  - `MessageSentEvent` → `@TransactionalEventListener(AFTER_COMMIT)` 기반
+- 메시지 전송 시 이벤트 발행 → 알림 생성
+  - `@TransactionalEventListener(AFTER_COMMIT)` 기반
 - 내 알림 조회 / 읽음 처리 / 전체 읽음 / 읽은 알림 일괄 삭제(soft delete)
 - 중복 알림 방지 로직(존재 여부 체크 기반)
 
@@ -106,7 +106,7 @@ JWT 인증, 테스트 기반 문서화(REST Docs), 실제 배포까지 고려한
 - GitHub Pages: https://programer5.github.io/vue-spring-backend/
 
 ```bash
-./gradlew clean test asciidoctor -Dspring.profiles.active=test
+./gradlew clean test asciidoctor copyRestDocs -Dspring.profiles.active=test
 ```
 
 ---
@@ -132,12 +132,11 @@ src
 
 ---
 
-```md
 ## 🧩 Profiles
 
 ```text
 - default : MySQL (local/dev)
-- test    : H2 in-memory DB + test JWT props (CI & REST Docs)
+- test    : H2 in-memory DB + 테스트용 JWT 설정 (CI & REST Docs)
 ```
 
 ---
@@ -185,19 +184,54 @@ jwt:
 
 ---
 
-```md
 ## 🧪 Test & Documentation
 
 ```bash
 ./gradlew clean test asciidoctor -Dspring.profiles.active=test
 ```
+## 🧠 Design Decisions
+
+```text
+UUID 기반 PK
+  순차 ID 노출 방지
+  URL 추측 공격 방어
+Cursor 기반 페이징
+  대용량 데이터에서도 안정적인 성능
+  createdAt + id 기반 커서
+  외부 노출은 Base64URL Opaque Cursor 방식
+연관관계 최소화
+  Comment → Post 직접 연관관계 제거
+  postId(UUID)만 보유하여 도메인 결합도 감소
+```
 
 ---
 
-```md
+## ⚡ Performance & DB Strategy
+
+```text
+댓글 / 피드 / 메시지 목록 조회에 커서 페이징 적용
+MySQL 인덱스 설계 및 EXPLAIN 기반 실행 계획 검증
+중복 인덱스 제거 가이드(runbook) 문서화
+```
+
+---
+
+## 🔐 Security Notes
+
+```text
+Stateless JWT 인증 구조
+Authorization은 Controller / Service 계층에서 명시적으로 검증
+인증/인가 실패 시 내부 정보 노출 방지
+공통 ErrorResponse로 예외 응답 일관성 유지
+```
+
+---
+
 ## 🚀 Deployment
 
-- REST Docs is deployed automatically to GitHub Pages on every push to `main`.
+```text
+main 브랜치 push 시 GitHub Actions 실행
+테스트 → REST Docs 생성 → GitHub Pages 자동 배포
 ```
 
 ---
@@ -205,24 +239,18 @@ jwt:
 ## 🧱 Architecture Strategy (MSA Ready)
 
 ```text
-본 프로젝트는 초기에는 모놀리식 구조로 시작하되,
-도메인 단위 분리 → 마이크로서비스(MSA) 로 점진적 전환이 가능하도록 설계되었습니다.
+초기 단계: Modular Monolith
+- 도메인별 패키지 분리
+- 명확한 Service / Repository 경계
 
-현재 단계: Modular Monolith
- - 도메인별 패키지 분리
- - 명확한 Service / Repository 경계
- - 도메인 이벤트 확장 가능 구조
-  
-  향후 MSA 전환 전략
-    - Auth / User Service
-    - Post / Feed Service
-    - Messaging Service
-    - File Service
-    - Notification Service
-  각 서비스는:
-    - 독립적인 DB
-    - JWT 기반 인증
-    - 이벤트(Kafka) 기반 통신
+확장 시:
+- Auth / User
+- Post / Feed
+- Messaging
+- Notification
+- File
+
+→ 이벤트 기반(Kafka 등) 통신으로 MSA 전환 가능 구조
 ```
 
 ---
@@ -283,3 +311,14 @@ Phase 5 — Product Expansion
 - Android 앱 출시 (Google Play)
 - iOS 앱 출시 (Apple App Store)
 - 개인정보 보호 / 약관 정비
+```
+
+---
+## 🧠 Key Design Highlights
+
+- Cursor Pagination 기반 대용량 피드/댓글/메시지 조회
+- UUID PK + Opaque Cursor로 리소스 추측 방지
+- Comment–Post 연관관계 제거로 도메인 결합도 최소화
+- EXPLAIN 기반 인덱스 검증 및 중복 인덱스 제거
+- 테스트 기반 API 문서 자동화 (REST Docs)
+- 설계 결정 문서(ADR): `src/docs/architecture/ARCHITECTURE_DECISIONS.md`
