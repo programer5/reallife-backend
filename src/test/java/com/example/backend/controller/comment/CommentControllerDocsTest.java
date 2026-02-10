@@ -195,4 +195,27 @@ class CommentControllerDocsTest {
                         responseFields(ErrorResponseSnippet.validation())
                 ));
     }
+
+    @Test
+    void 댓글_삭제_commentId_invalid_uuid_400(RestDocumentationContextProvider restDocumentation) throws Exception {
+        User me = docs.saveUser("deleterBad", "삭제러");
+        String token = docs.issueTokenFor(me);
+
+        mockMvc(restDocumentation)
+                .perform(delete("/api/comments/{commentId}", "1")
+                        .header(HttpHeaders.AUTHORIZATION, DocsTestSupport.auth(token)))
+                .andDo(print())
+                .andExpect(status().isBadRequest())
+                .andDo(document("comments-delete-400-invalid-uuid",
+                        preprocessRequest(prettyPrint()),
+                        preprocessResponse(prettyPrint()),
+                        requestHeaders(
+                                headerWithName(HttpHeaders.AUTHORIZATION).description("Bearer {accessToken}")
+                        ),
+                        pathParameters(
+                                parameterWithName("commentId").description("댓글 ID(UUID). UUID 형식이 아니면 400")
+                        ),
+                        responseFields(ErrorResponseSnippet.common())
+                ));
+    }
 }
