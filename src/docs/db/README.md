@@ -1,44 +1,32 @@
-## Index cleanup (comments)
+## 인덱스 정리 (Comments)
 
-### Background
-- Existing index: `idx_comment_post_created` (post_id, created_at)
-- Added index: `idx_comments_post_created_id` (post_id, created_at, id)
+### 배경
+- 기존 인덱스: `idx_comment_post_created` (`post_id`, `created_at`)
+- 추가된 인덱스: `idx_comments_post_created_id` (`post_id`, `created_at`, `id`)
 
-EXPLAIN showed both indexes produce the same plan for typical queries:
+EXPLAIN 분석 결과, 두 인덱스는 일반적인 댓글 목록 조회 쿼리에 대해
+동일한 실행 계획을 사용함:
 - `Using where; Backward index scan`
-- No meaningful difference in rows/extra
+- 조회 rows, Extra 항목에서 유의미한 차이 없음
 
-When two indexes overlap heavily, keeping both can increase:
-- write cost (INSERT/UPDATE/DELETE)
-- storage usage
+두 인덱스가 기능적으로 크게 겹치는 상태로 동시에 유지될 경우,
+다음과 같은 비용이 증가할 수 있음:
+- 쓰기 비용 증가 (INSERT / UPDATE / DELETE)
+- 디스크 저장 공간 사용 증가
 
-### Recommendation
-Keep the newer index that matches the cursor key:
-- ✅ Keep: `idx_comments_post_created_id` (post_id, created_at, id)
-- ❌ Drop: `idx_comment_post_created` (post_id, created_at)
+---
 
-### How to apply (MySQL)
-Run during a low-traffic window.
+### 권장 사항
+커서 페이징에서 사용하는 키 구조에 더 적합한 신규 인덱스만 유지하고,
+기존 인덱스는 제거하는 것을 권장함.
+
+- ✅ 유지: `idx_comments_post_created_id` (`post_id`, `created_at`, `id`)
+- ❌ 제거: `idx_comment_post_created` (`post_id`, `created_at`)
+
+---
+
+### 적용 방법 (MySQL)
+운영 트래픽이 낮은 시간대에 실행하는 것을 권장함.
 
 ```sql
 DROP INDEX idx_comment_post_created ON comments;
-# DB Runbook (MySQL)
-
-## 2026-02-10 - Add comments cursor pagination index
-
-### Why
-- Comments list uses cursor pagination ordered by `created_at DESC, id DESC`
-- Filters by `post_id` (and usually `deleted=false`)
-- Composite index improves performance as comments grow
-
-### What
-- Add index: `idx_comments_post_created_id` on `(post_id, created_at, id)`
-
-### Script
-- `src/docs/db/2026-02-10_add_comments_cursor_index_mysql.sql`
-
-### How to apply (MySQL)
-
-#### Option A) mysql CLI로 실행 (추천)
-```bash
-
