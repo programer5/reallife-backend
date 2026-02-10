@@ -1,27 +1,24 @@
-# DB Runbook (MySQL)
+## Index cleanup (comments)
 
-## 2026-02-10 - Add comments cursor pagination index
+### Background
+- Existing index: `idx_comment_post_created` (post_id, created_at)
+- Added index: `idx_comments_post_created_id` (post_id, created_at, id)
 
-### Why
-- Comments list uses cursor pagination ordered by `created_at DESC, id DESC`
-- Filters by `post_id` (and usually `deleted=false`)
-- Composite index improves performance as comments grow
+EXPLAIN showed both indexes produce the same plan for typical queries:
+- `Using where; Backward index scan`
+- No meaningful difference in rows/extra
 
-### What
-- Add index: `idx_comments_post_created_id` on `(post_id, created_at, id)`
+When two indexes overlap heavily, keeping both can increase:
+- write cost (INSERT/UPDATE/DELETE)
+- storage usage
 
-### Script
-- `src/docs/db/2026-02-10_add_comments_cursor_index_mysql.sql`
+### Recommendation
+Keep the newer index that matches the cursor key:
+- ✅ Keep: `idx_comments_post_created_id` (post_id, created_at, id)
+- ❌ Drop: `idx_comment_post_created` (post_id, created_at)
 
 ### How to apply (MySQL)
+Run during a low-traffic window.
 
-#### Option A) mysql CLI로 실행 (추천)
-```bash
-mysql -h <host> -u <user> -p <db_name> < src/docs/db/2026-02-10_add_comments_cursor_index_mysql.sql
-
-### Note (Index duplication)
-- Existing index: idx_comment_post_created (post_id, created_at)
-- New index: idx_comments_post_created_id (post_id, created_at, id)
-If both exist and query plans show no benefit, consider dropping the older one to reduce write cost:
 ```sql
 DROP INDEX idx_comment_post_created ON comments;
