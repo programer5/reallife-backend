@@ -4,9 +4,11 @@
 Spring Boot 기반 백엔드 프로젝트로,  
 **“리얼한 삶을 공유하는 SNS(인스타그램 스타일)”**를 목표로 합니다.
 
-JWT 인증, 테스트 기반 문서화(REST Docs), 실제 배포까지 고려한  
-**실서비스 지향 프로젝트**이며,  
-장기적으로는 **무료 서버 배포 → 실제 사용자 이용 → 모바일 앱 스토어 등록**을 목표로 합니다.
+JWT 인증, 테스트 기반 문서화(REST Docs), Flyway 기반 DB 마이그레이션,  
+실제 배포까지 고려한 **실서비스 지향 프로젝트**입니다.
+
+장기적으로는  
+무료 서버 배포 → 실제 사용자 이용 → 모바일 앱 스토어 등록을 목표로 합니다.
 
 ---
 
@@ -34,6 +36,7 @@ JWT 인증, 테스트 기반 문서화(REST Docs), 실제 배포까지 고려한
 - Spring Data JPA (Hibernate)
 - QueryDSL (Cursor Paging / 검색 최적화)
 - JWT (Access Token)
+- **Flyway (DB Migration)**
 
 ### Testing & Docs
 - JUnit 5
@@ -47,15 +50,9 @@ JWT 인증, 테스트 기반 문서화(REST Docs), 실제 배포까지 고려한
 - Vue.js (별도 프로젝트)
 - Axios
 
-### Tools
-- IntelliJ IDEA (Community)
-- Gradle
-- Git / GitHub
-- Postman
-
 ### DevOps (Planned)
 - Docker / Docker Compose
-- Nginx (Reverse Proxy / Static / Gzip / HTTPS)
+- Nginx (Reverse Proxy / HTTPS / Gzip)
 - GitHub Actions (CI/CD)
 - Free Hosting (Render / Railway / Fly.io / OCI Free Tier)
 
@@ -66,9 +63,8 @@ JWT 인증, 테스트 기반 문서화(REST Docs), 실제 배포까지 고려한
 ### Auth / User
 - 회원가입 API (`POST /api/users`)
 - 로그인 API (`POST /api/auth/login`)
-  - JWT Access Token 발급
+- JWT Access Token 발급
 - 보호 API (`GET /api/me`)
-  - JWT 인증 필요
 
 ### SNS Core
 - 게시글 생성 / 조회 / 삭제
@@ -78,25 +74,21 @@ JWT 인증, 테스트 기반 문서화(REST Docs), 실제 배포까지 고려한
 - 팔로우 기반 피드 조회 (**Cursor 기반 페이징**)
 
 ### Messaging
-- 1:1 대화방 기반 메시지 전송/조회
-- 메시지 파일 첨부 (로컬 스토리지)
-- 커서 기반 메시지 페이징
+- 1:1 대화방 메시지 전송/조회
+- 파일 첨부 (Local → S3 확장 가능)
+- Cursor 기반 메시지 페이징
 
 ### Notification
-- 메시지 전송 시 이벤트 발행 → 알림 생성
-  - `@TransactionalEventListener(AFTER_COMMIT)` 기반
-- 내 알림 조회 / 읽음 처리 / 전체 읽음 / 읽은 알림 일괄 삭제(soft delete)
-- 중복 알림 방지 로직(존재 여부 체크 기반)
+- 이벤트 기반 알림 생성
+  - `@TransactionalEventListener(AFTER_COMMIT)`
+- 읽음 처리 / 전체 읽음 / 읽은 알림 soft delete
+- 중복 알림 방지 로직
 
-### File
-- 파일 업로드 API
-- 메시지 첨부 파일 다운로드
-- 스토리지 추상화 (Local → S3 교체 가능)
-
-### Error Handling / Docs
-- 에러 응답 표준화 (`ErrorResponse`)
-- Spring REST Docs 기반 API 문서 자동 생성
-- `/docs` 경로로 문서 서빙
+### DB Migration
+- Flyway 기반 스키마 관리
+- baseline 전략 적용
+- 인덱스 변경도 migration으로 관리
+- `flyway_schema_history` 테이블로 버전 추적
 
 ---
 
@@ -118,25 +110,30 @@ src
 └─ main
    ├─ java
    │  └─ com.example.backend
-   │     ├─ config           # Security, JPA, Logging, Querydsl
-   │     ├─ controller       # REST API
-   │     ├─ domain           # Entity, Aggregate Root
-   │     ├─ repository       # JPA + QueryDSL
-   │     ├─ service          # Business Logic
-   │     ├─ security         # JWT
-   │     ├─ exception        # Error Handling
-   │     └─ logging          # MDC RequestId
+   │     ├─ config
+   │     ├─ controller
+   │     ├─ domain
+   │     ├─ repository
+   │     ├─ service
+   │     ├─ security
+   │     ├─ exception
+   │     └─ logging
    └─ resources
-      └─ static/docs         # REST Docs
+      ├─ db
+      │  └─ migration        # Flyway scripts
+      └─ static/docs
 ```
 
 ---
 
 ## 🧩 Profiles
 
-```text
-- default : MySQL (local/dev)
-- test    : H2 in-memory DB + 테스트용 JWT 설정 (CI & REST Docs)
+```lua
+application.yml        → 공통 설정
+application-local.yml  → 개인 로컬 환경 (Git 제외)
+application-dev.yml    → 개발 환경
+application-prod.yml   → 운영 환경
+application-test.yml   → 테스트 환경
 ```
 
 ---
@@ -189,49 +186,80 @@ jwt:
 ```bash
 ./gradlew clean test asciidoctor -Dspring.profiles.active=test
 ```
-## 🧠 Design Decisions
+
+---
+
+## 🗄 DB Migration Strategy (Flyway)
 
 ```text
+Migration 위치: src/main/resources/db/migration
+네이밍 규칙:
+  V1__baseline.sql
+  V2__add_comments_cursor_index.sql
+  V3__drop_comment_duplicate_index.sql
+baseline-on-migrate 전략 사용
+운영/로컬 모두 동일한 migration 스크립트 사용
+DB 변경은 절대 수동 수정하지 않고 migration으로 관리
+```
+
+```sql
+SELECT * FROM flyway_schema_history ORDER BY installed_rank;
+```
+
+---
+
+## 🧠 Design Decisions
+
+```markdown
 UUID 기반 PK
-  순차 ID 노출 방지
-  URL 추측 공격 방어
+- 순차 ID 노출 방지
+- URL 추측 공격 방어
+
 Cursor 기반 페이징
-  대용량 데이터에서도 안정적인 성능
-  createdAt + id 기반 커서
-  외부 노출은 Base64URL Opaque Cursor 방식
+- createdAt + id 조합
+- Base64URL Opaque Cursor
+
 연관관계 최소화
-  Comment → Post 직접 연관관계 제거
-  postId(UUID)만 보유하여 도메인 결합도 감소
+- Comment → Post 직접 연관 제거
+- postId(UUID)만 보유
 ```
 
 ---
 
 ## ⚡ Performance & DB Strategy
 
-```text
-댓글 / 피드 / 메시지 목록 조회에 커서 페이징 적용
-MySQL 인덱스 설계 및 EXPLAIN 기반 실행 계획 검증
-중복 인덱스 제거 가이드(runbook) 문서화
+```scss
+Cursor Pagination 적용
+MySQL 인덱스 최적화
+EXPLAIN 기반 실행 계획 검증
+중복 인덱스 제거(runbook 문서화)
+Flyway로 인덱스 변경 관리
 ```
 
 ---
 
 ## 🔐 Security Notes
 
-```text
-Stateless JWT 인증 구조
-Authorization은 Controller / Service 계층에서 명시적으로 검증
-인증/인가 실패 시 내부 정보 노출 방지
-공통 ErrorResponse로 예외 응답 일관성 유지
+```nginx
+Stateless JWT 인증
+Controller / Service 계층에서 명시적 권한 검증
+공통 ErrorResponse 표준화
+환경 변수 기반 시크릿 관리
 ```
 
 ---
 
 ## 🚀 Deployment
 
-```text
-main 브랜치 push 시 GitHub Actions 실행
-테스트 → REST Docs 생성 → GitHub Pages 자동 배포
+```diff
+main 브랜치 push 시:
+- 테스트 실행
+- REST Docs 생성
+- GitHub Pages 자동 배포
+
+운영 환경에서는:
+  Flyway 자동 migrate
+  환경 변수 기반 DB / JWT 설정
 ```
 
 ---
@@ -239,20 +267,29 @@ main 브랜치 push 시 GitHub Actions 실행
 ## 🧱 Architecture Strategy (MSA Ready)
 
 ```text
-초기 단계: Modular Monolith
-- 도메인별 패키지 분리
-- 명확한 Service / Repository 경계
+현재: Modular Monolith
 
-확장 시:
-- Auth / User
-- Post / Feed
-- Messaging
-- Notification
-- File
-
-→ 이벤트 기반(Kafka 등) 통신으로 MSA 전환 가능 구조
+확장 시 분리 가능:
+  Auth Service
+  Post / Feed Service
+  Messaging Service
+  Notification Service
+  File Service
+이벤트 기반(Kafka 등) 통신 구조로 확장 가능
 ```
 
+---
+
+## 🧠 Key Design Highlights
+
+```text
+- Cursor Pagination 기반 대용량 피드/댓글/메시지 조회
+- UUID PK + Opaque Cursor로 리소스 추측 방지
+- Comment–Post 연관관계 제거로 도메인 결합도 최소화
+- EXPLAIN 기반 인덱스 검증 및 중복 인덱스 제거
+- 테스트 기반 API 문서 자동화 (REST Docs)
+- 설계 결정 문서(ADR): `src/docs/architecture/ARCHITECTURE_DECISIONS.md`
+```
 ---
 
 ## ✅ Roadmap
@@ -312,13 +349,3 @@ Phase 5 — Product Expansion
 - iOS 앱 출시 (Apple App Store)
 - 개인정보 보호 / 약관 정비
 ```
-
----
-## 🧠 Key Design Highlights
-
-- Cursor Pagination 기반 대용량 피드/댓글/메시지 조회
-- UUID PK + Opaque Cursor로 리소스 추측 방지
-- Comment–Post 연관관계 제거로 도메인 결합도 최소화
-- EXPLAIN 기반 인덱스 검증 및 중복 인덱스 제거
-- 테스트 기반 API 문서 자동화 (REST Docs)
-- 설계 결정 문서(ADR): `src/docs/architecture/ARCHITECTURE_DECISIONS.md`
