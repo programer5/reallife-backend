@@ -194,7 +194,7 @@ jwt:
 ```text
 Migration 위치: src/main/resources/db/migration
 네이밍 규칙:
-  V1__baseline.sql
+  V1__init_schema.sql
   V2__add_comments_cursor_index.sql
   V3__drop_comment_duplicate_index.sql
 baseline-on-migrate 전략 사용
