@@ -34,6 +34,9 @@ public enum ErrorCode {
     MESSAGE_FORBIDDEN(HttpStatus.FORBIDDEN, "MESSAGE_FORBIDDEN", "대화방에 접근할 수 없습니다."),
     MESSAGE_EMPTY(HttpStatus.BAD_REQUEST, "MESSAGE_EMPTY", "내용 또는 첨부파일 중 하나는 필수입니다."),
 
+    // Conversation
+    CONVERSATION_NOT_FOUND(HttpStatus.NOT_FOUND, "MESSAGE_CONVERSATION_NOT_FOUND", "대화방을 찾을 수 없습니다."),
+
     // File
     FILE_TOO_LARGE(HttpStatus.BAD_REQUEST, "FILE_TOO_LARGE", "파일 크기가 너무 큽니다."),
     FILE_TYPE_NOT_ALLOWED(HttpStatus.BAD_REQUEST, "FILE_TYPE_NOT_ALLOWED", "허용되지 않는 파일 형식입니다."),

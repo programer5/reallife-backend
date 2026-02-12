@@ -3,6 +3,7 @@ package com.example.backend.service.message;
 import com.example.backend.controller.message.dto.MessageSendRequest;
 import com.example.backend.controller.message.dto.MessageSendResponse;
 import com.example.backend.domain.file.UploadedFile;
+import com.example.backend.domain.message.Conversation;
 import com.example.backend.domain.message.Message;
 import com.example.backend.domain.message.MessageAttachment;
 import com.example.backend.domain.message.event.MessageSentEvent;
@@ -10,6 +11,7 @@ import com.example.backend.exception.BusinessException;
 import com.example.backend.exception.ErrorCode;
 import com.example.backend.repository.file.UploadedFileRepository;
 import com.example.backend.repository.message.ConversationMemberRepository;
+import com.example.backend.repository.message.ConversationRepository;
 import com.example.backend.repository.message.MessageAttachmentRepository;
 import com.example.backend.repository.message.MessageRepository;
 import com.example.backend.repository.user.UserRepository;
@@ -33,7 +35,8 @@ public class MessageCommandService {
     private final UploadedFileRepository uploadedFileRepository;
     private final ConversationMemberRepository memberRepository;
     private final UserRepository userRepository;
-    private final ApplicationEventPublisher eventPublisher; // ✅ 추가
+    private final ApplicationEventPublisher eventPublisher;
+    private final ConversationRepository conversationRepository;
 
     @Transactional
     public MessageSendResponse send(UUID meId, UUID conversationId, MessageSendRequest req) {
@@ -52,7 +55,16 @@ public class MessageCommandService {
             throw new BusinessException(ErrorCode.INVALID_REQUEST);
         }
 
-        Message saved = messageRepository.save(Message.text(conversationId, meId, content));
+        Message saved = messageRepository.save(Message.text(conversationId, meId, req.content()));
+
+        // ✅ Conversation 조회 (에러코드가 없으니 INVALID_REQUEST로 처리)
+        Conversation conversation = conversationRepository.findById(conversationId)
+                .orElseThrow(() -> new BusinessException(ErrorCode.CONVERSATION_NOT_FOUND));
+
+        // ✅ preview 업데이트
+        String preview = req.content() == null ? "" : req.content();
+        preview = preview.length() > 200 ? preview.substring(0, 200) : preview;
+        conversation.updateLastMessage(saved.getId(), saved.getCreatedAt(), preview);
 
         // 첨부 저장 + 응답 구성
         List<MessageSendResponse.FileItem> files = new ArrayList<>();
@@ -74,7 +86,7 @@ public class MessageCommandService {
             ));
         }
 
-        // ✅ 이벤트 발행 (추가)
+        // 이벤트 발행
         eventPublisher.publishEvent(new MessageSentEvent(
                 saved.getId(),
                 saved.getConversationId(),

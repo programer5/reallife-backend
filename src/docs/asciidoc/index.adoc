@@ -293,6 +293,16 @@ include::{snippets}/messages-get/query-parameters.adoc[]
 include::{snippets}/messages-get/http-response.adoc[]
 include::{snippets}/messages-get/response-fields.adoc[]
 
+[NOTE]
+====
+메시지 목록 조회 API를 호출하면, 해당 대화방의 마지막 메시지 시각까지 자동으로 읽음 처리(last_read_at)가 갱신됩니다.
+====
+
+==== unreadCount 변화 예시(메시지 목록 조회 전/후)
+
+include::{snippets}/conversations-unread-before-messages-get/http-response.adoc[]
+include::{snippets}/conversations-unread-after-messages-get/http-response.adoc[]
+
 ==== 다음 페이지 조회 예시
 include::{snippets}/messages-get-next-page/http-request.adoc[]
 include::{snippets}/messages-get-next-page/request-headers.adoc[]
@@ -300,3 +310,57 @@ include::{snippets}/messages-get-next-page/path-parameters.adoc[]
 include::{snippets}/messages-get-next-page/query-parameters.adoc[]
 include::{snippets}/messages-get-next-page/http-response.adoc[]
 include::{snippets}/messages-get-next-page/response-fields.adoc[]
+
+== Conversations
+
+=== DIRECT 대화방 생성/조회 (Idempotent)
+
+include::{snippets}/conversations-direct-200/http-request.adoc[]
+include::{snippets}/conversations-direct-200/request-headers.adoc[]
+include::{snippets}/conversations-direct-200/request-fields.adoc[]
+include::{snippets}/conversations-direct-200/http-response.adoc[]
+include::{snippets}/conversations-direct-200/response-fields.adoc[]
+
+=== 대화방 목록 조회 (Cursor Paging)
+
+include::{snippets}/conversations-list/http-request.adoc[]
+include::{snippets}/conversations-list/request-headers.adoc[]
+include::{snippets}/conversations-list/query-parameters.adoc[]
+include::{snippets}/conversations-list/http-response.adoc[]
+include::{snippets}/conversations-list/response-fields.adoc[]
+
+=== 대화방 읽음 처리
+
+include::{snippets}/conversations-read/http-request.adoc[]
+include::{snippets}/conversations-read/request-headers.adoc[]
+include::{snippets}/conversations-read/path-parameters.adoc[]
+include::{snippets}/conversations-read/http-response.adoc[]
+
+==== unreadCount 변화 예시 (읽기 전/후)
+
+include::{snippets}/conversations-unread-before/http-response.adoc[]
+include::{snippets}/conversations-unread-after/http-response.adoc[]
+
+==== 실패 응답
+
+===== 404 Not Found (conversation not found)
+include::{snippets}/messages-get-404-conversation-not-found/http-request.adoc[]
+include::{snippets}/messages-get-404-conversation-not-found/request-headers.adoc[]
+include::{snippets}/messages-get-404-conversation-not-found/path-parameters.adoc[]
+include::{snippets}/messages-get-404-conversation-not-found/query-parameters.adoc[]
+include::{snippets}/messages-get-404-conversation-not-found/http-response.adoc[]
+include::{snippets}/messages-get-404-conversation-not-found/response-fields.adoc[]
+
+==== 다음 페이지 조회 예시
+
+include::{snippets}/conversations-list-200-next-page/http-request.adoc[]
+include::{snippets}/conversations-list-200-next-page/request-headers.adoc[]
+include::{snippets}/conversations-list-200-next-page/query-parameters.adoc[]
+include::{snippets}/conversations-list-200-next-page/http-response.adoc[]
+include::{snippets}/conversations-list-200-next-page/response-fields.adoc[]
+
+include::{snippets}/conversations-list-200-next-page-followup/http-request.adoc[]
+include::{snippets}/conversations-list-200-next-page-followup/request-headers.adoc[]
+include::{snippets}/conversations-list-200-next-page-followup/query-parameters.adoc[]
+include::{snippets}/conversations-list-200-next-page-followup/http-response.adoc[]
+include::{snippets}/conversations-list-200-next-page-followup/response-fields.adoc[]

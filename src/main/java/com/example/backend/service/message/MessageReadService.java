@@ -21,17 +21,19 @@ public class MessageReadService {
 
     @Transactional
     public void markAsRead(UUID meId, UUID conversationId) {
-        ConversationMember member =
-                memberRepository.findByConversationIdAndUserId(conversationId, meId)
-                        .orElseThrow(() -> new BusinessException(ErrorCode.MESSAGE_FORBIDDEN));
+
+        ConversationMember member = memberRepository.findByConversationIdAndUserId(conversationId, meId)
+                .orElseThrow(() -> new BusinessException(ErrorCode.MESSAGE_FORBIDDEN));
 
         Message lastMessage = messageRepository
                 .findTopByConversationIdAndDeletedFalseOrderByCreatedAtDesc(conversationId)
                 .orElse(null);
 
         if (lastMessage == null) return;
+
         if (lastMessage.getId().equals(member.getLastReadMessageId())) return;
 
         member.markRead(lastMessage.getId());
+        member.markReadAt(lastMessage.getCreatedAt()); // ✅ NEW
     }
 }

@@ -8,5 +8,5 @@ import java.util.UUID;
 
 public interface DirectConversationKeyRepository extends JpaRepository<DirectConversationKey, UUID> {
 
-    Optional<DirectConversationKey> findByUser1IdAndUser2Id(UUID user1Id, UUID user2Id);
+    Optional<DirectConversationKey> findByUser1IdAndUser2IdAndDeletedFalse(UUID user1Id, UUID user2Id);
 }

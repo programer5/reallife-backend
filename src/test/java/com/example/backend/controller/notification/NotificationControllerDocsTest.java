@@ -57,7 +57,7 @@ class NotificationControllerDocsTest {
 
     @Test
     void 알림목록_조회_첫페이지_200(RestDocumentationContextProvider restDocumentation) throws Exception {
-        var me = docs.saveUser("noti", "me");
+        var me = docs.saveUser("notiSelect", "me");
         String token = docs.issueTokenFor(me);
 
         // size=2 → hasNext=true 되도록 3개 생성
@@ -100,12 +100,14 @@ class NotificationControllerDocsTest {
 
     @Test
     void 알림목록_조회_다음페이지_200(RestDocumentationContextProvider restDocumentation) throws Exception {
-        var me = docs.saveUser("noti", "me");
+        var me = docs.saveUser("notiNext", "me");
         String token = docs.issueTokenFor(me);
 
         notificationRepository.save(Notification.create(me.getId(), NotificationType.MESSAGE_RECEIVED, UUID.randomUUID(), "알림 1"));
         notificationRepository.save(Notification.create(me.getId(), NotificationType.MESSAGE_RECEIVED, UUID.randomUUID(), "알림 2"));
         notificationRepository.save(Notification.create(me.getId(), NotificationType.MESSAGE_RECEIVED, UUID.randomUUID(), "알림 3"));
+        notificationRepository.save(Notification.create(me.getId(), NotificationType.MESSAGE_RECEIVED, UUID.randomUUID(), "알림 4"));
+        notificationRepository.save(Notification.create(me.getId(), NotificationType.MESSAGE_RECEIVED, UUID.randomUUID(), "알림 5"));
         notificationRepository.flush();
 
         String firstPage = mockMvc(restDocumentation)
@@ -126,6 +128,7 @@ class NotificationControllerDocsTest {
                         .param("cursor", nextCursor)
                         .header(HttpHeaders.AUTHORIZATION, DocsTestSupport.auth(token)))
                 .andExpect(status().isOk())
+                .andExpect(jsonPath("$.items[0].id").exists())
                 .andDo(document("notifications-get-200-next-page",
                         preprocessRequest(prettyPrint()),
                         preprocessResponse(prettyPrint()),
@@ -152,7 +155,7 @@ class NotificationControllerDocsTest {
 
     @Test
     void 알림_단건_읽음처리_200(RestDocumentationContextProvider restDocumentation) throws Exception {
-        var me = docs.saveUser("noti", "me");
+        var me = docs.saveUser("notiRead", "me");
         String token = docs.issueTokenFor(me);
 
         Notification n = notificationRepository.save(
@@ -178,7 +181,7 @@ class NotificationControllerDocsTest {
 
     @Test
     void 알림_전체_읽음처리_200(RestDocumentationContextProvider restDocumentation) throws Exception {
-        var me = docs.saveUser("noti", "me");
+        var me = docs.saveUser("notiAllRead", "me");
         String token = docs.issueTokenFor(me);
 
         notificationRepository.save(Notification.create(me.getId(), NotificationType.MESSAGE_RECEIVED, UUID.randomUUID(), "알림 1"));
@@ -205,7 +208,7 @@ class NotificationControllerDocsTest {
 
     @Test
     void 읽은알림_일괄삭제_softdelete_200(RestDocumentationContextProvider restDocumentation) throws Exception {
-        var me = docs.saveUser("noti", "me");
+        var me = docs.saveUser("notiAllDelete", "me");
         String token = docs.issueTokenFor(me);
 
         Notification read1 = Notification.create(me.getId(), NotificationType.MESSAGE_RECEIVED, UUID.randomUUID(), "읽은 알림 1");

@@ -87,6 +87,10 @@ dependencies {
 
 }
 
+test {
+	maxParallelForks = 1
+}
+
 tasks.named('test') {
 	useJUnitPlatform()
 	outputs.dir snippetsDir

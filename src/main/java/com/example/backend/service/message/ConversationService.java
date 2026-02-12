@@ -38,7 +38,7 @@ public class ConversationService {
         UUID u2 = (meId.compareTo(targetUserId) <= 0) ? targetUserId : meId;
 
         // 1) 먼저 key 테이블에서 조회
-        var existing = directKeyRepository.findByUser1IdAndUser2Id(u1, u2);
+        var existing = directKeyRepository.findByUser1IdAndUser2IdAndDeletedFalse(u1, u2);
         if (existing.isPresent()) {
             return existing.get().getConversationId();
         }
@@ -54,7 +54,7 @@ public class ConversationService {
             return c.getId();
         } catch (DataIntegrityViolationException e) {
             // 누가 먼저 만들었다 -> 재조회
-            return directKeyRepository.findByUser1IdAndUser2Id(u1, u2)
+            return directKeyRepository.findByUser1IdAndUser2IdAndDeletedFalse(u1, u2)
                     .map(DirectConversationKey::getConversationId)
                     .orElseThrow(() -> e);
         }
