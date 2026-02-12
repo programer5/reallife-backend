@@ -1,4 +1,8 @@
 spring:
+  testcontainers:
+    service-connection:
+      enabled: false
+
   datasource:
     url: jdbc:h2:mem:testdb;MODE=MySQL;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE
     driver-class-name: org.h2.Driver
@@ -10,24 +14,18 @@ spring:
       ddl-auto: create-drop
     properties:
       hibernate:
-        format_sql: true
         dialect: org.hibernate.dialect.H2Dialect
+        format_sql: true
         jdbc:
           time_zone: Asia/Seoul
+
+  flyway:
+    enabled: false
 
   sql:
     init:
       mode: never
 
 jwt:
-  # CI/테스트에서만 쓰는 값 (최소 32자 권장)
   secret: "test-secret-key-please-change-32chars!!"
-  accessTokenExpMinutes: 60
-
-logging:
-  level:
-    org.springframework.web: DEBUG
-    org.springframework.servlet.DispatcherServlet: DEBUG
-    org.springframework.test.web.servlet: DEBUG
-    org.springframework.security: DEBUG
-    com.example.backend: DEBUG
+  access-token-exp-minutes: 60

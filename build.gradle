@@ -76,6 +76,15 @@ dependencies {
 
 	testImplementation 'com.h2database:h2'
 
+	// ✅ Testcontainers (버전은 BOM으로 통일)
+	testImplementation platform("org.testcontainers:testcontainers-bom:1.21.4")
+	testImplementation "org.testcontainers:junit-jupiter"
+	testImplementation "org.testcontainers:mysql"
+	testImplementation "org.testcontainers:jdbc"
+
+	// (선택) 스프링 부트 테스트컨테이너 스타터는 있어도 되고 없어도 됨
+	testImplementation "org.springframework.boot:spring-boot-testcontainers"
+
 }
 
 tasks.named('test') {
