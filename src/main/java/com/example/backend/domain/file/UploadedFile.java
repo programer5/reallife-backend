@@ -33,7 +33,6 @@ public class UploadedFile extends BaseEntity {
     @Column(name = "original_filename", nullable = false, length = 255)
     private String originalFilename;
 
-    // ✅ 저장소 키 (로컬이면 저장된 파일명/상대경로, S3면 object key)
     @Column(name = "file_key", nullable = false, length = 500)
     private String fileKey;
 
@@ -43,16 +42,12 @@ public class UploadedFile extends BaseEntity {
     @Column(nullable = false)
     private long size;
 
-    @Column(nullable = false)
-    private boolean deleted;
-
     private UploadedFile(UUID uploaderId, String originalFilename, String fileKey, String contentType, long size) {
         this.uploaderId = uploaderId;
         this.originalFilename = originalFilename;
         this.fileKey = fileKey;
         this.contentType = contentType;
         this.size = size;
-        this.deleted = false;
     }
 
     public static UploadedFile create(UUID uploaderId, String originalFilename, String fileKey, String contentType, long size) {
@@ -60,6 +55,6 @@ public class UploadedFile extends BaseEntity {
     }
 
     public void delete() {
-        this.deleted = true;
+        markDeleted(); // ✅ BaseEntity.deleted 사용
     }
 }

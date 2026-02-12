@@ -9,7 +9,7 @@ import com.example.backend.domain.message.event.MessageSentEvent;
 import com.example.backend.exception.BusinessException;
 import com.example.backend.exception.ErrorCode;
 import com.example.backend.repository.file.UploadedFileRepository;
-import com.example.backend.repository.message.ConversationParticipantRepository;
+import com.example.backend.repository.message.ConversationMemberRepository;
 import com.example.backend.repository.message.MessageAttachmentRepository;
 import com.example.backend.repository.message.MessageRepository;
 import com.example.backend.repository.user.UserRepository;
@@ -19,7 +19,9 @@ import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.UUID;
 
 @Slf4j
 @Service
@@ -29,14 +31,14 @@ public class MessageCommandService {
     private final MessageRepository messageRepository;
     private final MessageAttachmentRepository attachmentRepository;
     private final UploadedFileRepository uploadedFileRepository;
-    private final ConversationParticipantRepository participantRepository;
+    private final ConversationMemberRepository memberRepository;
     private final UserRepository userRepository;
     private final ApplicationEventPublisher eventPublisher; // ✅ 추가
 
     @Transactional
     public MessageSendResponse send(UUID meId, UUID conversationId, MessageSendRequest req) {
 
-        if (!participantRepository.existsByConversationIdAndUserId(conversationId, meId)) {
+        if (!memberRepository.existsByConversationIdAndUserId(conversationId, meId)) {
             throw new BusinessException(ErrorCode.MESSAGE_FORBIDDEN);
         }
 

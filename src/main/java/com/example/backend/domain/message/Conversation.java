@@ -26,12 +26,8 @@ public class Conversation extends BaseEntity {
     @Column(nullable = false)
     private ConversationType type;
 
-    @Column(nullable = false)
-    private boolean deleted;
-
     private Conversation(ConversationType type) {
         this.type = type;
-        this.deleted = false;
     }
 
     public static Conversation direct() {

@@ -40,15 +40,11 @@ public class Message extends BaseEntity {
     @Column(columnDefinition = "TEXT")
     private String content;
 
-    @Column(nullable = false)
-    private boolean deleted;
-
     private Message(UUID conversationId, UUID senderId, MessageType type, String content) {
         this.conversationId = conversationId;
         this.senderId = senderId;
         this.type = type;
         this.content = content;
-        this.deleted = false;
     }
 
     public static Message text(UUID conversationId, UUID senderId, String content) {
