@@ -2,7 +2,7 @@ package com.example.backend.service.notification;
 
 import com.example.backend.domain.message.event.MessageSentEvent;
 import com.example.backend.domain.notification.NotificationType;
-import com.example.backend.repository.message.ConversationParticipantRepository;
+import com.example.backend.repository.message.ConversationMemberRepository;
 import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -20,7 +20,7 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class NotificationEventListener {
 
-    private final ConversationParticipantRepository participantRepository;
+    private final ConversationMemberRepository memberRepository;
     private final NotificationCommandService notificationCommandService;
 
     @PostConstruct
@@ -38,7 +38,7 @@ public class NotificationEventListener {
 
         log.info("🚨 NotificationEventListener CALLED | messageId={}", event.messageId());
 
-        List<UUID> targets = participantRepository
+        List<UUID> targets = memberRepository
                 .findUserIdsByConversationId(event.conversationId())
                 .stream()
                 .filter(id -> !id.equals(event.senderId()))

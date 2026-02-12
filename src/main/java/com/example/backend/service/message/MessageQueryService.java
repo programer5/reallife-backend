@@ -3,7 +3,7 @@ package com.example.backend.service.message;
 import com.example.backend.controller.message.dto.MessageListResponse;
 import com.example.backend.exception.BusinessException;
 import com.example.backend.exception.ErrorCode;
-import com.example.backend.repository.message.ConversationParticipantRepository;
+import com.example.backend.repository.message.ConversationMemberRepository;
 import com.example.backend.repository.message.MessageQueryRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -18,7 +18,7 @@ import java.util.UUID;
 public class MessageQueryService {
 
     private final MessageQueryRepository messageQueryRepository;
-    private final ConversationParticipantRepository participantRepository; // ✅ 통일
+    private final ConversationMemberRepository memberRepository;
 
     public MessageListResponse list(
             UUID conversationId,
@@ -26,8 +26,7 @@ public class MessageQueryService {
             String cursor,
             int size
     ) {
-        // ✅ 권한 체크: participants 기준으로 통일
-        if (!participantRepository.existsByConversationIdAndUserId(conversationId, meId)) {
+        if (!memberRepository.existsByConversationIdAndUserId(conversationId, meId)) {
             throw new BusinessException(ErrorCode.MESSAGE_FORBIDDEN);
         }
 
