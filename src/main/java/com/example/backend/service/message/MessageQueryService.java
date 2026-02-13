@@ -50,6 +50,7 @@ public class MessageQueryService {
 
         var items = messageQueryRepository.fetchPage(
                 conversationId,
+                meId,                 // ✅ 추가
                 decoded.createdAt(),
                 decoded.messageId(),
                 pageSize + 1

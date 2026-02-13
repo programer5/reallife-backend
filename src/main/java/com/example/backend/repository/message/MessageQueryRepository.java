@@ -8,10 +8,7 @@ import java.util.UUID;
 
 public interface MessageQueryRepository {
 
-    List<MessageListResponse.Item> fetchPage(
-            UUID conversationId,
-            LocalDateTime cursorCreatedAt,
-            UUID cursorMessageId,
-            int size
-    );
+    List<MessageListResponse.Item> fetchPage(UUID conversationId, LocalDateTime cursorCreatedAt, UUID cursorMessageId, int size);
+
+    List<MessageListResponse.Item> fetchPage(UUID conversationId, UUID meId, LocalDateTime cursorCreatedAt, UUID cursorMessageId, int limit);
 }

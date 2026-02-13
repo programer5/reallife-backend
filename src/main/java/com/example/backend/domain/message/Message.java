@@ -6,6 +6,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import org.hibernate.annotations.UuidGenerator;
 
+import java.time.LocalDateTime;
 import java.util.UUID;
 
 import static lombok.AccessLevel.PROTECTED;
@@ -40,6 +41,9 @@ public class Message extends BaseEntity {
     @Column(columnDefinition = "TEXT")
     private String content;
 
+    @Column(name = "deleted_at")
+    private LocalDateTime deletedAt;
+
     private Message(UUID conversationId, UUID senderId, MessageType type, String content) {
         this.conversationId = conversationId;
         this.senderId = senderId;
@@ -49,5 +53,10 @@ public class Message extends BaseEntity {
 
     public static Message text(UUID conversationId, UUID senderId, String content) {
         return new Message(conversationId, senderId, MessageType.TEXT, content);
+    }
+
+    public void deleteForAll(LocalDateTime now) {
+        this.markDeleted();    // ✅ BaseEntity 메서드 사용
+        this.deletedAt = now;
     }
 }

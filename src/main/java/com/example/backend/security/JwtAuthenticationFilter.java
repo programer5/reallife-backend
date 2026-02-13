@@ -3,6 +3,7 @@ package com.example.backend.security;
 import io.jsonwebtoken.Claims;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
+import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.http.HttpHeaders;
@@ -16,6 +17,9 @@ import java.io.IOException;
 import java.util.List;
 
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
+
+    // ✅ 쿠키 이름 통일
+    public static final String ACCESS_TOKEN_COOKIE = "access_token";
 
     private final JwtTokenProvider jwtTokenProvider;
 
@@ -33,13 +37,8 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             return;
         }
 
-        String header = request.getHeader(HttpHeaders.AUTHORIZATION);
-        if (!StringUtils.hasText(header) || !header.startsWith("Bearer ")) {
-            chain.doFilter(request, response);
-            return;
-        }
-
-        String token = header.substring(7).trim();
+        // ✅ 1) Authorization 헤더 우선, 2) 없으면 HttpOnly 쿠키에서 토큰 찾기
+        String token = resolveToken(request);
         if (!StringUtils.hasText(token)) {
             chain.doFilter(request, response);
             return;
@@ -66,6 +65,26 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         }
 
         chain.doFilter(request, response);
+    }
+
+    private String resolveToken(HttpServletRequest request) {
+        // 1) Authorization: Bearer xxx
+        String header = request.getHeader(HttpHeaders.AUTHORIZATION);
+        if (StringUtils.hasText(header) && header.startsWith("Bearer ")) {
+            String token = header.substring(7).trim();
+            return StringUtils.hasText(token) ? token : null;
+        }
+
+        // 2) Cookie: access_token=xxx
+        Cookie[] cookies = request.getCookies();
+        if (cookies == null) return null;
+
+        for (Cookie c : cookies) {
+            if (ACCESS_TOKEN_COOKIE.equals(c.getName()) && StringUtils.hasText(c.getValue())) {
+                return c.getValue();
+            }
+        }
+        return null;
     }
 
     @Override

@@ -1,6 +1,7 @@
 package com.example.backend.exception;
 
 import jakarta.servlet.http.HttpServletRequest;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
@@ -11,8 +12,21 @@ import org.springframework.web.method.annotation.MethodArgumentTypeMismatchExcep
 import java.time.LocalDateTime;
 import java.util.List;
 
+@Slf4j // ✅ 추가
 @RestControllerAdvice
 public class GlobalExceptionHandler {
+
+    @ExceptionHandler(Exception.class)
+    public ResponseEntity<ErrorResponse> handleUnknown(Exception e, HttpServletRequest req) {
+        ErrorCode ec = ErrorCode.INTERNAL_ERROR;
+
+        // ✅ 이 1줄이 없어서 스택트레이스가 안 보였던 거야
+        log.error("Unhandled exception. path={}", req.getRequestURI(), e);
+
+        return ResponseEntity.status(ec.status()).body(
+                new ErrorResponse(ec.code(), e.getMessage(), LocalDateTime.now(), req.getRequestURI(), null)
+        );
+    }
 
     @ExceptionHandler(BusinessException.class)
     public ResponseEntity<ErrorResponse> handleBusiness(BusinessException e, HttpServletRequest req) {
@@ -41,16 +55,6 @@ public class GlobalExceptionHandler {
                         fieldErrors
                 )
         );
-    }
-
-    @ExceptionHandler(Exception.class)
-    public ResponseEntity<ErrorResponse> handleUnknown(Exception e, HttpServletRequest req) {
-        ErrorCode ec = ErrorCode.INTERNAL_ERROR;
-
-        return ResponseEntity.status(ec.status()).body(
-                new ErrorResponse(ec.code(), e.getMessage(), LocalDateTime.now(), req.getRequestURI(), null)
-        );
-
     }
 
     @ExceptionHandler(IllegalArgumentException.class)

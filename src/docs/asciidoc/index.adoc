@@ -293,6 +293,14 @@ include::{snippets}/messages-get/query-parameters.adoc[]
 include::{snippets}/messages-get/http-response.adoc[]
 include::{snippets}/messages-get/response-fields.adoc[]
 
+== Message Delete
+
+=== 나만 삭제(숨김)
+operation::message-hide[snippets='http-request,path-parameters,request-headers,http-response']
+
+=== 모두 삭제(송신자만)
+operation::message-delete-for-all[snippets='http-request,path-parameters,request-headers,http-response']
+
 [NOTE]
 ====
 메시지 목록 조회 API를 호출하면, 해당 대화방의 마지막 메시지 시각까지 자동으로 읽음 처리(last_read_at)가 갱신됩니다.
@@ -364,3 +372,38 @@ include::{snippets}/conversations-list-200-next-page-followup/request-headers.ad
 include::{snippets}/conversations-list-200-next-page-followup/query-parameters.adoc[]
 include::{snippets}/conversations-list-200-next-page-followup/http-response.adoc[]
 include::{snippets}/conversations-list-200-next-page-followup/response-fields.adoc[]
+
+== SSE
+
+=== 구독
+
+* URL: `GET /api/sse/subscribe`
+* 인증: 필요 (Authorization Bearer 또는 쿠키 access_token)
+* 응답: `text/event-stream`
+
+==== 이벤트 종류
+|===
+|event name |설명 |data 예시
+
+|connected
+|연결 확인 이벤트
+|`{"serverTime":"2026-02-13T12:55:58.496","lastEventId":null}`
+
+|ping
+|연결 유지 heartbeat
+|`{"ts": 1770958000123}`
+
+|message-created
+|새 메시지 도착
+|`{"messageId":"...","conversationId":"...","senderId":"...","content":"...","createdAt":"..."}`
+
+|notification-created
+|새 알림 생성
+|`{"notificationId":"...","type":"...","refId":"...","body":"...","createdAt":"..."}`
+
+==== 응답 헤더
+* `Content-Type: text/event-stream`
+* `Cache-Control: no-cache`
+* `X-Accel-Buffering: no`
+
+operation::sse-subscribe[snippets='http-request,request-headers']

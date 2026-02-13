@@ -33,6 +33,7 @@ public class SecurityConfig {
                 )
 
                 .authorizeHttpRequests(auth -> auth
+                        .requestMatchers("/api/sse/**").authenticated()
                         .requestMatchers("/docs/**", "/static/**").permitAll()
                         .requestMatchers("/api/users").permitAll()       // 회원가입
                         .requestMatchers("/api/auth/**").permitAll()     // 로그인

@@ -53,4 +53,9 @@ public abstract class BaseEntity {
     protected void restore() {
         this.deleted = false;
     }
+
+    public void markDeletedAt(LocalDateTime now) {
+        this.deleted = true;
+        this.updateAt = now; // 너 BaseEntity 필드명이 update_at -> updateAt 라면 맞춰줘
+    }
 }
