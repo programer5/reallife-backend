@@ -4,7 +4,7 @@ import com.example.backend.domain.message.event.MessageDeletedEvent;
 import com.example.backend.domain.message.event.MessageSentEvent;
 import com.example.backend.domain.notification.event.NotificationCreatedEvent;
 import com.example.backend.repository.message.ConversationMemberRepository;
-import com.example.backend.sse.SsePushService;
+import com.example.backend.sse.SsePushPort; // ✅ 변경
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
@@ -20,7 +20,7 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class SseEventListener {
 
-    private final SsePushService pushService;
+    private final SsePushPort pushService; // ✅ 변경
     private final ConversationMemberRepository memberRepository;
 
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
@@ -61,7 +61,6 @@ public class SseEventListener {
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
     public void onMessageDeleted(MessageDeletedEvent event) {
 
-        // 대화방 멤버 전체에게 "message-deleted" push
         List<UUID> targets = memberRepository.findUserIdsByConversationId(event.conversationId());
 
         var payload = Map.of(
@@ -72,7 +71,6 @@ public class SseEventListener {
         );
 
         for (UUID targetId : targets) {
-            // ✅ messageId를 eventId로 사용 (replay에도 유리)
             pushService.push(targetId, "message-deleted", payload, event.messageId().toString());
         }
     }
