@@ -26,21 +26,30 @@ public class SecurityConfig {
                 .formLogin(form -> form.disable())
                 .httpBasic(basic -> basic.disable())
 
-                // ✅ 401/403 JSON 통일
                 .exceptionHandling(ex -> ex
                         .authenticationEntryPoint(securityErrorHandler)
                         .accessDeniedHandler(securityErrorHandler)
                 )
-
                 .authorizeHttpRequests(auth -> auth
+                        .requestMatchers("/docs/**", "/static/**", "/favicon.ico", "/error").permitAll()
+                        .requestMatchers("/api/users").permitAll()
+
+                        // ✅ auth: 공개
+                        .requestMatchers("/api/auth/login", "/api/auth/login-cookie").permitAll()
+                        .requestMatchers("/api/auth/refresh", "/api/auth/refresh-cookie").permitAll()
+
+                        // ✅ auth: 보호(인증 필요)
+                        .requestMatchers("/api/auth/logout-cookie").authenticated()
+                        .requestMatchers("/api/auth/logout-all").authenticated()
+                        .requestMatchers("/api/auth/logout-all-cookie").authenticated()
+
+                        // ✅ SSE 보호
                         .requestMatchers("/api/sse/**").authenticated()
-                        .requestMatchers("/docs/**", "/static/**").permitAll()
-                        .requestMatchers("/api/users").permitAll()       // 회원가입
-                        .requestMatchers("/api/auth/**").permitAll()     // 로그인
+
                         .anyRequest().authenticated()
                 )
                 .addFilterBefore(new JwtAuthenticationFilter(jwtTokenProvider),
-                        org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter.class);;
+                        org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
     }

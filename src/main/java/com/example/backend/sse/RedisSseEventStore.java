@@ -39,7 +39,7 @@ public class RedisSseEventStore implements SseEventStore {
             String json, // payload json
             long ts      // 저장 시각
     ) {}
-
+    @Override
     public void append(UUID userId, String eventName, String eventId, Object payload) {
         if (eventId == null || eventId.isBlank()) return;
 

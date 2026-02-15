@@ -40,6 +40,10 @@ include::{snippets}/users-create-400-validation/response-fields.adoc[]
 include::{snippets}/users-create-409-duplicate-email/http-response.adoc[]
 include::{snippets}/users-create-409-duplicate-email/response-fields.adoc[]
 
+===== 409 Duplicate Handle
+include::{snippets}/users-create-409-duplicate-handle/http-response.adoc[]
+include::{snippets}/users-create-409-duplicate-handle/response-fields.adoc[]
+
 === 사용자 검색 (Cursor Paging)
 
 include::{snippets}/users-search-200/http-request.adoc[]
@@ -82,17 +86,34 @@ include::{snippets}/users-search-200-following-flag/response-fields.adoc[]
 
 == Auth
 
-=== 내 정보 조회 (/api/me)
+== Auth
 
-==== 200 OK
-include::{snippets}/me-200-ok/http-request.adoc[]
-include::{snippets}/me-200-ok/request-headers.adoc[]
-include::{snippets}/me-200-ok/http-response.adoc[]
-include::{snippets}/me-200-ok/response-fields.adoc[]
+=== 로그인 (Bearer 토큰 반환)
 
-==== 401 Unauthorized (토큰 없음)
-include::{snippets}/me-401-unauthorized/http-request.adoc[]
-include::{snippets}/me-401-unauthorized/http-response.adoc[]
+include::{snippets}/auth-login/http-request.adoc[]
+include::{snippets}/auth-login/request-fields.adoc[]
+include::{snippets}/auth-login/http-response.adoc[]
+include::{snippets}/auth-login/response-fields.adoc[]
+
+=== 토큰 재발급 (Refresh Rotation)
+
+include::{snippets}/auth-refresh/http-request.adoc[]
+include::{snippets}/auth-refresh/request-fields.adoc[]
+include::{snippets}/auth-refresh/http-response.adoc[]
+include::{snippets}/auth-refresh/response-fields.adoc[]
+
+=== 토큰 재사용 차단 (Refresh Reuse → 401)
+
+include::{snippets}/auth-refresh-401-reuse/http-request.adoc[]
+include::{snippets}/auth-refresh-401-reuse/http-response.adoc[]
+include::{snippets}/auth-refresh-401-reuse/response-fields.adoc[]
+
+=== 전체 기기 로그아웃 (Logout-All)
+
+include::{snippets}/auth-logout-all/http-request.adoc[]
+include::{snippets}/auth-logout-all/request-headers.adoc[]
+include::{snippets}/auth-logout-all/http-response.adoc[]
+include::{snippets}/auth-logout-all/response-fields.adoc[]
 
 == Posts
 
@@ -224,6 +245,22 @@ include::{snippets}/follows-create/request-headers.adoc[]
 include::{snippets}/follows-create/path-parameters.adoc[]
 include::{snippets}/follows-create/http-response.adoc[]
 
+=== 언팔로우
+
+include::{snippets}/follows-delete/http-request.adoc[]
+include::{snippets}/follows-delete/request-headers.adoc[]
+include::{snippets}/follows-delete/path-parameters.adoc[]
+include::{snippets}/follows-delete/http-response.adoc[]
+
+==== 실패 응답
+
+===== 400 Bad Request (self follow)
+include::{snippets}/follows-create-400-self/http-request.adoc[]
+include::{snippets}/follows-create-400-self/request-headers.adoc[]
+include::{snippets}/follows-create-400-self/path-parameters.adoc[]
+include::{snippets}/follows-create-400-self/http-response.adoc[]
+include::{snippets}/follows-create-400-self/response-fields.adoc[]
+
 == Likes
 
 === 좋아요
@@ -293,24 +330,6 @@ include::{snippets}/messages-get/query-parameters.adoc[]
 include::{snippets}/messages-get/http-response.adoc[]
 include::{snippets}/messages-get/response-fields.adoc[]
 
-== Message Delete
-
-=== 나만 삭제(숨김)
-operation::message-hide[snippets='http-request,path-parameters,request-headers,http-response']
-
-=== 모두 삭제(송신자만)
-operation::message-delete-for-all[snippets='http-request,path-parameters,request-headers,http-response']
-
-[NOTE]
-====
-메시지 목록 조회 API를 호출하면, 해당 대화방의 마지막 메시지 시각까지 자동으로 읽음 처리(last_read_at)가 갱신됩니다.
-====
-
-==== unreadCount 변화 예시(메시지 목록 조회 전/후)
-
-include::{snippets}/conversations-unread-before-messages-get/http-response.adoc[]
-include::{snippets}/conversations-unread-after-messages-get/http-response.adoc[]
-
 ==== 다음 페이지 조회 예시
 include::{snippets}/messages-get-next-page/http-request.adoc[]
 include::{snippets}/messages-get-next-page/request-headers.adoc[]
@@ -318,6 +337,42 @@ include::{snippets}/messages-get-next-page/path-parameters.adoc[]
 include::{snippets}/messages-get-next-page/query-parameters.adoc[]
 include::{snippets}/messages-get-next-page/http-response.adoc[]
 include::{snippets}/messages-get-next-page/response-fields.adoc[]
+
+==== 실패 응답
+
+===== 404 Not Found (conversation not found)
+include::{snippets}/messages-get-404-conversation-not-found/http-request.adoc[]
+include::{snippets}/messages-get-404-conversation-not-found/request-headers.adoc[]
+include::{snippets}/messages-get-404-conversation-not-found/path-parameters.adoc[]
+include::{snippets}/messages-get-404-conversation-not-found/query-parameters.adoc[]
+include::{snippets}/messages-get-404-conversation-not-found/http-response.adoc[]
+include::{snippets}/messages-get-404-conversation-not-found/response-fields.adoc[]
+
+[NOTE]
+====
+메시지 목록 조회 API를 호출하면, 해당 대화방의 마지막 메시지 시각까지 자동으로 읽음 처리(last_read_at)가 갱신됩니다.
+====
+
+==== 자동 읽음 처리 호출 예시 (messages-get-auto-read)
+
+include::{snippets}/messages-get-auto-read/http-request.adoc[]
+include::{snippets}/messages-get-auto-read/request-headers.adoc[]
+include::{snippets}/messages-get-auto-read/path-parameters.adoc[]
+include::{snippets}/messages-get-auto-read/query-parameters.adoc[]
+include::{snippets}/messages-get-auto-read/http-response.adoc[]
+
+==== unreadCount 변화 예시(메시지 목록 조회 전/후)
+
+include::{snippets}/conversations-unread-before-messages-get/http-response.adoc[]
+include::{snippets}/conversations-unread-after-messages-get/http-response.adoc[]
+
+== Message Delete
+
+=== 나만 삭제(숨김)
+operation::message-hide[snippets='http-request,path-parameters,request-headers,http-response']
+
+=== 모두 삭제(송신자만)
+operation::message-delete-for-all[snippets='http-request,path-parameters,request-headers,http-response']
 
 == Conversations
 
@@ -337,28 +392,6 @@ include::{snippets}/conversations-list/query-parameters.adoc[]
 include::{snippets}/conversations-list/http-response.adoc[]
 include::{snippets}/conversations-list/response-fields.adoc[]
 
-=== 대화방 읽음 처리
-
-include::{snippets}/conversations-read/http-request.adoc[]
-include::{snippets}/conversations-read/request-headers.adoc[]
-include::{snippets}/conversations-read/path-parameters.adoc[]
-include::{snippets}/conversations-read/http-response.adoc[]
-
-==== unreadCount 변화 예시 (읽기 전/후)
-
-include::{snippets}/conversations-unread-before/http-response.adoc[]
-include::{snippets}/conversations-unread-after/http-response.adoc[]
-
-==== 실패 응답
-
-===== 404 Not Found (conversation not found)
-include::{snippets}/messages-get-404-conversation-not-found/http-request.adoc[]
-include::{snippets}/messages-get-404-conversation-not-found/request-headers.adoc[]
-include::{snippets}/messages-get-404-conversation-not-found/path-parameters.adoc[]
-include::{snippets}/messages-get-404-conversation-not-found/query-parameters.adoc[]
-include::{snippets}/messages-get-404-conversation-not-found/http-response.adoc[]
-include::{snippets}/messages-get-404-conversation-not-found/response-fields.adoc[]
-
 ==== 다음 페이지 조회 예시
 
 include::{snippets}/conversations-list-200-next-page/http-request.adoc[]
@@ -372,6 +405,18 @@ include::{snippets}/conversations-list-200-next-page-followup/request-headers.ad
 include::{snippets}/conversations-list-200-next-page-followup/query-parameters.adoc[]
 include::{snippets}/conversations-list-200-next-page-followup/http-response.adoc[]
 include::{snippets}/conversations-list-200-next-page-followup/response-fields.adoc[]
+
+=== 대화방 읽음 처리
+
+include::{snippets}/conversations-read/http-request.adoc[]
+include::{snippets}/conversations-read/request-headers.adoc[]
+include::{snippets}/conversations-read/path-parameters.adoc[]
+include::{snippets}/conversations-read/http-response.adoc[]
+
+==== unreadCount 변화 예시 (읽기 전/후)
+
+include::{snippets}/conversations-unread-before/http-response.adoc[]
+include::{snippets}/conversations-unread-after/http-response.adoc[]
 
 == SSE
 
@@ -400,6 +445,7 @@ include::{snippets}/conversations-list-200-next-page-followup/response-fields.ad
 |notification-created
 |새 알림 생성
 |`{"notificationId":"...","type":"...","refId":"...","body":"...","createdAt":"..."}`
+|===
 
 ==== 응답 헤더
 * `Content-Type: text/event-stream`
@@ -407,3 +453,13 @@ include::{snippets}/conversations-list-200-next-page-followup/response-fields.ad
 * `X-Accel-Buffering: no`
 
 operation::sse-subscribe[snippets='http-request,request-headers']
+
+[NOTE]
+====
+SSE 재연결(replay)을 위해 클라이언트는 `Last-Event-ID` 헤더를 보낼 수 있습니다.
+
+- `Last-Event-ID` 값은 "마지막으로 수신한 SSE 이벤트의 id" 입니다.
+- 본 프로젝트는 이벤트 id를 다음 규칙으로 통일합니다.
+- message-created / message-deleted: `msg:{messageId}`
+- notification-created: `noti:{notificationId}`
+====

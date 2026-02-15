@@ -1,25 +1,13 @@
 package com.example.backend.security;
 
-import io.jsonwebtoken.Claims;
-import jakarta.servlet.FilterChain;
-import jakarta.servlet.ServletException;
-import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
-import jakarta.servlet.http.HttpServletResponse;
-import org.springframework.http.HttpHeaders;
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.security.web.authentication.WebAuthenticationDetailsSource;
-import org.springframework.util.StringUtils;
 import org.springframework.web.filter.OncePerRequestFilter;
-
-import java.io.IOException;
-import java.util.List;
 
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     // ✅ 쿠키 이름 통일
     public static final String ACCESS_TOKEN_COOKIE = "access_token";
+    public static final String REFRESH_TOKEN_COOKIE = "refresh_token";
 
     private final JwtTokenProvider jwtTokenProvider;
 
@@ -28,59 +16,55 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     }
 
     @Override
-    protected void doFilterInternal(HttpServletRequest request,
-                                    HttpServletResponse response,
-                                    FilterChain chain) throws ServletException, IOException {
+    protected void doFilterInternal(
+            jakarta.servlet.http.HttpServletRequest request,
+            jakarta.servlet.http.HttpServletResponse response,
+            jakarta.servlet.FilterChain filterChain
+    ) throws java.io.IOException, jakarta.servlet.ServletException {
 
-        if (SecurityContextHolder.getContext().getAuthentication() != null) {
-            chain.doFilter(request, response);
-            return;
-        }
-
-        // ✅ 1) Authorization 헤더 우선, 2) 없으면 HttpOnly 쿠키에서 토큰 찾기
         String token = resolveToken(request);
-        if (!StringUtils.hasText(token)) {
-            chain.doFilter(request, response);
+
+        if (token == null || token.isBlank()) {
+            filterChain.doFilter(request, response);
             return;
         }
 
-        try {
-            Claims claims = jwtTokenProvider.parse(token);
-
-            // ✅ subject = userId(UUID 문자열)
-            String userId = claims.getSubject();
-            if (!StringUtils.hasText(userId)) {
-                chain.doFilter(request, response);
-                return;
-            }
-
-            var auth = new UsernamePasswordAuthenticationToken(
-                    userId, null, List.of()
-            );
-            auth.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
-            SecurityContextHolder.getContext().setAuthentication(auth);
-
-        } catch (Exception e) {
-            SecurityContextHolder.clearContext();
+        if (!jwtTokenProvider.validateToken(token)) {
+            filterChain.doFilter(request, response);
+            return;
         }
 
-        chain.doFilter(request, response);
+        // ✅ 여기서 userId를 "String"으로 뽑아 principal로 넣어야
+        // @AuthenticationPrincipal String userId 가 null이 안 됨
+        String userId = jwtTokenProvider.getSubject(token); // sub 값 (UUID 문자열)
+
+        var auth = new org.springframework.security.authentication.UsernamePasswordAuthenticationToken(
+                userId,                 // ✅ principal을 String으로
+                null,
+                java.util.List.of(new org.springframework.security.core.authority.SimpleGrantedAuthority("ROLE_USER"))
+        );
+
+        auth.setDetails(new org.springframework.security.web.authentication.WebAuthenticationDetailsSource()
+                .buildDetails(request));
+
+        org.springframework.security.core.context.SecurityContextHolder.getContext().setAuthentication(auth);
+
+        filterChain.doFilter(request, response);
     }
 
-    private String resolveToken(HttpServletRequest request) {
+    private String resolveToken(jakarta.servlet.http.HttpServletRequest request) {
         // 1) Authorization: Bearer xxx
-        String header = request.getHeader(HttpHeaders.AUTHORIZATION);
-        if (StringUtils.hasText(header) && header.startsWith("Bearer ")) {
-            String token = header.substring(7).trim();
-            return StringUtils.hasText(token) ? token : null;
+        String auth = request.getHeader("Authorization");
+        if (auth != null && auth.startsWith("Bearer ")) {
+            return auth.substring(7);
         }
 
-        // 2) Cookie: access_token=xxx
-        Cookie[] cookies = request.getCookies();
+        // 2) Cookie fallback (웹/SSE)
+        var cookies = request.getCookies();
         if (cookies == null) return null;
 
-        for (Cookie c : cookies) {
-            if (ACCESS_TOKEN_COOKIE.equals(c.getName()) && StringUtils.hasText(c.getValue())) {
+        for (var c : cookies) {
+            if (ACCESS_TOKEN_COOKIE.equals(c.getName())) {
                 return c.getValue();
             }
         }

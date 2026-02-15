@@ -32,4 +32,9 @@ public class NoopSseEventStore implements SseEventStore {
             return Map.of();
         }
     }
+
+    @Override
+    public void append(UUID userId, String eventName, String eventId, Object payload) {
+        // test 프로필에서는 저장하지 않음 (replay 테스트가 필요하면 별도 fake 구현으로 교체)
+    }
 }
