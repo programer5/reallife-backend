@@ -3,16 +3,20 @@ package com.example.backend.sse;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
-import lombok.Value;
+import org.springframework.context.annotation.Profile;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Component;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
+@Profile("!test")
 @Component
 @RequiredArgsConstructor
-public class RedisSseEventStore {
+public class RedisSseEventStore implements SseEventStore {
 
     private final StringRedisTemplate redis;
     private final ObjectMapper objectMapper;
@@ -25,13 +29,16 @@ public class RedisSseEventStore {
         return "sse:events:" + userId;
     }
 
-    @Value
-    public static class StoredEvent {
-        String id;       // SSE event id (messageId/notificationId 등)
-        String name;     // event name
-        String json;     // payload json
-        long ts;         // 저장 시각
-    }
+    /**
+     * Redis 내부 저장용 DTO
+     * - Lombok @Value 대신 record로 가면 IDE/Lombok 설정에 덜 의존해서 안전함
+     */
+    private record StoredEvent(
+            String id,   // SSE event id (messageId/notificationId 등)
+            String name, // event name
+            String json, // payload json
+            long ts      // 저장 시각
+    ) {}
 
     public void append(UUID userId, String eventName, String eventId, Object payload) {
         if (eventId == null || eventId.isBlank()) return;
@@ -64,11 +71,16 @@ public class RedisSseEventStore {
             redis.opsForList().trim(k, trimStart, -1);
         }
 
-        // ✅ TTL(선택): 3일 보관
+        // ✅ TTL: 3일 보관
         redis.expire(k, 3, TimeUnit.DAYS);
     }
 
-    public List<StoredEvent> replayAfter(UUID userId, String lastEventId) {
+    /**
+     * ✅ 인터페이스(SseEventStore) 시그니처에 맞춰서
+     * StoredEvent -> SseStoredEvent 로 변환해서 반환
+     */
+    @Override
+    public List<SseStoredEvent> replayAfter(UUID userId, String lastEventId) {
         if (lastEventId == null || lastEventId.isBlank()) return List.of();
 
         List<String> raw = redis.opsForList().range(key(userId), 0, -1);
@@ -79,23 +91,34 @@ public class RedisSseEventStore {
             try {
                 StoredEvent e = objectMapper.readValue(s, StoredEvent.class);
                 events.add(e);
-            } catch (Exception ignore) { }
+            } catch (Exception ignore) {
+                // skip broken row
+            }
         }
 
         int idx = -1;
         for (int i = 0; i < events.size(); i++) {
-            if (lastEventId.equals(events.get(i).getId())) {
+            if (lastEventId.equals(events.get(i).id())) {
                 idx = i;
                 break;
             }
         }
         if (idx < 0) return List.of();
 
-        return events.subList(idx + 1, events.size());
+        List<StoredEvent> missed = events.subList(idx + 1, events.size());
+
+        // ✅ 외부로는 SseStoredEvent 타입으로 내보내기
+        List<SseStoredEvent> result = new ArrayList<>(missed.size());
+        for (StoredEvent e : missed) {
+            result.add(new SseStoredEvent(e.id(), e.name(), e.json()));
+        }
+        return result;
     }
 
+    @Override
     public Map<String, Object> payloadToMap(String payloadJson) {
         try {
+            if (payloadJson == null || payloadJson.isBlank()) return Map.of();
             return objectMapper.readValue(payloadJson, new TypeReference<Map<String, Object>>() {});
         } catch (Exception e) {
             return Map.of("raw", payloadJson);

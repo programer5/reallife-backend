@@ -1,7 +1,7 @@
 package com.example.backend.controller.sse;
 
-import com.example.backend.sse.RedisSseEventStore;
 import com.example.backend.sse.SseEmitterRegistry;
+import com.example.backend.sse.SseEventStore;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -28,7 +28,7 @@ import java.util.UUID;
 public class SseController {
 
     private final SseEmitterRegistry registry;
-    private final RedisSseEventStore eventStore;
+    private final SseEventStore eventStore;
 
     @GetMapping(value = "/subscribe", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
     public SseEmitter subscribe(
@@ -59,7 +59,12 @@ public class SseController {
 
             var missed = eventStore.replayAfter(meId, lastEventId);
             for (var e : missed) {
-                registry.send(meId, e.getName(), eventStore.payloadToMap(e.getJson()), e.getId());
+                registry.send(
+                        meId,
+                        e.name(),
+                        eventStore.payloadToMap(e.json()),
+                        e.id()
+                );
             }
 
             return emitter;

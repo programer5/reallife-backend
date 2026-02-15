@@ -9,7 +9,7 @@ jobs:
   build-test:
     runs-on: ubuntu-latest
 
-    services:                 # ✅ 여기 추가
+    services:
       redis:
         image: redis:7-alpine
         ports:
@@ -22,8 +22,8 @@ jobs:
 
     env:
       SPRING_PROFILES_ACTIVE: test
-      SPRING_DATA_REDIS_HOST: localhost     # ✅ 추가
-      SPRING_DATA_REDIS_PORT: 6379          # ✅ 추가
+      SPRING_DATA_REDIS_HOST: localhost
+      SPRING_DATA_REDIS_PORT: 6379
 
     steps:
       - name: Checkout
@@ -38,6 +38,15 @@ jobs:
 
       - name: Grant execute permission for gradlew
         run: chmod +x ./gradlew
+
+      - name: Wait for Redis
+        run: |
+          for i in {1..30}; do
+            (echo > /dev/tcp/127.0.0.1/6379) >/dev/null 2>&1 && echo "Redis is up" && exit 0
+            echo "Waiting for Redis..."
+            sleep 1
+          done
+          echo "Redis did not start in time" && exit 1
 
       - name: Test & Asciidoctor (generate REST Docs)
         run: ./gradlew clean test asciidoctor
