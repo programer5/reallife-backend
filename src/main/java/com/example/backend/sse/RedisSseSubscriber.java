@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.annotation.Profile; // ✅ 추가
 import org.springframework.data.redis.connection.Message;
 import org.springframework.data.redis.connection.MessageListener;
 import org.springframework.data.redis.listener.ChannelTopic;
@@ -14,6 +15,7 @@ import java.util.Map;
 import java.util.UUID;
 
 @Slf4j
+@Profile("!test") // ✅ test 프로필에서는 빈 생성 안 함
 @Component
 @RequiredArgsConstructor
 public class RedisSseSubscriber {
@@ -33,9 +35,7 @@ public class RedisSseSubscriber {
                     RedisSsePubSub.PushMessage pm =
                             objectMapper.readValue(body, RedisSsePubSub.PushMessage.class);
 
-                    // ✅ record는 getUserId()가 아니라 userId()
                     UUID userId = UUID.fromString(pm.userId());
-
                     Map<String, Object> payload =
                             objectMapper.readValue(pm.payloadJson(), Map.class);
 

@@ -8,8 +8,22 @@ on:
 jobs:
   build-test:
     runs-on: ubuntu-latest
+
+    services:                 # ✅ 여기 추가
+      redis:
+        image: redis:7-alpine
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
     env:
       SPRING_PROFILES_ACTIVE: test
+      SPRING_DATA_REDIS_HOST: localhost     # ✅ 추가
+      SPRING_DATA_REDIS_PORT: 6379          # ✅ 추가
 
     steps:
       - name: Checkout
