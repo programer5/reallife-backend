@@ -13,6 +13,11 @@ spring:
           preferred_uuid_jdbc_type: BINARY
         format_sql: true
 
+  data:
+    redis:
+      host: localhost
+      port: 6379
+
 jwt:
   secret: ${JWT_SECRET:CHANGE_ME_TO_A_LONG_RANDOM_SECRET_KEY_64_CHARS_MIN_0123456789abcdef}
   access-token-exp-minutes: ${JWT_ACCESS_TOKEN_EXP_MINUTES:60}

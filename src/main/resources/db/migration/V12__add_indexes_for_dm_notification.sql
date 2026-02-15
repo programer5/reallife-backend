@@ -1,30 +1,99 @@
 -- V12__add_indexes_for_dm_notification.sql
+-- Safe for MySQL: create index only if table exists AND index not exists
 
--- 1) messages: 커서 페이징 핵심 인덱스
--- WHERE conversation_id = ? AND deleted = 0
--- ORDER BY created_at DESC, id DESC
-CREATE INDEX idx_messages_conv_deleted_created_id
-    ON messages (conversation_id, deleted, created_at, id);
+SET @db := DATABASE();
 
--- 2) message_hidden: 나만 삭제(숨김) NOT EXISTS 최적화
--- 이미 UK(user_id, message_id)가 있으면 사실상 충분하지만,
--- 실행계획이 흔들릴 때를 대비해 조회용 인덱스 명시(UK가 있으면 생략 가능)
-CREATE INDEX idx_message_hidden_user_message
-    ON message_hidden (user_id, message_id);
+-- Helper pattern:
+-- 1) check table exists
+-- 2) check index exists
+-- 3) prepare CREATE INDEX or SELECT 1
 
--- 3) notifications: 유저별 목록 커서 페이징
-CREATE INDEX idx_notifications_user_deleted_created_id
-    ON notifications (user_id, deleted, created_at, id);
+-- 1) messages(conversation_id, deleted, created_at, id)
+SET @table_exists := (
+  SELECT COUNT(1)
+  FROM information_schema.tables
+  WHERE table_schema = @db AND table_name = 'messages'
+);
+SET @idx_exists := (
+  SELECT COUNT(1)
+  FROM information_schema.statistics
+  WHERE table_schema = @db AND table_name = 'messages'
+    AND index_name = 'idx_messages_conv_deleted_created_id'
+);
+SET @sql := IF(@table_exists = 1 AND @idx_exists = 0,
+  'CREATE INDEX idx_messages_conv_deleted_created_id ON messages (conversation_id, deleted, created_at, id)',
+  'SELECT 1'
+);
+PREPARE stmt FROM @sql; EXECUTE stmt; DEALLOCATE PREPARE stmt;
 
--- 4) conversation_member: 멤버십 조회/권한 체크/대화방 목록 조인 최적화
--- existsByConversationIdAndUserId, findUserIdsByConversationId, updateLastReadAtIfLater 등에 도움
-CREATE INDEX idx_conv_member_conv_user
-    ON conversation_member (conversation_id, user_id);
+-- 2) notifications(user_id, deleted, created_at, id)
+SET @table_exists := (
+  SELECT COUNT(1)
+  FROM information_schema.tables
+  WHERE table_schema = @db AND table_name = 'notifications'
+);
+SET @idx_exists := (
+  SELECT COUNT(1)
+  FROM information_schema.statistics
+  WHERE table_schema = @db AND table_name = 'notifications'
+    AND index_name = 'idx_notifications_user_deleted_created_id'
+);
+SET @sql := IF(@table_exists = 1 AND @idx_exists = 0,
+  'CREATE INDEX idx_notifications_user_deleted_created_id ON notifications (user_id, deleted, created_at, id)',
+  'SELECT 1'
+);
+PREPARE stmt FROM @sql; EXECUTE stmt; DEALLOCATE PREPARE stmt;
 
-CREATE INDEX idx_conv_member_user_conv
-    ON conversation_member (user_id, conversation_id);
+-- 3) conversation_member(conversation_id, user_id)  ✅ table 없으면 스킵
+SET @table_exists := (
+  SELECT COUNT(1)
+  FROM information_schema.tables
+  WHERE table_schema = @db AND table_name = 'conversation_member'
+);
+SET @idx_exists := (
+  SELECT COUNT(1)
+  FROM information_schema.statistics
+  WHERE table_schema = @db AND table_name = 'conversation_member'
+    AND index_name = 'idx_conv_member_conv_user'
+);
+SET @sql := IF(@table_exists = 1 AND @idx_exists = 0,
+  'CREATE INDEX idx_conv_member_conv_user ON conversation_member (conversation_id, user_id)',
+  'SELECT 1'
+);
+PREPARE stmt FROM @sql; EXECUTE stmt; DEALLOCATE PREPARE stmt;
 
--- 5) conversations: 최근 대화방 정렬(있다면)
--- 대화방 목록을 last_message_at 기준으로 정렬한다면 도움
-CREATE INDEX idx_conversations_last_message_at
-    ON conversations (last_message_at, id);
+-- 4) conversation_member(user_id, conversation_id) ✅ table 없으면 스킵
+SET @table_exists := (
+  SELECT COUNT(1)
+  FROM information_schema.tables
+  WHERE table_schema = @db AND table_name = 'conversation_member'
+);
+SET @idx_exists := (
+  SELECT COUNT(1)
+  FROM information_schema.statistics
+  WHERE table_schema = @db AND table_name = 'conversation_member'
+    AND index_name = 'idx_conv_member_user_conv'
+);
+SET @sql := IF(@table_exists = 1 AND @idx_exists = 0,
+  'CREATE INDEX idx_conv_member_user_conv ON conversation_member (user_id, conversation_id)',
+  'SELECT 1'
+);
+PREPARE stmt FROM @sql; EXECUTE stmt; DEALLOCATE PREPARE stmt;
+
+-- 5) conversations(last_message_at, id)
+SET @table_exists := (
+  SELECT COUNT(1)
+  FROM information_schema.tables
+  WHERE table_schema = @db AND table_name = 'conversations'
+);
+SET @idx_exists := (
+  SELECT COUNT(1)
+  FROM information_schema.statistics
+  WHERE table_schema = @db AND table_name = 'conversations'
+    AND index_name = 'idx_conversations_last_message_at'
+);
+SET @sql := IF(@table_exists = 1 AND @idx_exists = 0,
+  'CREATE INDEX idx_conversations_last_message_at ON conversations (last_message_at, id)',
+  'SELECT 1'
+);
+PREPARE stmt FROM @sql; EXECUTE stmt; DEALLOCATE PREPARE stmt;

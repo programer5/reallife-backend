@@ -16,5 +16,13 @@ services:
       --character-set-server=utf8mb4
       --collation-server=utf8mb4_unicode_ci
 
+  redis:
+    image: redis:7-alpine
+    container_name: reallife-redis
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    command: ["redis-server", "--appendonly", "yes"]
+
 volumes:
   reallife_mysql_data:
