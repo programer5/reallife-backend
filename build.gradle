@@ -100,7 +100,10 @@ tasks.named('test') {
 
 tasks.named('asciidoctor') {
 	dependsOn test
-	inputs.dir snippetsDir
+
+	// ✅ 테스트(-x test)로 snippets가 없을 수 있으니 optional 처리(Gradle 9+ 대응)
+	inputs.dir(snippetsDir).optional(true)
+
 	attributes(
 			'snippets': snippetsDir,
 			'stylesdir': 'styles',
@@ -123,12 +126,16 @@ tasks.register('copyRestDocs', Copy) {
 	duplicatesStrategy = DuplicatesStrategy.INCLUDE
 }
 
-// ✅ build 하면 REST Docs도 자동 생성 + static/docs로 복사
+// ✅ build 하면 REST Docs도 자동 생성 + static/docs로 복사 (CI/로컬 문서 생성용)
 tasks.named('build') {
 	dependsOn tasks.named('copyRestDocs')
 }
 
-// ✅ bootJar 만들 때도 docs가 포함되도록 보장 (선택이지만 강추)
-tasks.named('bootJar') {
+// ❌ Docker에서 bootJar만 만들 때 docs를 강제하면 안 됨(빌드 실패 원인)
+// tasks.named('bootJar') { dependsOn tasks.named('copyRestDocs') }
+
+// ✅ 대신 docs 포함 jar가 필요하면 별도 태스크로 제공(선택)
+tasks.register('bootJarWithDocs') {
 	dependsOn tasks.named('copyRestDocs')
+	dependsOn tasks.named('bootJar')
 }
