@@ -113,6 +113,18 @@ include::{snippets}/auth-logout-all/request-headers.adoc[]
 include::{snippets}/auth-logout-all/http-response.adoc[]
 include::{snippets}/auth-logout-all/response-fields.adoc[]
 
+=== 내 정보 조회 (/api/me)
+
+==== 200 OK
+include::{snippets}/me-200-ok/http-request.adoc[]
+include::{snippets}/me-200-ok/request-headers.adoc[]
+include::{snippets}/me-200-ok/http-response.adoc[]
+include::{snippets}/me-200-ok/response-fields.adoc[]
+
+==== 401 Unauthorized (토큰 없음)
+include::{snippets}/me-401-unauthorized/http-request.adoc[]
+include::{snippets}/me-401-unauthorized/http-response.adoc[]
+
 == Posts
 
 === 게시글 생성
@@ -451,13 +463,3 @@ include::{snippets}/conversations-unread-after/http-response.adoc[]
 * `X-Accel-Buffering: no`
 
 operation::sse-subscribe[snippets='http-request,request-headers']
-
-[NOTE]
-====
-SSE 재연결(replay)을 위해 클라이언트는 `Last-Event-ID` 헤더를 보낼 수 있습니다.
-
-- `Last-Event-ID` 값은 "마지막으로 수신한 SSE 이벤트의 id" 입니다.
-- 본 프로젝트는 이벤트 id를 다음 규칙으로 통일합니다.
-- message-created / message-deleted: `msg:{messageId}`
-- notification-created: `noti:{notificationId}`
-====

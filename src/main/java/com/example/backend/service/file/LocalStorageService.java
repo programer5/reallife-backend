@@ -14,7 +14,8 @@ public class LocalStorageService implements StorageService {
 
     private final Path root;
 
-    public LocalStorageService(@Value("${storage.local.root:uploads}") String rootDir) {
+    // ✅ application.yml의 file.upload-dir 사용
+    public LocalStorageService(@Value("${file.upload-dir:uploads}") String rootDir) {
         this.root = Paths.get(rootDir).toAbsolutePath().normalize();
         try {
             Files.createDirectories(this.root);
