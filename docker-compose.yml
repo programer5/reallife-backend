@@ -36,7 +36,6 @@ services:
     environment:
       SPRING_PROFILES_ACTIVE: dev
 
-      # Spring Boot 표준 환경변수 오버라이드
       SPRING_DATASOURCE_URL: jdbc:mysql://reallife-mysql:3306/${MYSQL_DATABASE}?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=Asia/Seoul&characterEncoding=UTF-8
       SPRING_DATASOURCE_USERNAME: ${MYSQL_USER}
       SPRING_DATASOURCE_PASSWORD: ${MYSQL_PASSWORD}
@@ -44,13 +43,16 @@ services:
       SPRING_DATA_REDIS_HOST: redis
       SPRING_DATA_REDIS_PORT: 6379
 
-      # JWT는 dev에서도 env로 두는 게 운영 감각 좋음
+      # ✅ JWT (Spring 바인딩 규칙 정석)
       JWT_SECRET: ${JWT_SECRET}
       JWT_ACCESS_TOKEN_EXP_MINUTES: ${JWT_ACCESS_TOKEN_EXP_MINUTES}
       JWT_REFRESH_TOKEN_EXP_DAYS: ${JWT_REFRESH_TOKEN_EXP_DAYS}
 
-    ports:
-      - "8080:8080"
+      # ✅ 파일 업로드 디렉터리(컨테이너 내부)
+      FILE_UPLOAD_DIR: /app/uploads
+
+    volumes:
+      - ./uploads:/app/uploads
 
   nginx:
     image: nginx:1.27-alpine
@@ -59,7 +61,7 @@ services:
     depends_on:
       - app
     ports:
-      - "${NGINX_PORT}:80"
+      - "80:80"
     volumes:
       - ./nginx/default.conf:/etc/nginx/conf.d/default.conf:ro
 

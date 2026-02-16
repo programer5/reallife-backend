@@ -6,6 +6,7 @@ import com.example.backend.security.SecurityErrorHandler;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.web.SecurityFilterChain;
@@ -37,6 +38,7 @@ public class SecurityConfig {
                         // ✅ auth: 공개
                         .requestMatchers("/api/auth/login", "/api/auth/login-cookie").permitAll()
                         .requestMatchers("/api/auth/refresh", "/api/auth/refresh-cookie").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/files/*/download").permitAll()
 
                         // ✅ auth: 보호(인증 필요)
                         .requestMatchers("/api/auth/logout-cookie").authenticated()

@@ -6,7 +6,7 @@ import com.example.backend.exception.BusinessException;
 import com.example.backend.exception.ErrorCode;
 import com.example.backend.repository.file.UploadedFileRepository;
 import com.example.backend.service.file.FileService;
-import com.example.backend.service.file.LocalStorageService;
+import com.example.backend.service.file.StorageService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.core.io.FileSystemResource;
 import org.springframework.http.*;
@@ -24,7 +24,7 @@ public class FileController {
 
     private final FileService fileService;
     private final UploadedFileRepository uploadedFileRepository;
-    private final LocalStorageService storageService;
+    private final StorageService storageService;
 
     @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public FileUploadResponse upload(@RequestPart("file") MultipartFile file,
@@ -33,23 +33,21 @@ public class FileController {
         return fileService.upload(meId, file);
     }
 
-    // ✅ 파일 다운로드/서빙 API 추가
+    /**
+     * ✅ 이미지/파일을 브라우저에서 바로 볼 수 있도록 inline 서빙
+     * - 프론트 연결 시 <img src="...">가 바로 동작
+     * - "무조건 다운로드"를 원하면 inline() -> attachment()로 변경하면 됨
+     */
     @GetMapping("/{fileId}/download")
-    public ResponseEntity<FileSystemResource> download(
-            @PathVariable UUID fileId,
-            Authentication authentication
-    ) {
-        // 인증은 SecurityConfig에서 기본 보호(.anyRequest().authenticated())
-        UUID meId = UUID.fromString(authentication.getName());
+    public ResponseEntity<FileSystemResource> download(@PathVariable UUID fileId) {
 
         UploadedFile file = uploadedFileRepository.findByIdAndDeletedFalse(fileId)
                 .orElseThrow(() -> new BusinessException(ErrorCode.FILE_NOT_FOUND));
 
-        // (선택) 업로더만 다운로드 가능하게 하고 싶으면 아래 체크 추가 가능
-        // if (!file.getUploaderId().equals(meId)) throw new BusinessException(ErrorCode.FILE_FORBIDDEN);
-
         Path path = storageService.resolvePath(file.getFileKey());
-        if (!path.toFile().exists()) throw new BusinessException(ErrorCode.FILE_NOT_FOUND);
+        if (!path.toFile().exists()) {
+            throw new BusinessException(ErrorCode.FILE_NOT_FOUND);
+        }
 
         FileSystemResource resource = new FileSystemResource(path);
 

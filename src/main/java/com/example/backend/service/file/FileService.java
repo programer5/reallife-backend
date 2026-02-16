@@ -45,7 +45,7 @@ public class FileService {
 
         return new FileUploadResponse(
                 saved.getId(),
-                "/api/files/" + saved.getId() + "/download", // ✅ 다운로드 URL로 통일
+                "/api/files/" + saved.getId() + "/download", // ✅ 실제로 존재하는 다운로드 URL로 통일
                 saved.getOriginalFilename(),
                 saved.getContentType(),
                 saved.getSize()
