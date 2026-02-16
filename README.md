@@ -1,167 +1,212 @@
-# 📸 RealLife (Instagram-style SNS Backend)
+# RealLife Backend
 
-> Real moments. Real people. Real life.
+Spring Boot 기반 백엔드 서버입니다.  
+**JWT 인증(Refresh Rotation) + REST Docs + Flyway + Redis Pub/Sub + SSE + Docker Compose(MySQL/Redis/Nginx/App)** 구성을 갖추고 있습니다.
 
-**Spring Boot 기반 SNS 백엔드 프로젝트**입니다.  
-현재 코드 베이스는 **JWT 인증(Refresh Rotation) + REST Docs + Flyway + Redis Pub/Sub + SSE + Docker(Nginx/MySQL/Redis/App)** 까지 갖춘 “실서비스에 가까운 뼈대”를 목표로 구성되어 있습니다.
-
-## 1) 현재 구현된 기능
-
-### ✅ 인증 / 보안
-- Stateless JWT 인증
-- Refresh Rotation(재발급 토큰 회전)
-- Logout-All(전 기기 로그아웃) 지원
-- `/api/me` 내 정보 조회 API
-
-### ✅ 유저 / 소셜
-- 회원가입
-- 사용자 검색(커서 페이징)
-- 팔로우/언팔로우
-- (User 엔티티에 followerCount 유지)
-
-### ✅ 콘텐츠
-- 게시글 생성 / 조회 / 피드 조회(커서 페이징)
-- 댓글 생성 / 목록 / 삭제
-- 좋아요 / 좋아요 취소
-
-### ✅ 실시간 / 메시징
-- DM(대화방 생성/조회, 메시지 목록, 자동 읽음 처리)
-- SSE 구독 (`/api/sse/subscribe`)
-- Redis Pub/Sub 기반 멀티 인스턴스 SSE Fanout
-- 알림 시스템(커서 페이징 / 읽음 처리 / 일괄 삭제)
-
-### ✅ 문서 / 운영
-- Spring REST Docs 자동 문서화
-- Docker Compose: MySQL + Redis + App + Nginx
+> 이 저장소는 **백엔드 API / 실시간(SSE) / 문서화(REST Docs) / 컨테이너 실행**을 중심으로 관리합니다.
 
 ---
 
-## 2) 빠른 실행(로컬)
+## 1) Tech Stack
 
-### 2-1) 환경파일 준비
-프로젝트에 있는 파일은 `.env.example` 입니다.
+- **Java / Spring Boot**
+  - Spring Web, Validation
+  - Spring Security (JWT)
+  - Spring Data JPA
+- **DB / Cache**
+  - MySQL
+  - Redis (Pub/Sub, 토큰/세션성 데이터)
+- **Realtime**
+  - SSE(Server-Sent Events)
+  - Redis Pub/Sub 기반 멀티 인스턴스 Fan-out
+- **DB Migration**
+  - Flyway
+- **API Docs**
+  - Spring REST Docs (Asciidoctor)
+- **Infra**
+  - Docker / Docker Compose
+  - Nginx Reverse Proxy
+
+---
+
+## 2) 주요 기능
+
+### Auth / Account
+- 회원가입
+- 로그인(Access Token 발급)
+- Refresh Token Rotation(재발급 토큰 회전)
+- Refresh Token 재사용 감지/차단
+- 전 기기 로그아웃(Logout-All)
+- 내 정보 조회: `GET /api/me`
+
+### Users / Social
+- 사용자 검색(커서 페이징)
+- 팔로우/언팔로우
+
+### Posts / Feed
+- 게시글 생성/조회/삭제
+- 피드 조회(커서 페이징)
+- 댓글 생성/목록/삭제(커서 페이징)
+- 좋아요/좋아요 취소
+
+#### 게시글 이미지 저장 정책(중요)
+- **정석 방식(권장)**: `imageFileIds: [UUID]`  
+  - 먼저 파일 업로드 → 응답의 `id`(UploadedFile ID)를 게시글 생성 요청에 전달
+- **구버전 호환**: `imageUrls: [String]`  
+  - 당장 프론트를 바꾸기 어렵다면 유지 가능 (점진 전환용)
+
+서버는 게시글 응답에서 `imageUrls`를 내려주며, 파일 서빙 URL 형태는 다음과 같습니다.
+
+- `GET /api/files/{fileId}/download`  (**브라우저에서 바로 렌더링 가능**)
+
+> 참고: `<img src="...">`에서 Authorization 헤더를 넣을 수 없기 때문에,  
+> `/download`는 브라우저 직접 접근(헤더 없이)도 가능하도록 설계되어 있습니다.  
+> 추후 “비공개 계정/권한”이 필요해지면 Signed URL 방식으로 고도화할 수 있습니다.
+
+### DM / Messages
+- DIRECT 대화방 생성/조회(Idempotent)
+- 대화방 목록(커서 페이징)
+- 메시지 목록(커서 페이징)
+- 메시지 자동 읽음 처리(last_read_at 갱신)
+- 메시지 삭제(나만 삭제/모두 삭제)
+
+### Notifications / Realtime(SSE)
+- 알림 목록(커서 페이징)
+- 알림 단건 읽음/전체 읽음
+- 읽은 알림 일괄 삭제(soft delete)
+- SSE 구독: `GET /api/sse/subscribe`
+  - 이벤트: `connected`, `ping`, `message-created`, `notification-created`
+
+---
+
+## 3) 로컬 실행 (Docker Compose)
+
+### 3-1) 사전 준비
+- Docker / Docker Compose 설치
+
+### 3-2) 환경 파일 준비
+`.env.example`을 복사해 `.env`를 생성하세요.
 
 ```bash
 cp .env.example .env
 ```
 
-### 2-2) 전체 실행
+필수로 확인/수정 권장 값:
+- `MYSQL_ROOT_PASSWORD`, `MYSQL_PASSWORD`
+- `JWT_SECRET` (길고 랜덤한 값)
+- `JWT_ACCESS_TOKEN_EXP_MINUTES`, `JWT_REFRESH_TOKEN_EXP_DAYS`
+
+> ⚠️ `.env`는 **절대 커밋하지 않습니다.** (아래 “Git 체크” 참고)
+
+### 3-3) 실행
 ```bash
 docker compose down
 docker compose up -d --build
+docker compose ps
 ```
 
-### 2-3) 접속
-| 기능 | 주소 |
+### 3-4) 접속
+| 항목 | 주소 |
 |---|---|
-| API | http://localhost:8080/api |
-| Docs | http://localhost:8080/docs |
-| SSE | http://localhost:8080/api/sse/subscribe |
+| Docs | http://localhost/docs |
+| API | http://localhost/api |
+| File download | http://localhost/api/files/{fileId}/download |
 
 ---
 
-## 3) API 문서(REST Docs) 생성
+## 4) Postman 테스트 가이드(추천 흐름)
 
+### 4-1) 로그인 → 토큰 확보
+- `POST {{baseUrl}}/api/auth/login`
+- 응답의 `accessToken`을 복사
+
+### 4-2) 파일 업로드
+- `POST {{baseUrl}}/api/files`
+- Authorization: `Bearer {{accessToken}}`
+- Body: form-data
+  - key: `file` (type: File)
+
+응답 예시:
+```json
+{
+  "id": "UUID",
+  "url": "/api/files/UUID/download",
+  "originalFilename": "cat.png",
+  "contentType": "image/png",
+  "size": 12345
+}
+```
+
+### 4-3) 게시글 생성 (정석: imageFileIds)
+- `POST {{baseUrl}}/api/posts`
+- Authorization: `Bearer {{accessToken}}`
+- Body(JSON):
+```json
+{
+  "content": "hello",
+  "imageFileIds": ["업로드 응답의 id"],
+  "visibility": "PUBLIC"
+}
+```
+
+응답의 `imageUrls[0]`를 브라우저에서 열면 이미지가 렌더링됩니다:
+- `http://localhost` + `/api/files/{id}/download`
+
+---
+
+## 5) API 문서(REST Docs)
+
+### 5-1) 문서 생성
 ```bash
 ./gradlew clean test asciidoctor copyRestDocs
 ```
 
----
+### 5-2) 문서 확인
+- `http://localhost/docs`
 
-## 4) SSE 이벤트
-
-- `connected`
-- `ping`
-- `message-created`
-- `notification-created`
+> REST Docs 스니펫은 테스트 실행 시 `build/generated-snippets`에 생성됩니다.
 
 ---
 
-### A. 사용자 프로필
-- [ ] 프로필 조회: `GET /api/users/{handle}` (혹은 id)
-- [ ] 프로필 수정: 이름/소개(bio)/웹사이트/프로필 이미지
-- [ ] followerCount뿐 아니라 **followingCount / postCount** 관리(집계 전략 학습)
+## 6) Git 체크(실서비스/오픈소스 안전)
 
-> ✅ 추천 기술 포인트  
-> - 프로필/집계는 “정규화 vs 비정규화(카운트 컬럼)” 트레이드오프를 경험하기 좋음  
-> - 동시성/정합성(락/이벤트/배치) 같은 주제를 자연스럽게 배우게 됨
+### 6-1) 커밋 금지 파일
+다음 항목은 **절대 커밋하지 않도록** 관리합니다.
 
-### B. 미디어(사진) 파이프라인
-현재는 `PostCreateRequest.imageUrls`가 문자열 리스트이고, 파일 업로드는 `/api/files`가 존재하지만 **일반 다운로드/서빙 정책이 부족**합니다.
+- `.env`
+- `uploads/` (로컬 파일 저장소)
+- `build/`
+- `application-local.yml`, `application-dev.yml` 등 개인 설정
 
-- [ ] 업로드 파일을 “조회 가능한 URL”로 서빙 (예: `/api/files/{id}/download` 또는 `/uploads/{key}`)
-- [ ] 이미지 타입/용량 검증 강화 (MIME 스니핑, 확장자/콘텐츠 불일치 방지)
-- [ ] 이미지 리사이즈/썸네일 생성(예: 1080px, 320px) + 원본 보관
-- [ ] 스토리지 추상화 확장: Local → (학습용) S3 호환 스토리지로 교체 가능하게
+`.gitignore` 예시:
+```gitignore
+.env
+uploads/
+build/
+*.log
+src/main/resources/application-local.yml
+src/main/resources/application-dev.yml
+```
 
-> ✅ 추천 기술 포인트  
-> - (학습) LocalStorage → StorageService(S3 구현)로 확장  
-> - 썸네일 생성은 서버에서 처리(비동기)하거나, 프론트에서 리사이즈 후 업로드하는 방식도 비교 가능
-
-### C. 게시글/피드 고도화
-- [ ] 게시글 수정/숨김/아카이브/삭제 정책(Soft delete)
-- [ ] 피드 랭킹(최신순 → “친밀도/가중치” 실험 가능)
-- [ ] 게시글 목록: 내 게시글, 특정 유저 게시글, 좋아요한 게시글
-- [ ] 댓글/좋아요 “목록 조회” (누가 좋아요 했는지 / 누가 댓글 달았는지)
-
-> ✅ 추천 기술 포인트  
-> - 커서 페이징을 이미 적용했으니, “정렬키 설계(createdAt + id)”를 더 세련되게 다듬기 좋음
-
-### D. 탐색/검색
-- [ ] 해시태그(파싱/저장/검색)
-- [ ] 멘션(@user) 파싱 및 알림 연동
-- [ ] 인기글/추천유저(간단한 스코어링)
-
-> ✅ 추천 기술 포인트  
-> - 처음에는 DB 인덱스 + LIKE/Prefix 검색으로 시작 → 나중에 Elasticsearch/OpenSearch로 확장(선택)
-
-### E. 안전/프라이버시(실서비스급)
-- [ ] 차단(Block) / 뮤트(Mute)
-- [ ] 비공개 계정(팔로우 승인 흐름)
-- [ ] 신고(Report) / 콘텐츠 숨김
-- [ ] Rate limiting(로그인/검색/댓글 폭주 방지)
-
-> ✅ 추천 기술 포인트  
-> - Redis 기반 Rate limit(토큰 버킷) 같은 패턴을 학습하기 좋음
-
-### F. 운영/관측성(나중에 배포 때 진짜 도움됨)
-- [ ] Actuator + Prometheus 지표
-- [ ] 로그 상관관계(RequestId) 유지
-- [ ] 에러 응답 표준화(이미 어느 정도 되어 있다면 문서화 강화)
-- [ ] CI: 테스트 + 문서 생성 자동화(GitHub Actions)
+> 이미 커밋된 경우:
+```bash
+git rm --cached .env -f
+git rm --cached -r uploads build
+```
 
 ---
 
-## 6) 백엔드 완료 체크리스트
+## 7) Roadmap (추천 순서)
 
-프론트를 들어가기 전에 아래 6개만 안정적으로 되면, 화면 만들 때 속도가 확 올라갑니다.
-
-1. **Auth 흐름이 안정적**: 로그인/재발급/만료/로그아웃-all
-2. **프로필**: 조회/수정 + 프로필 이미지
-3. **미디어 서빙**: 업로드 → 접근 URL → 게시글 이미지로 표시
-4. **피드/게시글 목록**: 커서 페이징 정합성 + 삭제/숨김 정책
-5. **알림/DM 실시간**: SSE/Redis fanout 안정성(끊김 복구 포함)
-6. **문서/테스트**: REST Docs가 실제 API와 동일하게 유지
-
----
-
-## 7) Roadmap
-
-- [x] 인증 / 사용자 / 검색
-- [x] DM + 알림 + SSE (Redis Fanout)
-- [x] REST Docs / Docker Compose
-- [ ] **프로필(조회/수정) + 프로필 이미지**
-- [ ] **파일 다운로드/서빙 + 이미지 썸네일**
-- [ ] 해시태그/멘션 파싱 + 알림
-- [ ] 피드 랭킹(최신순 → 가중치) / Explore
-- [ ] 차단/비공개/신고 + Rate limit
+- [ ] 프로필 조회/수정 + 프로필 이미지
+- [ ] 게시글 이미지 썸네일/리사이즈 파이프라인(비동기 처리 포함)
+- [ ] 검색 고도화 (DB 인덱스/쿼리) → (선택) Elasticsearch/OpenSearch Read Model
+- [ ] 비공개/차단/신고 + Rate limit 확장
+- [ ] 관측성(Actuator/지표/로그 상관관계)
 - [ ] Vue.js 프론트엔드
-- [ ] HTTPS 배포
+- [ ] HTTPS 실배포(도메인/서버 구성)
 
 ---
 
-## 8) 개발 규칙
-
-- 기능 추가할 때마다:
-  1) 테스트 작성 → 2) 구현 → 3) REST Docs 스니펫 생성 → 4) 문서 반영
-- “작게 완성하고 다음으로”: 한 번에 크게 만들면 리팩토링이 지옥이 됩니다 😅
+## 8) License
+필요 시 라이선스를 명시하세요.
