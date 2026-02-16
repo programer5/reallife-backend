@@ -1,24 +1,24 @@
 # ===== Gradle =====
-.gradle
+.gradle/
 build/
 !gradle/wrapper/gradle-wrapper.jar
 !**/src/main/**/build/
 !**/src/test/**/build/
 
-### STS ###
-.apt_generated
+# ===== Spring Tool Suite / Eclipse =====
+.apt_generated/
 .classpath
 .factorypath
 .project
-.settings
+.settings/
 .springBeans
-.sts4-cache
+.sts4-cache/
 bin/
 !**/src/main/**/bin/
 !**/src/test/**/bin/
 
-### IntelliJ IDEA ###
-.idea
+# ===== IntelliJ IDEA =====
+.idea/
 *.iws
 *.iml
 *.ipr
@@ -26,21 +26,39 @@ out/
 !**/src/main/**/out/
 !**/src/test/**/out/
 
-### NetBeans ###
+# ===== NetBeans =====
 /nbproject/private/
 /nbbuild/
 /dist/
 /nbdist/
 /.nb-gradle/
 
-### VS Code ###
+# ===== VS Code =====
 .vscode/
 
-# ===== App Secrets / Local Only =====
-src/main/resources/application-local.yml
-src/main/resources/application-dev.yml
-.env
-uploads/
-cookies.txt
+# ===== OS / Misc =====
 .DS_Store
 Thumbs.db
+*.log
+logs/
+
+# ===== Local secrets / runtime artifacts (DO NOT COMMIT) =====
+# dotenv
+.env
+.env.*
+*.env
+
+# local uploads (LocalStorageService)
+uploads/
+tmp/
+cookies.txt
+
+# Spring profile configs (keep application.yml + application-example.yml tracked)
+src/main/resources/application-local.yml
+src/main/resources/application-dev.yml
+src/main/resources/application-prod.yml
+
+# (Optional) if you have additional private profiles, ignore them too:
+# src/main/resources/application-*.yml
+# !src/main/resources/application.yml
+# !src/main/resources/application-example.yml
