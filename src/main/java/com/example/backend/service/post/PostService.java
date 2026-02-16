@@ -5,6 +5,7 @@ import com.example.backend.controller.post.dto.PostCreateResponse;
 import com.example.backend.domain.post.Post;
 import com.example.backend.exception.BusinessException;
 import com.example.backend.exception.ErrorCode;
+import com.example.backend.repository.file.UploadedFileRepository;
 import com.example.backend.repository.post.PostRepository;
 import com.example.backend.repository.user.UserRepository;
 import com.example.backend.security.ContentSanitizer;
@@ -12,8 +13,6 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.Collections;
-import java.util.List;
 import java.util.UUID;
 
 @Service
@@ -23,6 +22,7 @@ public class PostService {
 
     private final PostRepository postRepository;
     private final UserRepository userRepository;
+    private final UploadedFileRepository uploadedFileRepository;
 
     @Transactional
     public PostCreateResponse createPost(UUID meId, PostCreateRequest request) {
@@ -33,9 +33,25 @@ public class PostService {
         String safeContent = ContentSanitizer.minimal(request.content());
         Post post = Post.create(meId, safeContent, request.visibility());
 
-        List<String> urls = request.imageUrls() == null ? Collections.emptyList() : request.imageUrls();
-        for (int i = 0; i < urls.size(); i++) {
-            post.addImage(urls.get(i), i);
+        // ===== 1. 새 방식 (fileId 기반) =====
+        if (request.imageFileIds() != null && !request.imageFileIds().isEmpty()) {
+
+            var files = uploadedFileRepository.findAllById(request.imageFileIds());
+
+            if (files.size() != request.imageFileIds().size()) {
+                throw new BusinessException(ErrorCode.FILE_NOT_FOUND);
+            }
+
+            int order = 0;
+            for (var file : files) {
+                post.addImage(file, order++);
+            }
+        }
+        // ===== 2. 구버전 호환 (문자열 URL) =====
+        else if (request.imageUrls() != null) {
+            for (int i = 0; i < request.imageUrls().size(); i++) {
+                post.addImage(request.imageUrls().get(i), i);
+            }
         }
 
         Post saved = postRepository.save(post);

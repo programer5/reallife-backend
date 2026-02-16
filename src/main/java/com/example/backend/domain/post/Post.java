@@ -1,6 +1,7 @@
 package com.example.backend.domain.post;
 
 import com.example.backend.domain.BaseEntity;
+import com.example.backend.domain.file.UploadedFile;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -56,8 +57,15 @@ public class Post extends BaseEntity {
         return new Post(authorId, content, visibility);
     }
 
+    /** ✅ 기존 방식(유지): url 문자열 저장 */
     public void addImage(String imageUrl, int sortOrder) {
         this.images.add(PostImage.create(this, imageUrl, sortOrder));
+    }
+
+    /** ✅ 새 방식(추가): UploadedFile 기반 + url도 같이 저장(프론트 편의) */
+    public void addImage(UploadedFile file, int sortOrder) {
+        String url = "/api/files/" + file.getId() + "/download";
+        this.images.add(PostImage.create(this, file, url, sortOrder));
     }
 
     public void delete() {
@@ -71,6 +79,4 @@ public class Post extends BaseEntity {
     public void decreaseLikeCount() {
         if (this.likeCount > 0) this.likeCount--;
     }
-
-
 }
