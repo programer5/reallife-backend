@@ -1,5 +1,6 @@
 package com.example.backend.service.file;
 
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
@@ -9,10 +10,12 @@ import java.io.IOException;
 import java.nio.file.*;
 import java.util.UUID;
 
+@Slf4j
 @Service
 public class LocalStorageService implements StorageService {
 
     private final Path root;
+
 
     // ✅ application.yml의 file.upload-dir 사용 (ENV: FILE_UPLOAD_DIR)
     public LocalStorageService(@Value("${file.upload-dir:uploads}") String rootDir) {
@@ -48,5 +51,15 @@ public class LocalStorageService implements StorageService {
     @Override
     public Path resolvePath(String fileKey) {
         return root.resolve(fileKey).normalize();
+    }
+
+    @Override
+    public void delete(String fileKey) {
+        try {
+            Path filePath = resolvePath(fileKey);
+            Files.deleteIfExists(filePath);
+        } catch (Exception e) {
+            log.error("파일 삭제 실패: {}", fileKey, e);
+        }
     }
 }
