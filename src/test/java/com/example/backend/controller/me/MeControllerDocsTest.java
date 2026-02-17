@@ -1,8 +1,11 @@
 package com.example.backend.controller.me;
 
 import com.example.backend.controller.DocsTestSupport;
+import com.example.backend.domain.file.UploadedFile;
+import com.example.backend.repository.file.UploadedFileRepository;
 import com.example.backend.restdocs.ErrorResponseSnippet;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -25,14 +28,14 @@ import static org.springframework.restdocs.headers.HeaderDocumentation.requestHe
 import static org.springframework.restdocs.mockmvc.MockMvcRestDocumentation.document;
 import static org.springframework.restdocs.mockmvc.MockMvcRestDocumentation.documentationConfiguration;
 import static org.springframework.restdocs.operation.preprocess.Preprocessors.*;
-import static org.springframework.restdocs.payload.JsonFieldType.NUMBER;
-import static org.springframework.restdocs.payload.JsonFieldType.STRING;
+import static org.springframework.restdocs.payload.JsonFieldType.*;
 import static org.springframework.restdocs.payload.PayloadDocumentation.*;
 import static org.springframework.restdocs.snippet.Attributes.key;
 import static org.springframework.security.test.web.servlet.setup.SecurityMockMvcConfigurers.springSecurity;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @SpringBootTest
 @ActiveProfiles("test")
@@ -43,6 +46,7 @@ class MeControllerDocsTest {
     @Autowired WebApplicationContext context;
     @Autowired ObjectMapper objectMapper;
     @Autowired DocsTestSupport docs;
+    @Autowired UploadedFileRepository uploadedFileRepository;
 
     private MockMvc mockMvc(RestDocumentationContextProvider restDocumentation) {
         return MockMvcBuilders.webAppContextSetup(context)
@@ -135,6 +139,48 @@ class MeControllerDocsTest {
                                 fieldWithPath("profileImageUrl").optional().type(STRING).description("프로필 이미지 URL(/api/files/{id}/download)"),
                                 fieldWithPath("followerCount").type(NUMBER).description("팔로워 수"),
                                 fieldWithPath("followingCount").type(NUMBER).description("팔로잉 수")
+                        )
+                ));
+    }
+
+    @Test
+    @DisplayName("내 프로필 수정 실패 - 다른 유저 파일 사용(403)")
+    void 내프로필_수정_실패_다른유저파일_403(RestDocumentationContextProvider restDocumentation) throws Exception {
+
+        MockMvc mockMvc = mockMvc(restDocumentation);
+
+        // 내 계정
+        var me = docs.saveUser("me403", "나");
+        String token = docs.issueTokenFor(me);
+
+        // 다른 유저
+        var other = docs.saveUser("other403", "남");
+
+        // 다른 유저가 업로드한 파일 생성
+        UploadedFile otherFile = UploadedFile.create(
+                other.getId(),
+                "forbidden.png",
+                "docs/forbidden.png",
+                "image/png",
+                10L
+        );
+        uploadedFileRepository.saveAndFlush(otherFile);
+
+        var req = new HashMap<String, Object>();
+        req.put("bio", "변경시도");
+        req.put("website", "https://hack.com");
+        req.put("profileImageFileId", otherFile.getId().toString());
+
+        mockMvc.perform(patch("/api/me/profile")
+                        .header(DocsTestSupport.headerName(), DocsTestSupport.auth(token))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(req)))
+                .andExpect(status().isForbidden())
+                .andDo(document("me-profile-update-403-forbidden-file",
+                        preprocessRequest(prettyPrint()),
+                        preprocessResponse(prettyPrint()),
+                        responseFields(
+                                ErrorResponseSnippet.common()
                         )
                 ));
     }
