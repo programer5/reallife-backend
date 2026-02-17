@@ -3,8 +3,6 @@
 Spring Boot 기반 백엔드 서버입니다.  
 현재는 **단일 모놀리식(monolith) + 모듈형 패키지 구조**로 개발하고 있으며, 기능이 안정화되면 **Kafka 기반 이벤트 드리븐 + MSA + Kubernetes 배포**로 확장하는 것을 목표로 합니다.
 
-> 이 저장소는 **백엔드 API / 실시간(SSE) / 문서화(REST Docs) / 컨테이너 실행**을 중심으로 관리합니다.
-
 ---
 
 ## 1) Tech Stack (현재)
@@ -103,7 +101,7 @@ docker compose ps
 ### 3-3) 접속
 | 항목 | 주소 |
 |---|---|
-| Docs | http://localhost/docs |
+| Docs (Nginx) | http://localhost/docs |
 | API | http://localhost/api |
 | File download | http://localhost/api/files/{fileId}/download |
 
@@ -148,13 +146,12 @@ docker compose ps
 
 ## 5) API 문서(REST Docs)
 
-문서 생성:
+로컬에서 문서 생성:
 ```bash
-./gradlew clean test asciidoctor copyRestDocs
+./gradlew clean test asciidoctor
 ```
 
-문서 확인:
-- `http://localhost/docs`
+- 결과: `build/docs/asciidoc/`
 
 ---
 
@@ -185,17 +182,101 @@ git rm --cached -r uploads build
 
 ---
 
-## 7) Kafka / Event-Driven / MSA 확장 계획 (추가 예정)
+## 7) CI / Docs / CD
+
+이 레포는 GitHub Actions 기반으로 **CI(테스트) + Docs 배포(REST Docs → GitHub Pages)** 가 이미 구성되어 있습니다.
+
+### 7-1) CI (현재)
+- `.github/workflows/ci.yml`
+  - Redis 서비스 컨테이너를 띄운 뒤
+  - `SPRING_PROFILES_ACTIVE=test`로 테스트 실행
+  - `./gradlew clean test asciidoctor`
+  - 생성된 REST Docs 결과물을 Artifact로 업로드
+
+### 7-2) Docs 배포 (현재)
+- `.github/workflows/docs.yml`
+  - main 브랜치 push 또는 수동 실행(`workflow_dispatch`) 시
+  - `./gradlew clean test asciidoctor`
+  - `build/docs/asciidoc/`을 GitHub Pages로 배포
+
+> GitHub Pages URL은 레포 Settings → Pages에서 확인할 수 있습니다.
+
+### 7-3) CD (추가 권장)
+현재 워크플로는 “빌드/테스트/문서” 중심이며, **실서버 배포(CD)** 단계는 별도로 두는 것을 추천합니다.
+
+#### CD 1단계(추천): Docker 이미지 빌드 → 서버에서 docker compose로 배포
+1) GitHub Actions에서 Docker 이미지를 빌드해서 **GHCR(ghcr.io)** 로 push  
+2) 서버(VPS)에서 `docker compose pull && docker compose up -d`로 반영
+
+필요 GitHub Secrets(예시):
+- `GHCR_TOKEN` (또는 `GITHUB_TOKEN`로 대체 가능)
+- `DEPLOY_HOST`, `DEPLOY_USER`, `DEPLOY_SSH_KEY`, `DEPLOY_PATH`
+
+(복붙용) `cd.yml` 예시:
+```yaml
+name: CD
+on:
+  push:
+    branches: [ "main" ]
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+          cache: gradle
+
+      - name: Build
+        run: ./gradlew clean bootJar
+
+      - name: Login to GHCR
+        run: echo "${{ secrets.GHCR_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
+
+      - name: Build & Push image
+        run: |
+          IMAGE=ghcr.io/${{ github.repository_owner }}/reallife-api:latest
+          docker build -t $IMAGE .
+          docker push $IMAGE
+
+      - name: Deploy via SSH (docker compose pull/up)
+        uses: appleboy/ssh-action@v1.2.0
+        with:
+          host: ${{ secrets.DEPLOY_HOST }}
+          username: ${{ secrets.DEPLOY_USER }}
+          key: ${{ secrets.DEPLOY_SSH_KEY }}
+          script: |
+            cd ${{ secrets.DEPLOY_PATH }}
+            docker compose pull
+            docker compose up -d
+            docker image prune -f
+```
+
+#### CD 2단계: Kubernetes로 이전
+- 이미지 빌드/푸시는 동일
+- 배포 단계에서 `kubectl apply -k k8s/overlays/prod` 또는 Helm upgrade 실행
+
+> 처음부터 K8s로 가기보다, **Docker Compose CD로 운영 흐름을 만든 뒤** K8s로 이전하는 것이 학습/운영 모두에 유리합니다.
+
+---
+
+## 8) Kafka / Event-Driven / MSA 확장 계획 (추가 예정)
 
 > 지금은 “기능 완성 + 데이터 모델 안정화”가 1순위입니다.  
 > 그 다음 **Kafka를 이용해 도메인 이벤트를 발행하고**, 점진적으로 서비스 분리를 진행합니다.  
 > (처음부터 MSA로 시작하면 개발 속도/디버깅 비용이 급격히 증가할 수 있어, **단계적 전환**을 권장합니다.)
 
-### 7-1) 도입 목표
+### 8-1) 도입 목표
 - 서비스 간 결합도를 낮추고(비동기 이벤트), 확장성과 장애 격리를 높입니다.
 - “게시글 생성 → 알림/피드/검색 인덱싱” 같은 후처리를 이벤트로 분리합니다.
 
-### 7-2) 이벤트 설계(초안)
+### 8-2) 이벤트 설계(초안)
 - `user.created`
 - `follow.created`, `follow.deleted`
 - `post.created`, `post.deleted`
@@ -204,61 +285,41 @@ git rm --cached -r uploads build
 - `dm.message.created`
 - `notification.created`
 
-> 이벤트는 **Outbox 패턴**으로 발행(추천)  
-> - DB 트랜잭션과 이벤트 발행의 정합성 확보  
-> - 최소 1회 전달(at-least-once) 전제 + 멱등성(idempotency) 처리
+> 이벤트는 **Outbox 패턴**으로 발행(추천)
 
-### 7-3) 점진적 서비스 분리 후보(추천 순서)
-1) **Notification Service** (이벤트 소비 → 알림 저장/전송)
-2) **Search/Indexing Service** (Elasticsearch/OpenSearch 인덱싱 전담)
-3) **Feed Service** (피드 생성/랭킹)
-4) **Media Service** (썸네일/리사이즈/스토리지)
-
-> 핵심 도메인(Post/User/Auth)은 마지막까지 모놀리식에 남겨두는 전략이 안정적입니다.
-
-### 7-4) 로컬 Kafka 구성(예정)
-- Docker Compose에 `kafka` + `zookeeper`(또는 KRaft) 추가
-- Spring Kafka 의존성 추가
-- Outbox 테이블 + 퍼블리셔 + 컨슈머 모듈 추가
-
-> 실제 추가 시: `docker-compose.kafka.yml` 같은 별도 파일로 분리하는 것을 권장합니다.
+### 8-3) 점진적 서비스 분리 후보(추천 순서)
+1) Notification Service
+2) Search/Indexing Service
+3) Feed Service
+4) Media Service(썸네일/리사이즈/스토리지)
 
 ---
 
-## 8) Kubernetes(K8s) 배포 계획 (추가 예정)
+## 9) Kubernetes(K8s) 배포 계획 (추가 예정)
 
-### 8-1) 목표
+### 9-1) 목표
 - Nginx Ingress + TLS(HTTPS)
 - API 서버 다중 레플리카 + 오토스케일(선택)
 - ConfigMap/Secret로 설정 분리
-- Observability(로그/지표/트레이싱) 기반 운영
 
-### 8-2) 예상 구성(초안)
-- `Deployment` : reallife-api
-- `Service` : ClusterIP
-- `Ingress` : 외부 라우팅(도메인/HTTPS)
-- `ConfigMap/Secret` : 환경변수/민감정보
-- `HPA` : 트래픽 기반 스케일(선택)
-
-### 8-3) 디렉터리 구조(예정)
-- `k8s/base/` (deployment/service/ingress)
+### 9-2) 디렉터리 구조(예정)
+- `k8s/base/`
 - `k8s/overlays/dev`, `k8s/overlays/prod` (kustomize)
-- 또는 `helm/` 차트로 관리
+- 또는 `helm/`
 
 ---
 
-## 9) Roadmap (추천 순서)
-
+## 10) Roadmap (추천 순서)
 - [ ] 프로필 조회/수정 + 프로필 이미지
 - [ ] 게시글 이미지 썸네일/리사이즈 파이프라인(비동기 처리 포함)
 - [ ] 검색 고도화 (DB 인덱스/쿼리) → (선택) Elasticsearch/OpenSearch Read Model
+- [ ] CD 추가(서버 배포 자동화) → 이후 K8s 전환
 - [ ] Kafka 도입: Outbox + 도메인 이벤트 발행/소비
 - [ ] Notification/Search/Feed 등 점진적 서비스 분리(MSA)
-- [ ] Kubernetes 배포(ingress/https/secret/config)
 - [ ] Vue.js 프론트엔드
 - [ ] HTTPS 실배포(도메인/서버 구성)
 
 ---
 
-## 10) License
+## 11) License
 필요 시 라이선스를 명시하세요.
