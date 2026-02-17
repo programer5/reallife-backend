@@ -61,6 +61,15 @@ public class User extends BaseEntity {
     @Column(nullable = false)
     private long followerCount = 0;
 
+    @Column(length = 255)
+    private String bio;
+
+    @Column(length = 255)
+    private String website;
+
+    @Column(name = "profile_image_file_id", columnDefinition = "BINARY(16)")
+    private java.util.UUID profileImageFileId;
+
     public User(String email, String handle, String password, String name) {
         this.email = email;
         this.handle = handle;
@@ -69,6 +78,12 @@ public class User extends BaseEntity {
         this.provider = AuthProvider.LOCAL;
 
         syncSearchFields(); // 생성자에서도 안전하게
+    }
+
+    public void updateProfile(String bio, String website, java.util.UUID profileImageFileId) {
+        this.bio = bio;
+        this.website = website;
+        this.profileImageFileId = profileImageFileId;
     }
 
     // ✅ BaseEntity 훅에서 호출됨

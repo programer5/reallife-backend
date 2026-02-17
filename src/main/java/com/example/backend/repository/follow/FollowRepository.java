@@ -17,7 +17,10 @@ public interface FollowRepository extends JpaRepository<Follow, UUID> {
 
     List<Follow> findAllByFollowerIdAndDeletedFalse(UUID followerId);
 
-    // ✅ 내가 팔로우 중인 대상들만 한 번에 조회 (검색 결과에 isFollowing 붙일 때 사용)
+    // ✅ 추가: 팔로워 수 / 팔로잉 수
+    long countByFollowingIdAndDeletedFalse(UUID followingId); // 나를 팔로우하는 수
+    long countByFollowerIdAndDeletedFalse(UUID followerId);   // 내가 팔로우하는 수
+
     @Query("""
         select f.followingId
         from Follow f

@@ -1,6 +1,8 @@
 package com.example.backend.controller.post;
 
 import com.example.backend.controller.DocsTestSupport;
+import com.example.backend.domain.file.UploadedFile;
+import com.example.backend.repository.file.UploadedFileRepository;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -23,9 +25,12 @@ import static org.springframework.restdocs.headers.HeaderDocumentation.headerWit
 import static org.springframework.restdocs.headers.HeaderDocumentation.requestHeaders;
 import static org.springframework.restdocs.mockmvc.MockMvcRestDocumentation.document;
 import static org.springframework.restdocs.mockmvc.MockMvcRestDocumentation.documentationConfiguration;
+import static org.springframework.restdocs.operation.preprocess.Preprocessors.*;
 import static org.springframework.restdocs.payload.JsonFieldType.ARRAY;
 import static org.springframework.restdocs.payload.JsonFieldType.STRING;
 import static org.springframework.restdocs.payload.PayloadDocumentation.*;
+import static org.springframework.restdocs.request.RequestDocumentation.parameterWithName;
+import static org.springframework.restdocs.request.RequestDocumentation.pathParameters;
 import static org.springframework.restdocs.snippet.Attributes.key;
 import static org.springframework.security.test.web.servlet.setup.SecurityMockMvcConfigurers.springSecurity;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
@@ -42,25 +47,37 @@ class PostControllerDocsTest {
     @Autowired private WebApplicationContext context;
     @Autowired private ObjectMapper objectMapper;
     @Autowired private DocsTestSupport docs;
+    @Autowired private UploadedFileRepository uploadedFileRepository;
 
     private MockMvc mockMvc(RestDocumentationContextProvider restDocumentation) {
         return MockMvcBuilders.webAppContextSetup(context)
-                .apply(springSecurity()) // ✅ 추가
+                .apply(springSecurity())
                 .apply(documentationConfiguration(restDocumentation))
                 .build();
     }
 
     @Test
-    void 게시글_생성_성공_201(RestDocumentationContextProvider restDocumentation) throws Exception {
+    void 게시글_생성_성공_201_imageFileIds(RestDocumentationContextProvider restDocumentation) throws Exception {
         MockMvc mockMvc = mockMvc(restDocumentation);
 
         var user = docs.saveUser("post", "작성자");
         String token = docs.issueTokenFor(user);
 
+        // ✅ imageFileIds 문서화를 위해 UploadedFile 한 건 생성
+        var uploaded = UploadedFile.create(
+                user.getId(),
+                "cat.png",
+                "docs/cat.png",
+                "image/png",
+                10L
+        );
+        uploadedFileRepository.saveAndFlush(uploaded);
+
         var req = new HashMap<String, Object>();
         req.put("content", "팔로워에게만 공유합니다 🙂");
-        req.put("imageUrls", java.util.List.of("https://example.com/image1.jpg"));
-        req.put("visibility", "FOLLOWERS"); // ✅ 실제 응답과 동일하게
+        req.put("imageUrls", java.util.List.of("https://example.com/legacy-image.jpg")); // 구버전 호환 문서용
+        req.put("imageFileIds", java.util.List.of(uploaded.getId().toString()));        // ✅ 권장 방식
+        req.put("visibility", "FOLLOWERS");
 
         mockMvc.perform(post("/api/posts")
                         .header(DocsTestSupport.headerName(), DocsTestSupport.auth(token))
@@ -72,21 +89,24 @@ class PostControllerDocsTest {
                 .andExpect(jsonPath("$.visibility").value("FOLLOWERS"))
                 .andDo(org.springframework.test.web.servlet.result.MockMvcResultHandlers.print())
                 .andDo(document("posts-create",
+                        preprocessRequest(prettyPrint()),
+                        preprocessResponse(prettyPrint()),
                         requestHeaders(
                                 headerWithName(DocsTestSupport.headerName()).description("Bearer {accessToken}")
                         ),
                         requestFields(
                                 fieldWithPath("content").type(STRING).description("게시글 본문"),
-                                fieldWithPath("imageUrls").optional().type(ARRAY).description("이미지 URL 목록"),
+                                fieldWithPath("imageUrls").optional().type(ARRAY).description("(구버전 호환) 이미지 URL 목록"),
+                                fieldWithPath("imageFileIds").optional().type(ARRAY).description("(권장) 업로드된 파일 ID(UUID) 목록"),
                                 fieldWithPath("visibility").optional().type(STRING)
-                                        .attributes(key("constraints").value("PUBLIC | FOLLOWERS | PRIVATE"))
+                                        .attributes(key("constraints").value("ALL | FOLLOWERS | PRIVATE"))
                                         .description("공개 범위")
                         ),
                         responseFields(
                                 fieldWithPath("postId").type(STRING).description("생성된 게시글 ID(UUID)"),
                                 fieldWithPath("authorId").type(STRING).description("작성자 ID(UUID)"),
                                 fieldWithPath("content").type(STRING).description("게시글 본문"),
-                                fieldWithPath("imageUrls").type(ARRAY).description("이미지 URL 목록"),
+                                fieldWithPath("imageUrls").type(ARRAY).description("이미지 URL 목록(다운로드 URL로 반환될 수 있음)"),
                                 fieldWithPath("visibility").type(STRING).description("공개 범위"),
                                 fieldWithPath("createdAt").type(STRING).description("생성 시각(ISO-8601)")
                         )
@@ -100,7 +120,6 @@ class PostControllerDocsTest {
         var user = docs.saveUser("detail", "작성자");
         String token = docs.issueTokenFor(user);
 
-        // 1) 게시글 생성해서 postId 확보
         var createReq = new HashMap<String, Object>();
         createReq.put("content", "상세조회 테스트");
         createReq.put("imageUrls", java.util.List.of("https://example.com/image1.jpg"));
@@ -116,16 +135,19 @@ class PostControllerDocsTest {
         String body = created.getResponse().getContentAsString();
         String postId = objectMapper.readTree(body).get("postId").asText();
 
-        // 2) 상세조회
         mockMvc.perform(get("/api/posts/{postId}", postId)
                 .header(DocsTestSupport.headerName(), DocsTestSupport.auth(token)))
                 .andExpect(status().isOk())
                 .andDo(org.springframework.test.web.servlet.result.MockMvcResultHandlers.print())
                 .andDo(document("posts-get",
+                        preprocessRequest(prettyPrint()),
+                        preprocessResponse(prettyPrint()),
                         requestHeaders(
                                 headerWithName(DocsTestSupport.headerName()).description("Bearer {accessToken}")
                         ),
-                        // 응답은 create와 동일한 스펙으로 문서화(필드 타입 고정)
+                        pathParameters(
+                                parameterWithName("postId").description("조회할 게시글 ID(UUID)")
+                        ),
                         responseFields(
                                 fieldWithPath("postId").type(STRING).description("게시글 ID(UUID)"),
                                 fieldWithPath("authorId").type(STRING).description("작성자 ID(UUID)"),
@@ -144,7 +166,6 @@ class PostControllerDocsTest {
         var user = docs.saveUser("del", "작성자");
         String token = docs.issueTokenFor(user);
 
-        // 게시글 생성 → postId 확보
         var createReq = new HashMap<String, Object>();
         createReq.put("content", "삭제 테스트");
         createReq.put("imageUrls", java.util.List.of("https://example.com/image1.jpg"));
@@ -161,14 +182,18 @@ class PostControllerDocsTest {
                         .getContentAsString()
         ).get("postId").asText();
 
-        // 삭제
         mockMvc.perform(delete("/api/posts/{postId}", postId)
                 .header(DocsTestSupport.headerName(), DocsTestSupport.auth(token)))
                 .andExpect(status().isNoContent())
                 .andDo(org.springframework.test.web.servlet.result.MockMvcResultHandlers.print())
                 .andDo(document("posts-delete",
+                        preprocessRequest(prettyPrint()),
+                        preprocessResponse(prettyPrint()),
                         requestHeaders(
                                 headerWithName(DocsTestSupport.headerName()).description("Bearer {accessToken}")
+                        ),
+                        pathParameters(
+                                parameterWithName("postId").description("삭제할 게시글 ID(UUID)")
                         )
                 ));
     }

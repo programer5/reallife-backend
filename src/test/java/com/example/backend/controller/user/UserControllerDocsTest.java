@@ -1,5 +1,6 @@
 package com.example.backend.controller.user;
 
+import com.example.backend.controller.DocsTestSupport;
 import com.example.backend.restdocs.ErrorResponseSnippet;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.Test;
@@ -19,11 +20,17 @@ import org.springframework.web.context.WebApplicationContext;
 import java.util.HashMap;
 import java.util.UUID;
 
+import static org.springframework.restdocs.headers.HeaderDocumentation.headerWithName;
+import static org.springframework.restdocs.headers.HeaderDocumentation.requestHeaders;
 import static org.springframework.restdocs.mockmvc.MockMvcRestDocumentation.document;
 import static org.springframework.restdocs.mockmvc.MockMvcRestDocumentation.documentationConfiguration;
-import static org.springframework.restdocs.payload.JsonFieldType.ARRAY;
-import static org.springframework.restdocs.payload.JsonFieldType.STRING;
+import static org.springframework.restdocs.operation.preprocess.Preprocessors.*;
+import static org.springframework.restdocs.payload.JsonFieldType.*;
 import static org.springframework.restdocs.payload.PayloadDocumentation.*;
+import static org.springframework.restdocs.request.RequestDocumentation.parameterWithName;
+import static org.springframework.restdocs.request.RequestDocumentation.pathParameters;
+import static org.springframework.security.test.web.servlet.setup.SecurityMockMvcConfigurers.springSecurity;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -32,13 +39,15 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @ActiveProfiles("test")
 @ExtendWith({RestDocumentationExtension.class, SpringExtension.class})
 @Transactional
-class UserControllerTest {
+class UserControllerDocsTest {
 
     @Autowired private WebApplicationContext context;
     @Autowired private ObjectMapper objectMapper;
+    @Autowired private DocsTestSupport docs;
 
     private MockMvc mockMvc(RestDocumentationContextProvider restDocumentation) {
         return MockMvcBuilders.webAppContextSetup(context)
+                .apply(springSecurity())
                 .apply(documentationConfiguration(restDocumentation))
                 .build();
     }
@@ -59,18 +68,19 @@ class UserControllerTest {
         mockMvc.perform(post("/api/users")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(req)))
-                .andExpect(status().isOk()) // 프로젝트 기준(200)
+                .andExpect(status().isOk())
                 .andExpect(jsonPath("$.email").value(email))
                 .andExpect(jsonPath("$.handle").value(handle))
                 .andDo(org.springframework.test.web.servlet.result.MockMvcResultHandlers.print())
                 .andDo(document("users-create",
+                        preprocessRequest(prettyPrint()),
+                        preprocessResponse(prettyPrint()),
                         requestFields(
                                 fieldWithPath("email").type(STRING).description("가입 이메일(로그인에 사용)"),
                                 fieldWithPath("handle").type(STRING).description("사용자 아이디(handle, 노출용 고유값)"),
                                 fieldWithPath("password").type(STRING).description("비밀번호(BCrypt 저장)"),
                                 fieldWithPath("name").type(STRING).description("이름")
                         ),
-                        // ✅ 응답은 프로젝트 구현에 따라 달라질 수 있어 optional로 둠
                         relaxedResponseFields(
                                 fieldWithPath("id").optional().type(STRING).description("사용자 ID(UUID)"),
                                 fieldWithPath("email").type(STRING).description("가입 이메일"),
@@ -84,12 +94,10 @@ class UserControllerTest {
     void 회원가입_API_실패_검증오류_400(RestDocumentationContextProvider restDocumentation) throws Exception {
         MockMvc mockMvc = mockMvc(restDocumentation);
 
-        // ✅ 네가 실제로 받은 validation 에러 형태를 그대로 재현
         var req = new HashMap<String, Object>();
         req.put("email", "seed@test.com");
         req.put("password", "password1234");
         req.put("name", "시드유저");
-        // handle intentionally missing
 
         mockMvc.perform(post("/api/users")
                         .contentType(MediaType.APPLICATION_JSON)
@@ -100,6 +108,7 @@ class UserControllerTest {
                 .andExpect(jsonPath("$.fieldErrors[0].field").value("handle"))
                 .andDo(org.springframework.test.web.servlet.result.MockMvcResultHandlers.print())
                 .andDo(document("users-create-400-validation",
+                        preprocessResponse(prettyPrint()),
                         relaxedResponseFields(
                                 fieldWithPath("code").type(STRING).description("에러 코드"),
                                 fieldWithPath("message").type(STRING).description("에러 메시지"),
@@ -126,13 +135,11 @@ class UserControllerTest {
         req1.put("password", "password1234");
         req1.put("name", "중복테스트");
 
-        // 1) 첫 가입 성공
         mockMvc.perform(post("/api/users")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(req1)))
                 .andExpect(status().isOk());
 
-        // 2) 같은 이메일로 다시 가입 → 409
         var req2 = new HashMap<String, Object>();
         req2.put("email", email);
         req2.put("handle", handle2);
@@ -181,6 +188,39 @@ class UserControllerTest {
                 .andDo(org.springframework.test.web.servlet.result.MockMvcResultHandlers.print())
                 .andDo(document("users-create-409-duplicate-handle",
                         responseFields(ErrorResponseSnippet.common())
+                ));
+    }
+
+    @Test
+    void 프로필_조회_성공_200(RestDocumentationContextProvider restDocumentation) throws Exception {
+        MockMvc mockMvc = mockMvc(restDocumentation);
+
+        var user = docs.saveUser("profile", "프로필유저");
+        String token = docs.issueTokenFor(user);
+
+        mockMvc.perform(get("/api/users/{handle}", user.getHandle())
+                        .header(DocsTestSupport.headerName(), DocsTestSupport.auth(token))
+                        .accept(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.id").exists())
+                .andExpect(jsonPath("$.handle").value(user.getHandle()))
+                .andDo(org.springframework.test.web.servlet.result.MockMvcResultHandlers.print())
+                .andDo(document("users-profile-get", requestHeaders(
+                                headerWithName(DocsTestSupport.headerName()).description("Bearer {accessToken}")
+                        ),
+                        pathParameters(
+                                parameterWithName("handle").description("조회할 유저의 handle")
+                        ),
+                        responseFields(
+                                fieldWithPath("id").type(STRING).description("유저 ID(UUID)"),
+                                fieldWithPath("handle").type(STRING).description("핸들"),
+                                fieldWithPath("name").type(STRING).description("이름"),
+                                fieldWithPath("bio").optional().type(STRING).description("소개"),
+                                fieldWithPath("website").optional().type(STRING).description("웹사이트"),
+                                fieldWithPath("profileImageUrl").optional().type(STRING).description("프로필 이미지 URL(/api/files/{id}/download)"),
+                                fieldWithPath("followerCount").type(NUMBER).description("팔로워 수"),
+                                fieldWithPath("followingCount").type(NUMBER).description("팔로잉 수")
+                        )
                 ));
     }
 }
