@@ -1,5 +1,6 @@
 package com.example.backend.service.user;
 
+import com.example.backend.common.PublicUrlBuilder;
 import com.example.backend.controller.me.dto.ProfileUpdateRequest;
 import com.example.backend.controller.user.dto.ProfileResponse;
 import com.example.backend.domain.file.UploadedFile;
@@ -22,6 +23,7 @@ public class UserProfileService {
     private final UserRepository userRepository;
     private final UploadedFileRepository uploadedFileRepository;
     private final FollowRepository followRepository;
+    private final PublicUrlBuilder urlBuilder;
 
     @Transactional(readOnly = true)
     public ProfileResponse getProfileByHandle(String handle) {
@@ -55,7 +57,7 @@ public class UserProfileService {
             UploadedFile file = uploadedFileRepository.findByIdAndDeletedFalse(newFileId)
                     .orElseThrow(() -> new BusinessException(ErrorCode.FILE_NOT_FOUND));
 
-            // 내 파일만 허용(원하면 유지)
+            // 내 파일만 허용
             if (!file.getUploaderId().equals(meId)) {
                 throw new BusinessException(ErrorCode.FORBIDDEN);
             }
@@ -80,6 +82,6 @@ public class UserProfileService {
 
     private String toFileUrl(UUID fileId) {
         if (fileId == null) return null;
-        return "/api/files/" + fileId + "/download";
+        return urlBuilder.absolute("/api/files/" + fileId + "/download");
     }
 }

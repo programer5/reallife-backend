@@ -1,5 +1,6 @@
 package com.example.backend.service.file;
 
+import com.example.backend.common.PublicUrlBuilder;
 import com.example.backend.controller.file.dto.FileUploadResponse;
 import com.example.backend.domain.file.UploadedFile;
 import com.example.backend.exception.BusinessException;
@@ -25,6 +26,9 @@ public class FileService {
     private final UserRepository userRepository;
     private final ApplicationEventPublisher eventPublisher;
 
+    // ✅ 추가
+    private final PublicUrlBuilder urlBuilder;
+
     @Transactional
     public FileUploadResponse upload(UUID meId, MultipartFile file) {
         userRepository.findById(meId)
@@ -48,16 +52,18 @@ public class FileService {
 
         String ct = (saved.getContentType() == null) ? "" : saved.getContentType().toLowerCase(Locale.ROOT);
 
-        // ✅ 썸네일 URL은 미리 내려주되, 생성은 AFTER_COMMIT 이후 비동기로 실행
+        // ✅ 절대 URL로 만들어서 내려주기
+        String downloadUrl = urlBuilder.absolute("/api/files/" + saved.getId() + "/download");
+
         String thumbnailUrl = null;
         if (ct.startsWith("image/")) {
             eventPublisher.publishEvent(new FileUploadedEvent(saved.getId()));
-            thumbnailUrl = "/api/files/" + saved.getId() + "/thumbnail";
+            thumbnailUrl = urlBuilder.absolute("/api/files/" + saved.getId() + "/thumbnail");
         }
 
         return new FileUploadResponse(
                 saved.getId(),
-                "/api/files/" + saved.getId() + "/download",
+                downloadUrl,
                 thumbnailUrl,
                 saved.getOriginalFilename(),
                 saved.getContentType(),
