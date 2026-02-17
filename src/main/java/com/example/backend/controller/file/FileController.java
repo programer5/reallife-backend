@@ -5,8 +5,8 @@ import com.example.backend.domain.file.UploadedFile;
 import com.example.backend.exception.BusinessException;
 import com.example.backend.exception.ErrorCode;
 import com.example.backend.repository.file.UploadedFileRepository;
-import com.example.backend.service.file.FileService;
 import com.example.backend.service.file.StorageService;
+import com.example.backend.service.file.FileService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.core.io.FileSystemResource;
 import org.springframework.http.*;
@@ -15,6 +15,7 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.nio.file.Path;
+import java.util.Locale;
 import java.util.UUID;
 
 @RestController
@@ -33,29 +34,51 @@ public class FileController {
         return fileService.upload(meId, file);
     }
 
-    /**
-     * ✅ 이미지/파일을 브라우저에서 바로 볼 수 있도록 inline 서빙
-     * - 프론트 연결 시 <img src="...">가 바로 동작
-     * - "무조건 다운로드"를 원하면 inline() -> attachment()로 변경하면 됨
-     */
+    // ✅ 공개 다운로드 (브라우저 렌더링 위해 inline)
     @GetMapping("/{fileId}/download")
     public ResponseEntity<FileSystemResource> download(@PathVariable UUID fileId) {
-
         UploadedFile file = uploadedFileRepository.findByIdAndDeletedFalse(fileId)
                 .orElseThrow(() -> new BusinessException(ErrorCode.FILE_NOT_FOUND));
 
         Path path = storageService.resolvePath(file.getFileKey());
-        if (!path.toFile().exists()) {
-            throw new BusinessException(ErrorCode.FILE_NOT_FOUND);
-        }
+        if (!path.toFile().exists()) throw new BusinessException(ErrorCode.FILE_NOT_FOUND);
 
         FileSystemResource resource = new FileSystemResource(path);
 
+        String ct = (file.getContentType() == null) ? "application/octet-stream" : file.getContentType();
+        boolean isImage = ct.toLowerCase(Locale.ROOT).startsWith("image/");
+
+        ContentDisposition disposition = isImage
+                ? ContentDisposition.inline().filename(file.getOriginalFilename()).build()
+                : ContentDisposition.attachment().filename(file.getOriginalFilename()).build();
+
         return ResponseEntity.ok()
-                .contentType(MediaType.parseMediaType(file.getContentType()))
+                .contentType(MediaType.parseMediaType(ct))
+                .header(HttpHeaders.CONTENT_DISPOSITION, disposition.toString())
+                .body(resource);
+    }
+
+    // ✅ 썸네일 다운로드 (없으면 404)
+    @GetMapping("/{fileId}/thumbnail")
+    public ResponseEntity<FileSystemResource> thumbnail(@PathVariable UUID fileId) {
+        UploadedFile file = uploadedFileRepository.findByIdAndDeletedFalse(fileId)
+                .orElseThrow(() -> new BusinessException(ErrorCode.FILE_NOT_FOUND));
+
+        if (!file.hasThumbnail()) {
+            throw new BusinessException(ErrorCode.FILE_NOT_FOUND);
+        }
+
+        Path path = storageService.resolvePath(file.getThumbnailFileKey());
+        if (!path.toFile().exists()) throw new BusinessException(ErrorCode.FILE_NOT_FOUND);
+
+        FileSystemResource resource = new FileSystemResource(path);
+
+        String ct = (file.getThumbnailContentType() == null) ? "image/jpeg" : file.getThumbnailContentType();
+
+        return ResponseEntity.ok()
+                .contentType(MediaType.parseMediaType(ct))
                 .header(HttpHeaders.CONTENT_DISPOSITION,
-                        ContentDisposition.inline().filename(file.getOriginalFilename()).build().toString())
-                .cacheControl(CacheControl.noCache())
+                        ContentDisposition.inline().filename("thumbnail-" + file.getOriginalFilename()).build().toString())
                 .body(resource);
     }
 }

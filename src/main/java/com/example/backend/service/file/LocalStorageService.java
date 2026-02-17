@@ -16,8 +16,6 @@ public class LocalStorageService implements StorageService {
 
     private final Path root;
 
-
-    // ✅ application.yml의 file.upload-dir 사용 (ENV: FILE_UPLOAD_DIR)
     public LocalStorageService(@Value("${file.upload-dir:uploads}") String rootDir) {
         this.root = Paths.get(rootDir).toAbsolutePath().normalize();
         try {
@@ -49,15 +47,33 @@ public class LocalStorageService implements StorageService {
     }
 
     @Override
+    public String storeBytes(byte[] bytes, String extension) {
+        String ext = (extension == null) ? "" : extension.trim();
+        if (StringUtils.hasText(ext) && !ext.startsWith(".")) ext = "." + ext;
+
+        String fileKey = UUID.randomUUID() + ext;
+        Path target = root.resolve(fileKey);
+
+        try {
+            Files.write(target, bytes, StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING);
+        } catch (IOException e) {
+            throw new IllegalStateException("바이너리 저장 실패", e);
+        }
+
+        return fileKey;
+    }
+
+    @Override
     public Path resolvePath(String fileKey) {
         return root.resolve(fileKey).normalize();
     }
 
     @Override
     public void delete(String fileKey) {
+        if (!StringUtils.hasText(fileKey)) return;
+
         try {
-            Path filePath = resolvePath(fileKey);
-            Files.deleteIfExists(filePath);
+            Files.deleteIfExists(resolvePath(fileKey));
         } catch (Exception e) {
             log.error("파일 삭제 실패: {}", fileKey, e);
         }

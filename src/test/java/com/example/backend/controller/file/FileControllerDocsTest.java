@@ -82,7 +82,8 @@ class FileControllerDocsTest {
                         ),
                         responseFields(
                                 fieldWithPath("fileId").type(STRING).description("업로드된 파일 ID(UUID)"),
-                                fieldWithPath("url").type(STRING).description("파일 다운로드 URL (예: /api/files/{id}/download)"),
+                                fieldWithPath("url").type(STRING).description("원본 파일 다운로드 URL (예: /api/files/{id}/download)"),
+                                fieldWithPath("thumbnailUrl").optional().type(STRING).description("썸네일 URL (이미지일 때만, 예: /api/files/{id}/thumbnail)"),
                                 fieldWithPath("originalFilename").type(STRING).description("원본 파일명"),
                                 fieldWithPath("contentType").type(STRING).description("MIME 타입"),
                                 fieldWithPath("size").type(NUMBER).description("파일 크기(bytes)")

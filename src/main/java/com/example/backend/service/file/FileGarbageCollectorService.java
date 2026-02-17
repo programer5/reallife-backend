@@ -34,10 +34,10 @@ public class FileGarbageCollectorService {
 
         for (UploadedFile file : targets) {
             try {
-                // 실제 파일 삭제
                 storageService.delete(file.getFileKey());
-
-                // soft delete
+                if (file.getThumbnailFileKey() != null) {
+                    storageService.delete(file.getThumbnailFileKey());
+                }
                 file.delete();
 
                 log.info("[FileGC] 삭제 완료: {}", file.getId());
