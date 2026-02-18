@@ -39,6 +39,7 @@ public class SecurityConfig {
                         .requestMatchers("/api/auth/login", "/api/auth/login-cookie").permitAll()
                         .requestMatchers("/api/auth/refresh", "/api/auth/refresh-cookie").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/files/*/download").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/files/*/thumbnail").permitAll()
 
                         // ✅ auth: 보호(인증 필요)
                         .requestMatchers("/api/auth/logout-cookie").authenticated()
