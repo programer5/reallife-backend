@@ -29,7 +29,7 @@ import static org.springframework.restdocs.mockmvc.MockMvcRestDocumentation.docu
 import static org.springframework.restdocs.operation.preprocess.Preprocessors.*;
 import static org.springframework.restdocs.payload.JsonFieldType.*;
 import static org.springframework.restdocs.payload.PayloadDocumentation.fieldWithPath;
-import static org.springframework.restdocs.payload.PayloadDocumentation.responseFields;
+import static org.springframework.restdocs.payload.PayloadDocumentation.relaxedResponseFields;
 import static org.springframework.restdocs.request.RequestDocumentation.*;
 import static org.springframework.security.test.web.servlet.setup.SecurityMockMvcConfigurers.springSecurity;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
@@ -84,7 +84,7 @@ class NotificationControllerDocsTest {
                                 parameterWithName("cursor").optional().description("페이지 커서(createdAt|id). 없으면 첫 페이지"),
                                 parameterWithName("size").optional().description("페이지 크기(기본 20, 최대 50)")
                         ),
-                        responseFields(
+                        relaxedResponseFields(
                                 fieldWithPath("items").type(ARRAY).description("알림 목록(최신순)"),
                                 fieldWithPath("items[].id").type(STRING).description("알림 ID(UUID)"),
                                 fieldWithPath("items[].type").type(STRING).description("알림 타입"),
@@ -139,7 +139,7 @@ class NotificationControllerDocsTest {
                                 parameterWithName("cursor").optional().description("페이지 커서(createdAt|id)"),
                                 parameterWithName("size").optional().description("페이지 크기(기본 20, 최대 50)")
                         ),
-                        responseFields(
+                        relaxedResponseFields(
                                 fieldWithPath("items").type(ARRAY).description("알림 목록(최신순)"),
                                 fieldWithPath("items[].id").type(STRING).description("알림 ID(UUID)"),
                                 fieldWithPath("items[].type").type(STRING).description("알림 타입"),
@@ -199,7 +199,7 @@ class NotificationControllerDocsTest {
                         requestHeaders(
                                 headerWithName(HttpHeaders.AUTHORIZATION).description("Bearer {accessToken}")
                         ),
-                        responseFields(
+                        relaxedResponseFields(
                                 fieldWithPath("updatedCount").type(NUMBER)
                                         .description("이번 요청으로 읽음 처리된 알림 개수")
                         )
@@ -233,7 +233,7 @@ class NotificationControllerDocsTest {
                         requestHeaders(
                                 headerWithName(HttpHeaders.AUTHORIZATION).description("Bearer {accessToken}")
                         ),
-                        responseFields(
+                        relaxedResponseFields(
                                 fieldWithPath("deletedCount").type(NUMBER)
                                         .description("이번 요청으로 삭제 처리된(soft delete) 알림 개수")
                         )

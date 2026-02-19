@@ -94,6 +94,9 @@ class FeedControllerDocsTest {
                                 fieldWithPath("items[].imageUrls").type(ARRAY).description("이미지 URL 목록"),
                                 fieldWithPath("items[].visibility").type(STRING).description("공개범위"),
                                 fieldWithPath("items[].createdAt").type(STRING).description("생성시각"),
+                                fieldWithPath("items[].likeCount").type(NUMBER).description("좋아요 수"),
+                                fieldWithPath("items[].commentCount").type(NUMBER).description("댓글 수"),
+                                fieldWithPath("items[].likedByMe").type(BOOLEAN).description("내가 좋아요 했는지"),
                                 fieldWithPath("nextCursor").optional().type(STRING).description("다음 페이지 커서(없으면 null)"),
                                 fieldWithPath("hasNext").type(BOOLEAN).description("다음 페이지 존재 여부")
                         )
@@ -151,6 +154,9 @@ class FeedControllerDocsTest {
                                 fieldWithPath("items[].imageUrls").type(ARRAY).description("이미지 URL 목록"),
                                 fieldWithPath("items[].visibility").type(STRING).description("공개범위"),
                                 fieldWithPath("items[].createdAt").type(STRING).description("생성시각"),
+                                fieldWithPath("items[].likeCount").type(NUMBER).description("좋아요 수"),
+                                fieldWithPath("items[].commentCount").type(NUMBER).description("댓글 수"),
+                                fieldWithPath("items[].likedByMe").type(BOOLEAN).description("내가 좋아요 했는지"),
                                 fieldWithPath("nextCursor").optional().type(STRING).description("다음 페이지 커서(없으면 null)"),
                                 fieldWithPath("hasNext").type(BOOLEAN).description("다음 페이지 존재 여부")
                         )

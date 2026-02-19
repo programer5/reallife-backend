@@ -17,6 +17,9 @@ public record FeedResponse(
             String content,
             List<String> imageUrls,
             String visibility,
-            LocalDateTime createdAt
+            LocalDateTime createdAt,
+            long likeCount,
+            long commentCount,
+            boolean likedByMe
     ) {}
 }

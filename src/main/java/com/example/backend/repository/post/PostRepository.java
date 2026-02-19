@@ -1,6 +1,7 @@
 package com.example.backend.repository.post;
 
 import com.example.backend.domain.post.Post;
+import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -14,15 +15,8 @@ public interface PostRepository extends JpaRepository<Post, UUID>, PostQueryRepo
     Optional<Post> findByIdAndAuthorIdAndDeletedFalse(UUID id, UUID authorId);
 
     /**
-     * ✅ Feed에서 imageUrls까지 내려주기 위한 fetch join
-     * - "팔로잉 피드"는 pageSize가 작으므로(<=50) IN 조회 + fetch join이 현실적
-     * - distinct로 중복 row 제거
+     * ✅ 피드에서 이미지까지 한 번에 가져오기 (N+1 방지)
      */
-    @Query("""
-            select distinct p
-            from Post p
-            left join fetch p.images imgs
-            where p.id in :ids
-            """)
+    @Query("select distinct p from Post p left join fetch p.images img where p.id in :ids and p.deleted = false")
     List<Post> findAllWithImagesByIdIn(@Param("ids") List<UUID> ids);
 }
