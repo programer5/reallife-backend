@@ -7,8 +7,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
-import java.util.List;
-import java.util.UUID;
+import java.util.*;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -21,7 +21,7 @@ public class FeedService {
         int pageSize = normalizeSize(size);
         Cursor parsed = parseCursor(cursor);
 
-        // ✅ hasNext 판별을 위해 +1로 조회 (Notification과 동일 패턴)
+        // ✅ hasNext 판별을 위해 +1로 조회
         int limit = pageSize + 1;
 
         List<FeedResponse.FeedItem> fetched = (parsed.createdAt() == null)
@@ -29,7 +29,10 @@ public class FeedService {
                 : postRepository.findFollowingFeedNextPage(meId, parsed.createdAt(), parsed.postId(), limit);
 
         boolean hasNext = fetched.size() > pageSize;
-        List<FeedResponse.FeedItem> items = hasNext ? fetched.subList(0, pageSize) : fetched;
+        List<FeedResponse.FeedItem> page = hasNext ? fetched.subList(0, pageSize) : fetched;
+
+        // ✅ imageUrls 보강 (feed query가 imageUrls를 빈 리스트로 내리므로 여기서 채워준다)
+        List<FeedResponse.FeedItem> items = enrichImageUrls(page);
 
         String nextCursor = null;
         if (hasNext && !items.isEmpty()) {
@@ -40,6 +43,37 @@ public class FeedService {
         return new FeedResponse(items, nextCursor, hasNext);
     }
 
+    private List<FeedResponse.FeedItem> enrichImageUrls(List<FeedResponse.FeedItem> items) {
+        if (items == null || items.isEmpty()) return items;
+
+        List<UUID> ids = items.stream().map(FeedResponse.FeedItem::postId).toList();
+
+        // fetch join으로 images까지 한 번에 로드
+        var posts = postRepository.findAllWithImagesByIdIn(ids);
+
+        Map<UUID, List<String>> map = posts.stream()
+                .collect(Collectors.toMap(
+                        p -> p.getId(),
+                        p -> p.getImages().stream()
+                                .sorted(Comparator.comparingInt(img -> img.getSortOrder()))
+                                .map(img -> img.getImageUrl())
+                                .toList()
+                ));
+
+        return items.stream()
+                .map(i -> new FeedResponse.FeedItem(
+                        i.postId(),
+                        i.authorId(),
+                        i.authorHandle(),
+                        i.authorName(),
+                        i.content(),
+                        map.getOrDefault(i.postId(), List.of()),
+                        i.visibility(),
+                        i.createdAt()
+                ))
+                .toList();
+    }
+
     private int normalizeSize(int size) {
         int v = size;
         if (v < 1) v = 1;
@@ -48,7 +82,6 @@ public class FeedService {
     }
 
     private Cursor parseCursor(String raw) {
-        // ✅ Notification 스타일: 이상하면 첫 페이지로 처리
         if (raw == null || raw.isBlank()) return new Cursor(null, null);
 
         String[] parts = raw.split("\\|");
