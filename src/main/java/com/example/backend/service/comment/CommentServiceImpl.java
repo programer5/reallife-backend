@@ -11,12 +11,12 @@ import com.example.backend.exception.ErrorCode;
 import com.example.backend.repository.comment.CommentRepository;
 import com.example.backend.repository.post.PostRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.nio.charset.StandardCharsets;
 import java.time.LocalDateTime;
 import java.util.Base64;
 import java.util.List;
@@ -29,6 +29,7 @@ public class CommentServiceImpl implements CommentService {
 
     private final CommentRepository commentRepository;
     private final PostRepository postRepository;
+    private final ApplicationEventPublisher eventPublisher;
 
     @Override
     public CommentResponse create(UUID postId, UUID userId, CommentCreateRequest request) {
@@ -36,6 +37,13 @@ public class CommentServiceImpl implements CommentService {
                 .orElseThrow(() -> new BusinessException(ErrorCode.POST_NOT_FOUND));
 
         Comment saved = commentRepository.save(Comment.create(postId, userId, request.content()));
+
+        // ✅ 댓글 수 카운트 증가 (피드 숫자 일치)
+        post.increaseCommentCount();
+
+        // ✅ 커밋 이후 알림/SSE 등에 쓰기 위한 이벤트
+        eventPublisher.publishEvent(new CommentCreatedEvent(postId, userId, saved.getId()));
+
         return CommentResponse.from(saved);
     }
 
@@ -45,10 +53,8 @@ public class CommentServiceImpl implements CommentService {
         postRepository.findById(postId)
                 .orElseThrow(() -> new BusinessException(ErrorCode.POST_NOT_FOUND));
 
-        // size 검증이 이미 다른 곳(Controller @Validated 등)에 있으면 생략 가능
         int pageSize = size <= 0 ? 20 : Math.min(size, 50);
-
-        Pageable pageable = PageRequest.of(0, pageSize + 1); // hasNext 판별용 +1
+        Pageable pageable = PageRequest.of(0, pageSize + 1);
 
         CursorKey cursorKey = CursorKey.parseOpaque(cursor);
 
@@ -69,55 +75,48 @@ public class CommentServiceImpl implements CommentService {
         return new CommentListResponse(items, nextCursor, hasNext);
     }
 
-    /**
-     * 내부 커서 포맷: "createdAt|commentId"
-     * 외부 노출: Base64URL(무패딩)으로 인코딩된 opaque 문자열
-     */
-    private record CursorKey(LocalDateTime createdAt, UUID commentId) {
-
-        static CursorKey parseOpaque(String cursor) {
-            if (cursor == null || cursor.isBlank()) return null;
-
-            String raw = decodeOpaque(cursor);
-
-            try {
-                String[] parts = raw.split("\\|", 2);
-                LocalDateTime createdAt = LocalDateTime.parse(parts[0]);
-                UUID id = UUID.fromString(parts[1]);
-                return new CursorKey(createdAt, id);
-            } catch (Exception e) {
-                // 포맷 불일치도 요청 오류(400)
-                throw new BusinessException(ErrorCode.INVALID_REQUEST);
-            }
-        }
-
-        static String encodeOpaque(String raw) {
-            return Base64.getUrlEncoder().withoutPadding()
-                    .encodeToString(raw.getBytes(StandardCharsets.UTF_8));
-        }
-
-        static String decodeOpaque(String cursor) {
-            try {
-                byte[] decoded = Base64.getUrlDecoder().decode(cursor);
-                return new String(decoded, StandardCharsets.UTF_8);
-            } catch (IllegalArgumentException e) {
-                // Base64 decode 실패도 요청 오류(400)
-                throw new BusinessException(ErrorCode.INVALID_REQUEST);
-            }
-        }
-    }
-
     @Override
     public void delete(UUID commentId, UUID userId) {
         Comment comment = commentRepository.findById(commentId)
+                .filter(c -> !c.isDeleted())
                 .orElseThrow(() -> new BusinessException(ErrorCode.COMMENT_NOT_FOUND));
-
-        if (comment.isDeleted()) return;
 
         if (!comment.getAuthorId().equals(userId)) {
             throw new BusinessException(ErrorCode.COMMENT_NOT_OWNED);
         }
 
         comment.delete();
+
+        // ✅ 댓글 수 카운트 감소 (0 밑으로 내려가지 않도록 Post에서 가드)
+        postRepository.findById(comment.getPostId())
+                .ifPresent(Post::decreaseCommentCount);
     }
+
+    // ====== cursor util ======
+    record CursorKey(LocalDateTime createdAt, UUID commentId) {
+
+        static CursorKey parseOpaque(String cursor) {
+            if (cursor == null || cursor.isBlank()) return null;
+
+            // cursor가 "있는데" 파싱이 깨지면 400이 정석 (DocsTest도 이것을 기대)
+            try {
+                String raw = new String(Base64.getUrlDecoder().decode(cursor));
+                String[] parts = raw.split("\\|", 2);
+                if (parts.length != 2) throw new BusinessException(ErrorCode.INVALID_REQUEST);
+
+                return new CursorKey(LocalDateTime.parse(parts[0]), UUID.fromString(parts[1]));
+            } catch (BusinessException e) {
+                throw e;
+            } catch (Exception e) {
+                throw new BusinessException(ErrorCode.INVALID_REQUEST);
+            }
+        }
+
+        static String encodeOpaque(String raw) {
+            return Base64.getUrlEncoder().withoutPadding()
+                    .encodeToString(raw.getBytes());
+        }
+    }
+
+    public record CommentCreatedEvent(UUID postId, UUID userId, UUID commentId) {}
 }

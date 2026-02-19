@@ -6,6 +6,7 @@ import com.example.backend.exception.ErrorCode;
 import com.example.backend.repository.follow.FollowRepository;
 import com.example.backend.repository.user.UserRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -17,24 +18,21 @@ public class FollowService {
 
     private final FollowRepository followRepository;
     private final UserRepository userRepository;
+    private final ApplicationEventPublisher eventPublisher;
 
     @Transactional
     public void follow(UUID meId, UUID targetUserId) {
         if (meId.equals(targetUserId)) {
-            throw new BusinessException(ErrorCode.CANNOT_FOLLOW_SELF); // 너 enum에 맞춰 사용
-            // 네 ErrorCode 이름이 FOLLOW_CANNOT_FOLLOW_SELF면 그걸로 바꿔
+            throw new BusinessException(ErrorCode.CANNOT_FOLLOW_SELF);
         }
 
-        // target 존재 검증 (원하면 생략 가능)
         userRepository.findById(targetUserId)
                 .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
 
-        // 이미 active면 멱등 성공
         if (followRepository.existsByFollowerIdAndFollowingIdAndDeletedFalse(meId, targetUserId)) {
             return;
         }
 
-        // 기존 row가 있으면 restore, 없으면 생성
         Follow follow = followRepository.findByFollowerIdAndFollowingId(meId, targetUserId)
                 .map(f -> {
                     f.restore();
@@ -43,6 +41,9 @@ public class FollowService {
                 .orElseGet(() -> Follow.create(meId, targetUserId));
 
         followRepository.save(follow);
+
+        // ✅ 커밋 이후 알림 생성 + SSE push를 위해 이벤트 발행
+        eventPublisher.publishEvent(new UserFollowedEvent(meId, targetUserId));
     }
 
     @Transactional
@@ -53,8 +54,9 @@ public class FollowService {
 
         followRepository.findByFollowerIdAndFollowingId(meId, targetUserId)
                 .ifPresent(f -> {
-                    // 멱등: 이미 deleted여도 그냥 성공
                     f.softDelete();
                 });
     }
+
+    public record UserFollowedEvent(UUID followerId, UUID targetUserId) {}
 }
