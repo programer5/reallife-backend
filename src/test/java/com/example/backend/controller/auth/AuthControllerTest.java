@@ -107,6 +107,16 @@ class AuthControllerTest {
 
     private record AuthCookies(Cookie accessToken, Cookie refreshToken) {}
 
+    /**
+     * 쿠키 기반 인증 테스트는 "더미 쿠키"로 때려 넣는 방식이 아니라,
+     * login-cookie가 내려준 Set-Cookie를 실제로 받아서 그대로 재사용해야 안정적으로 통과합니다.
+     *
+     * 이 메서드는:
+     * - login-cookie 호출
+     * - Set-Cookie 2개 이상 검증(access/refresh)
+     * - REST Docs 스니펫 생성
+     * - 응답에서 access_token / refresh_token Cookie 추출
+     */
     private AuthCookies loginCookieAndExtract(MockMvc mockMvc, String email, String snippetId) throws Exception {
         var req = new HashMap<String, Object>();
         req.put("email", email);
