@@ -135,6 +135,175 @@ SSE는 “연결을 오래 유지”하므로 프록시 설정이 중요합니�
 
 ---
 
+== Usage Scenarios (실전 사용 흐름)
+
+이 섹션은 API를 “목록”이 아니라 “실제 제품 흐름”으로 설명합니다.
+(각 API의 상세 스펙은 아래 1~12 섹션의 REST Docs 스니펫을 참고하세요.)
+
+=== 시나리오 1: 회원가입 → 로그인(Cookie) → 내 정보 조회
+
+[source,bash]
+----
+# 0) 회원가입 (필드: email, handle, password, name)
+curl -i -H "Content-Type: application/json" \
+  -d '{"email":"user@example.com","handle":"user1","password":"1234","name":"User One"}' \
+  http://localhost/api/users
+
+# 1) 로그인(쿠키 저장)
+curl -i -c cookies.txt \
+  -H "Content-Type: application/json" \
+  -d '{"email":"user@example.com","password":"1234"}' \
+  http://localhost/api/auth/login-cookie
+
+# 2) 내 정보 조회
+curl -i -b cookies.txt http://localhost/api/me
+
+# 3) 로그아웃
+curl -i -b cookies.txt http://localhost/api/auth/logout-cookie
+----
+
+[NOTE]
+====
+- 브라우저(SPA)에서는 쿠키 자동 저장이므로 `cookies.txt`는 필요 없습니다.
+- 프론트는 반드시 `withCredentials: true`를 켜야 합니다.
+====
+
+---
+
+=== 시나리오 2: 파일 업로드 → 게시글 생성 → 피드 확인
+
+권장 흐름:
+1) 파일 업로드로 `fileId` 확보
+2) 게시글 생성 시 `imageFileIds`에 첨부
+3) 피드에서 확인
+
+[source,bash]
+----
+# (전제) 로그인 후 cookies.txt가 있다고 가정
+
+# 1) 파일 업로드 (multipart POST /api/files, part name: file)
+# - 응답에서 fileId를 확보
+curl -i -b cookies.txt \
+  -F "file=@./sample.png" \
+  http://localhost/api/files
+
+# 2) 게시글 생성 (POST /api/posts)
+# - 권장: imageFileIds 사용
+curl -i -b cookies.txt -H "Content-Type: application/json" \
+  -d '{"content":"hello","imageFileIds":["<fileId>"],"visibility":"FOLLOWERS"}' \
+  http://localhost/api/posts
+
+# 3) 피드 조회 (GET /api/feed?size=20)
+curl -i -b cookies.txt "http://localhost/api/feed?size=20"
+----
+
+[NOTE]
+====
+- visibility 값: `ALL | FOLLOWERS | PRIVATE`
+- 피드는 cursor 기반 페이징을 지원합니다. (다음 페이지: `cursor`를 응답 값으로 넣어 재호출)
+====
+
+---
+
+=== 시나리오 3: 쿠키 기반 채팅 실시간(메시지/삭제) + 알림 실시간(SSE)
+
+이 서버는 SSE 이벤트로 실시간 신호를 보내고, 화면 데이터는 REST API 재조회로 동기화하는 패턴을 권장합니다.
+
+==== 3-1) SSE 구독 (Cookie 권장)
+
+SSE 엔드포인트:
+----
+GET /api/sse/subscribe
+----
+
+- 쿠키 인증이면 SSE에도 동일하게 쿠키가 전송되어 인증됩니다.
+- 연결 직후 서버는 `connected` 이벤트를 한 번 보냅니다.
+- 클라이언트는 필요 시 `Last-Event-ID` 헤더로 누락 이벤트를 replay 받을 수 있습니다.
+
+==== 3-2) DIRECT 대화방 생성/조회
+
+[source,bash]
+----
+# 상대 userId로 DIRECT 대화방 생성/조회
+curl -i -b cookies.txt -H "Content-Type: application/json" \
+  -d '{"targetUserId":"<targetUserId>"}' \
+  http://localhost/api/conversations/direct
+----
+
+==== 3-3) 메시지 목록 조회 (화면 동기화용)
+
+[source,bash]
+----
+# 최근 메시지 조회 (cursor 기반이면 cursor/size를 사용)
+curl -i -b cookies.txt \
+  "http://localhost/api/conversations/<conversationId>/messages?size=20"
+----
+
+==== 3-4) 메시지 전송
+
+[source,bash]
+----
+curl -i -b cookies.txt -H "Content-Type: application/json" \
+  -d '{"content":"안녕!","attachmentIds":[]}' \
+  "http://localhost/api/conversations/<conversationId>/messages"
+----
+
+---
+
+==== 3-5) SSE 이벤트 종류(서버가 실제로 보내는 이벤트)
+
+서버는 아래 이벤트를 전송합니다.
+
+[cols="1,2,2",options="header"]
+|===
+|event name |언제 발생 |클라이언트 권장 동작
+|`connected` |구독 직후 연결 확인 |상태 표시(connected), 필요 시 초기 동기화 트리거
+|`message-created` |상대가 메시지 전송 |해당 대화방 메시지 목록 재조회(또는 뱃지/리스트 갱신)
+|`message-deleted` |메시지 삭제 발생 |해당 대화방 메시지 목록 재조회
+|`notification-created` |새 알림 생성 |알림 목록 재조회 / 뱃지 카운트 갱신
+|===
+
+[IMPORTANT]
+====
+SSE 이벤트 payload는 "화면에 바로 렌더링"하기보다,
+- 메시지/알림 API를 재조회해서 서버 상태와 1:1로 맞추는 방식이 운영에 가장 안정적입니다.
+====
+
+---
+
+==== 3-6) 401/재연결 권장 규칙 (쿠키 + refresh-cookie)
+
+SSE 연결 중 인증 문제가 생기면(401):
+1) `POST /api/auth/refresh-cookie`
+2) 성공 시 SSE 재구독
+3) 실패 시 로그아웃 처리
+
+네트워크 단절/서버 재시작 등(5xx/네트워크 에러):
+- 일정 backoff로 자동 재연결
+- 가능하면 마지막으로 받은 이벤트 ID를 저장해 `Last-Event-ID`로 전달(누락 replay)
+
+[NOTE]
+====
+현재 서버는 구독 시 `Last-Event-ID`를 받아 누락 이벤트 replay를 시도합니다.
+====
+
+---
+
+=== FAQ
+
+==== Q1. 401이 반복돼요
+- SPA면 `withCredentials: true`가 꺼졌을 가능성이 큽니다.
+- 운영 HTTPS라면 `Secure=true` 쿠키가 아니면 브라우저가 막을 수 있습니다.
+- 크로스 도메인이라면 `SameSite=None; Secure`가 필요할 수 있습니다.
+
+==== Q2. SSE가 끊겨요
+- 프록시에서 `proxy_buffering off`, `proxy_read_timeout`이 빠진 경우가 가장 흔합니다.
+- 네트워크 변경에 대비해 클라이언트 자동 재연결이 필요합니다.
+
+==== Q3. refresh-cookie는 언제 호출해요?
+- 보통 “401 발생 시”에만 호출합니다.
+- 원 요청은 1회만 재시도(무한 루프 방지)하세요.
+
 == 1. Authentication
 
 === 로그인 (Bearer)
@@ -413,6 +582,10 @@ include::{snippets}/conversations-unread-after/http-response.adoc[]
 === 안 읽은 메시지: after (messages get)
 include::{snippets}/conversations-unread-after-messages-get/http-request.adoc[]
 include::{snippets}/conversations-unread-after-messages-get/http-response.adoc[]
+
+=== 메시지 전송
+include::{snippets}/messages-send/http-request.adoc[]
+include::{snippets}/messages-send/http-response.adoc[]
 
 === 메시지 목록
 include::{snippets}/messages-get/http-request.adoc[]
