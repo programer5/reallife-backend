@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="">
+<head>
+<meta charset="UTF-8">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="generator" content="Asciidoctor 2.0.18">
+<title>공통 에러 코드</title>
+<link rel="stylesheet" href="styles/custom.css">
+</head>
+<body class="article">
+<div id="header">
+</div>
+<div id="content">
+<div class="sect2">
+<h3 id="common-error-codes">공통 에러 코드</h3>
+<div class="paragraph">
+<p>에러 응답은 기본적으로 아래 형태를 따릅니다.</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlight"><code class="language-json" data-lang="json">{
+  "code": "AUTH_UNAUTHORIZED",
+  "message": "인증이 필요합니다.",
+  "timestamp": "2026-02-20T12:34:56",
+  "path": "/api/me",
+  "fieldErrors": [
+    { "field": "email", "reason": "must not be blank" }
+  ]
+}</code></pre>
+</div>
+</div>
+<div class="admonitionblock note">
+<table>
+<tr>
+<td class="icon">
+<div class="title">Note</div>
+</td>
+<td class="content">
+<div class="paragraph">
+<p>`fieldErrors`는 주로 Validation 실패(400)에서만 채워지며, 그 외에는 빈 배열이거나 `null`일 수 있습니다.</p>
+</div>
+</td>
+</tr>
+</table>
+</div>
+<div class="sect3">
+<h4 id="_common">COMMON</h4>
+<table class="tableblock frame-all grid-all stretch">
+<colgroup>
+<col style="width: 33.3333%;">
+<col style="width: 50%;">
+<col style="width: 16.6667%;">
+</colgroup>
+<thead>
+<tr>
+<th class="tableblock halign-left valign-top">code</th>
+<th class="tableblock halign-left valign-top">설명</th>
+<th class="tableblock halign-left valign-top">HTTP</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">COMMON_BAD_REQUEST</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">잘못된 요청</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">400</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">COMMON_NOT_FOUND</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">리소스를 찾을 수 없음</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">404</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">COMMON_CONFLICT</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">충돌(중복 등)</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">409</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="sect3">
+<h4 id="_auth">AUTH</h4>
+<table class="tableblock frame-all grid-all stretch">
+<colgroup>
+<col style="width: 33.3333%;">
+<col style="width: 50%;">
+<col style="width: 16.6667%;">
+</colgroup>
+<thead>
+<tr>
+<th class="tableblock halign-left valign-top">code</th>
+<th class="tableblock halign-left valign-top">설명</th>
+<th class="tableblock halign-left valign-top">HTTP</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">AUTH_UNAUTHORIZED</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">인증 필요</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">401</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">AUTH_FORBIDDEN</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">권한 없음</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">403</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">AUTH_TOKEN_EXPIRED</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">토큰 만료</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">401</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">AUTH_REFRESH_REUSE</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">리프레시 토큰 재사용</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">401</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="sect3">
+<h4 id="_user">USER</h4>
+<table class="tableblock frame-all grid-all stretch">
+<colgroup>
+<col style="width: 33.3333%;">
+<col style="width: 50%;">
+<col style="width: 16.6667%;">
+</colgroup>
+<thead>
+<tr>
+<th class="tableblock halign-left valign-top">code</th>
+<th class="tableblock halign-left valign-top">설명</th>
+<th class="tableblock halign-left valign-top">HTTP</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">USER_DUPLICATE_EMAIL</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">이메일 중복</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">409</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">USER_DUPLICATE_HANDLE</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">핸들 중복</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">409</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="sect3">
+<h4 id="_file">FILE</h4>
+<table class="tableblock frame-all grid-all stretch">
+<colgroup>
+<col style="width: 33.3333%;">
+<col style="width: 50%;">
+<col style="width: 16.6667%;">
+</colgroup>
+<thead>
+<tr>
+<th class="tableblock halign-left valign-top">code</th>
+<th class="tableblock halign-left valign-top">설명</th>
+<th class="tableblock halign-left valign-top">HTTP</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">FILE_FORBIDDEN</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">다른 유저 파일 접근</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">403</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="sect3">
+<h4 id="_follow">FOLLOW</h4>
+<table class="tableblock frame-all grid-all stretch">
+<colgroup>
+<col style="width: 33.3333%;">
+<col style="width: 50%;">
+<col style="width: 16.6667%;">
+</colgroup>
+<thead>
+<tr>
+<th class="tableblock halign-left valign-top">code</th>
+<th class="tableblock halign-left valign-top">설명</th>
+<th class="tableblock halign-left valign-top">HTTP</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">FOLLOW_SELF</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">자기 자신 팔로우</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">400</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+</div>
+<div id="footer">
+<div id="footer-text">
+Version 0.0.1-SNAPSHOT<br>
+Last updated 2026-02-20 13:14:47 +0900
+</div>
+</div>
+</body>
+</html>

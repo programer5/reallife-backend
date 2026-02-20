@@ -2,348 +2,430 @@
 :doctype: book
 :toc: left
 :toclevels: 3
+:sectnums:
 :sectanchors:
 :sectlinks:
+:icons: font
+:source-highlighter: highlightjs
 :stylesdir: styles
 :stylesheet: custom.css
 :linkcss:
+:snippets: {snippets}
 
 == Overview
 
 [cols="1,3",options="header"]
 |===
 |항목 |설명
-|Base URL|`http://localhost` (docker compose 로컬)
+|Base URL|`http://localhost`
 |Docs|`/docs`
-|인증|대부분 `Authorization: Bearer <accessToken>`
-|파일 다운로드|`/api/files/{fileId}/download` (브라우저 직접 렌더링)
+|인증|**Cookie 방식 권장** (`login-cookie` / `refresh-cookie`) + Bearer 대안
 |===
 
-TIP: 이 문서는 **Spring REST Docs 테스트**에서 생성된 스니펫을 include 해서 만들어집니다.
+[TIP]
+====
+이 문서는 Spring REST Docs가 테스트 실행 시 생성한 스니펫(`build/generated-snippets`)을 include 해서 만들어집니다.
+====
+
+=== Quick Start (Bearer)
+
+[source,bash]
+----
+# 1) 로그인 → accessToken
+curl -s -H "Content-Type: application/json" \
+  -d '{"email":"user@example.com","password":"1234"}' \
+  http://localhost/api/auth/login
+
+# 2) Authorization 헤더로 호출
+curl -i -H "Authorization: Bearer <accessToken>" http://localhost/api/me
+----
+
+=== Quick Start (Cookie)
+
+[source,bash]
+----
+# 1) 로그인(쿠키 저장)
+curl -i -c cookies.txt \
+  -H "Content-Type: application/json" \
+  -d '{"email":"user@example.com","password":"1234"}' \
+  http://localhost/api/auth/login-cookie
+
+# 2) 내 정보
+curl -i -b cookies.txt http://localhost/api/me
+
+# 3) refresh-cookie (Access 만료 시)
+curl -i -b cookies.txt -c cookies.txt http://localhost/api/auth/refresh-cookie
+
+# 4) logout-cookie
+curl -i -b cookies.txt http://localhost/api/auth/logout-cookie
+----
+
+=== 공통 에러 응답 안내(가이드)
+
+[NOTE]
+====
+에러 응답은 보통 아래와 같은 형태를 가집니다(프로젝트 구현에 따라 필드가 다를 수 있음).
+
+[source,json]
+----
+{
+  "code": "AUTH_UNAUTHORIZED",
+  "message": "인증이 필요합니다."
+}
+----
+====
+
+---
 
 == 1. Authentication
 
-=== 로그인
+=== 로그인 (Bearer)
 include::{snippets}/auth-login/http-request.adoc[]
-include::{snippets}/auth-login/request-fields.adoc[]
 include::{snippets}/auth-login/http-response.adoc[]
-include::{snippets}/auth-login/response-fields.adoc[]
 
-=== 토큰 재발급(Refresh)
+=== 토큰 재발급(Refresh, Bearer)
 include::{snippets}/auth-refresh/http-request.adoc[]
-include::{snippets}/auth-refresh/request-fields.adoc[]
 include::{snippets}/auth-refresh/http-response.adoc[]
-include::{snippets}/auth-refresh/response-fields.adoc[]
 
 ==== 실패: Refresh Token 재사용(401)
+include::{snippets}/auth-refresh-401-reuse/http-request.adoc[]
 include::{snippets}/auth-refresh-401-reuse/http-response.adoc[]
-include::{snippets}/auth-refresh-401-reuse/response-fields.adoc[]
 
-=== 전 기기 로그아웃
+=== 전 기기 로그아웃 (Bearer)
 include::{snippets}/auth-logout-all/http-request.adoc[]
-include::{snippets}/auth-logout-all/request-headers.adoc[]
 include::{snippets}/auth-logout-all/http-response.adoc[]
+
+=== 로그인 (Cookie)
+include::{snippets}/auth-login-cookie/http-request.adoc[]
+include::{snippets}/auth-login-cookie/http-response.adoc[]
+
+=== 토큰 재발급 (Cookie)
+include::{snippets}/auth-refresh-cookie/http-request.adoc[]
+include::{snippets}/auth-refresh-cookie/http-response.adoc[]
+
+=== 로그아웃 (Cookie)
+include::{snippets}/auth-logout-cookie/http-request.adoc[]
+include::{snippets}/auth-logout-cookie/http-response.adoc[]
+
+=== 전 기기 로그아웃 (Cookie)
+include::{snippets}/auth-logout-all-cookie/http-request.adoc[]
+include::{snippets}/auth-logout-all-cookie/http-response.adoc[]
+
+---
 
 == 2. Users
 
+[TIP]
+====
+**Users API 권장 흐름**
+- 회원가입 → 로그인(쿠키 권장)
+- 사용자 검색은 Cursor Paging → 응답에 nextCursor가 있으면 다음 페이지 조회에 사용
+====
+
 === 회원가입
 include::{snippets}/users-create/http-request.adoc[]
-include::{snippets}/users-create/request-fields.adoc[]
 include::{snippets}/users-create/http-response.adoc[]
-include::{snippets}/users-create/response-fields.adoc[]
 
-==== 실패 응답
-===== 400 Validation Error
+==== 실패: 400 Validation
+include::{snippets}/users-create-400-validation/http-request.adoc[]
 include::{snippets}/users-create-400-validation/http-response.adoc[]
-include::{snippets}/users-create-400-validation/response-fields.adoc[]
 
-===== 409 Duplicate Email
+==== 실패: 409 Duplicate Email
+include::{snippets}/users-create-409-duplicate-email/http-request.adoc[]
 include::{snippets}/users-create-409-duplicate-email/http-response.adoc[]
-include::{snippets}/users-create-409-duplicate-email/response-fields.adoc[]
 
-===== 409 Duplicate Handle
+==== 실패: 409 Duplicate Handle
+include::{snippets}/users-create-409-duplicate-handle/http-request.adoc[]
 include::{snippets}/users-create-409-duplicate-handle/http-response.adoc[]
-include::{snippets}/users-create-409-duplicate-handle/response-fields.adoc[]
 
 === 사용자 검색 (Cursor Paging)
 include::{snippets}/users-search-200/http-request.adoc[]
-include::{snippets}/users-search-200/request-headers.adoc[]
-include::{snippets}/users-search-200/query-parameters.adoc[]
 include::{snippets}/users-search-200/http-response.adoc[]
-include::{snippets}/users-search-200/response-fields.adoc[]
 
 ==== 다음 페이지 조회 예시
 include::{snippets}/users-search-200-next-page/http-request.adoc[]
-include::{snippets}/users-search-200-next-page/request-headers.adoc[]
-include::{snippets}/users-search-200-next-page/query-parameters.adoc[]
 include::{snippets}/users-search-200-next-page/http-response.adoc[]
-include::{snippets}/users-search-200-next-page/response-fields.adoc[]
 
 ==== 팔로잉 여부 포함 예시
+include::{snippets}/users-search-200-following-flag/http-request.adoc[]
 include::{snippets}/users-search-200-following-flag/http-response.adoc[]
-include::{snippets}/users-search-200-following-flag/response-fields.adoc[]
 
-==== 실패 응답
-===== 400 Bad Request (q blank)
+==== 실패: q blank(400)
+include::{snippets}/users-search-400-q-blank/http-request.adoc[]
 include::{snippets}/users-search-400-q-blank/http-response.adoc[]
-include::{snippets}/users-search-400-q-blank/response-fields.adoc[]
 
-===== 400 Bad Request (size range)
+==== 실패: size range(400)
+include::{snippets}/users-search-400-size-range/http-request.adoc[]
 include::{snippets}/users-search-400-size-range/http-response.adoc[]
-include::{snippets}/users-search-400-size-range/response-fields.adoc[]
 
 === 프로필 조회
 include::{snippets}/users-profile-get/http-request.adoc[]
-include::{snippets}/users-profile-get/path-parameters.adoc[]
 include::{snippets}/users-profile-get/http-response.adoc[]
-include::{snippets}/users-profile-get/response-fields.adoc[]
+
+---
 
 == 3. Me
 
 === 내 정보 조회
 include::{snippets}/me-200-ok/http-request.adoc[]
-include::{snippets}/me-200-ok/request-headers.adoc[]
 include::{snippets}/me-200-ok/http-response.adoc[]
-include::{snippets}/me-200-ok/response-fields.adoc[]
 
 ==== 실패: 401 Unauthorized
+include::{snippets}/me-401-unauthorized/http-request.adoc[]
 include::{snippets}/me-401-unauthorized/http-response.adoc[]
-include::{snippets}/me-401-unauthorized/response-fields.adoc[]
 
 === 내 프로필 수정
 include::{snippets}/me-profile-update/http-request.adoc[]
-include::{snippets}/me-profile-update/request-headers.adoc[]
-include::{snippets}/me-profile-update/request-fields.adoc[]
 include::{snippets}/me-profile-update/http-response.adoc[]
-include::{snippets}/me-profile-update/response-fields.adoc[]
 
 ==== 실패: 다른 유저 파일 사용(403)
+include::{snippets}/me-profile-update-403-forbidden-file/http-request.adoc[]
 include::{snippets}/me-profile-update-403-forbidden-file/http-response.adoc[]
-include::{snippets}/me-profile-update-403-forbidden-file/response-fields.adoc[]
+
+---
 
 == 4. Files
 
+[NOTE]
+====
+다운로드/썸네일은 ETag(304)를 활용하면 트래픽/로딩을 줄일 수 있습니다.
+====
+
 === 파일 업로드
 include::{snippets}/files-upload/http-request.adoc[]
-include::{snippets}/files-upload/request-headers.adoc[]
-include::{snippets}/files-upload/request-parts.adoc[]
 include::{snippets}/files-upload/http-response.adoc[]
-include::{snippets}/files-upload/response-fields.adoc[]
 
 === 파일 다운로드 (브라우저 렌더링)
 include::{snippets}/files-download-200/http-request.adoc[]
-include::{snippets}/files-download-200/path-parameters.adoc[]
-include::{snippets}/files-download-200/response-headers.adoc[]
+include::{snippets}/files-download-200/http-response.adoc[]
 
 ==== 304 Not Modified (ETag)
 include::{snippets}/files-download-304/http-request.adoc[]
-include::{snippets}/files-download-304/path-parameters.adoc[]
-include::{snippets}/files-download-304/request-headers.adoc[]
-include::{snippets}/files-download-304/response-headers.adoc[]
+include::{snippets}/files-download-304/http-response.adoc[]
 
 === 썸네일 조회
 include::{snippets}/files-thumbnail-200/http-request.adoc[]
-include::{snippets}/files-thumbnail-200/path-parameters.adoc[]
-include::{snippets}/files-thumbnail-200/response-headers.adoc[]
+include::{snippets}/files-thumbnail-200/http-response.adoc[]
 
 ==== 304 Not Modified (ETag)
 include::{snippets}/files-thumbnail-304/http-request.adoc[]
-include::{snippets}/files-thumbnail-304/path-parameters.adoc[]
-include::{snippets}/files-thumbnail-304/request-headers.adoc[]
-include::{snippets}/files-thumbnail-304/response-headers.adoc[]
+include::{snippets}/files-thumbnail-304/http-response.adoc[]
 
-[NOTE]
-====
-파일 다운로드는 브라우저에서 직접 렌더링됩니다.
-
-- `GET /api/files/{fileId}/download`
-====
+---
 
 == 5. Follows
 
 === 팔로우
 include::{snippets}/follows-create/http-request.adoc[]
-include::{snippets}/follows-create/path-parameters.adoc[]
-include::{snippets}/follows-create/request-headers.adoc[]
 include::{snippets}/follows-create/http-response.adoc[]
 
 ==== 실패: 자기 자신 팔로우(400)
+include::{snippets}/follows-create-400-self/http-request.adoc[]
 include::{snippets}/follows-create-400-self/http-response.adoc[]
-include::{snippets}/follows-create-400-self/response-fields.adoc[]
 
 === 언팔로우
 include::{snippets}/follows-delete/http-request.adoc[]
-include::{snippets}/follows-delete/path-parameters.adoc[]
-include::{snippets}/follows-delete/request-headers.adoc[]
 include::{snippets}/follows-delete/http-response.adoc[]
+
+---
 
 == 6. Posts
 
+[TIP]
+====
+게시글에 파일이 포함된다면, 먼저 Files 업로드로 fileId 확보 후 Posts에서 참조하는 흐름을 권장합니다.
+====
+
 === 게시글 생성
 include::{snippets}/posts-create/http-request.adoc[]
-include::{snippets}/posts-create/request-headers.adoc[]
-include::{snippets}/posts-create/request-fields.adoc[]
 include::{snippets}/posts-create/http-response.adoc[]
-include::{snippets}/posts-create/response-fields.adoc[]
-
-[IMPORTANT]
-====
-요청은 두 방식을 모두 지원합니다.
-
-- `imageFileIds` (권장): 파일 업로드 후 fileId(UUID)로 연결
-- `imageUrls` (구버전 호환)
-====
 
 === 게시글 단건 조회
 include::{snippets}/posts-get/http-request.adoc[]
-include::{snippets}/posts-get/request-headers.adoc[]
-include::{snippets}/posts-get/path-parameters.adoc[]
 include::{snippets}/posts-get/http-response.adoc[]
-include::{snippets}/posts-get/response-fields.adoc[]
 
 === 게시글 삭제
 include::{snippets}/posts-delete/http-request.adoc[]
-include::{snippets}/posts-delete/request-headers.adoc[]
-include::{snippets}/posts-delete/path-parameters.adoc[]
 include::{snippets}/posts-delete/http-response.adoc[]
+
+---
 
 == 7. Post Likes
 
 === 좋아요
 include::{snippets}/post-likes-create-204/http-request.adoc[]
-include::{snippets}/post-likes-create-204/request-headers.adoc[]
-include::{snippets}/post-likes-create-204/path-parameters.adoc[]
 include::{snippets}/post-likes-create-204/http-response.adoc[]
 
 === 좋아요 취소
 include::{snippets}/post-likes-delete-204/http-request.adoc[]
-include::{snippets}/post-likes-delete-204/request-headers.adoc[]
-include::{snippets}/post-likes-delete-204/path-parameters.adoc[]
 include::{snippets}/post-likes-delete-204/http-response.adoc[]
+
+---
 
 == 8. Comments
 
-=== 댓글 생성
+=== 댓글 생성(201)
 include::{snippets}/comments-create-201/http-request.adoc[]
-include::{snippets}/comments-create-201/request-headers.adoc[]
-include::{snippets}/comments-create-201/path-parameters.adoc[]
-include::{snippets}/comments-create-201/request-fields.adoc[]
 include::{snippets}/comments-create-201/http-response.adoc[]
-include::{snippets}/comments-create-201/response-fields.adoc[]
 
-==== 실패: content blank(400)
+==== 실패: 내용 비어있음(400)
+include::{snippets}/comments-create-400-content-blank/http-request.adoc[]
 include::{snippets}/comments-create-400-content-blank/http-response.adoc[]
-include::{snippets}/comments-create-400-content-blank/response-fields.adoc[]
 
-=== 댓글 목록(커서 페이징)
+=== 댓글 목록(200)
 include::{snippets}/comments-list-200/http-request.adoc[]
-include::{snippets}/comments-list-200/request-headers.adoc[]
-include::{snippets}/comments-list-200/query-parameters.adoc[]
 include::{snippets}/comments-list-200/http-response.adoc[]
-include::{snippets}/comments-list-200/response-fields.adoc[]
 
 ==== 다음 페이지 예시
+include::{snippets}/comments-list-200-next-page/http-request.adoc[]
 include::{snippets}/comments-list-200-next-page/http-response.adoc[]
-include::{snippets}/comments-list-200-next-page/response-fields.adoc[]
 
-==== 실패: cursor invalid(400)
+==== 다음 페이지 followup 예시
+include::{snippets}/comments-list-200-next-page-followup/http-request.adoc[]
+include::{snippets}/comments-list-200-next-page-followup/http-response.adoc[]
+
+==== 실패: invalid cursor(400)
+include::{snippets}/comments-list-400-invalid-cursor/http-request.adoc[]
 include::{snippets}/comments-list-400-invalid-cursor/http-response.adoc[]
-include::{snippets}/comments-list-400-invalid-cursor/response-fields.adoc[]
 
-=== 댓글 삭제
+=== 댓글 삭제(204)
 include::{snippets}/comments-delete-204/http-request.adoc[]
-include::{snippets}/comments-delete-204/request-headers.adoc[]
-include::{snippets}/comments-delete-204/path-parameters.adoc[]
 include::{snippets}/comments-delete-204/http-response.adoc[]
 
-==== 실패: commentId invalid uuid(400)
+==== 실패: invalid uuid(400)
+include::{snippets}/comments-delete-400-invalid-uuid/http-request.adoc[]
 include::{snippets}/comments-delete-400-invalid-uuid/http-response.adoc[]
-include::{snippets}/comments-delete-400-invalid-uuid/response-fields.adoc[]
+
+---
 
 == 9. Feed
 
 === 피드 조회
 include::{snippets}/feed-get/http-request.adoc[]
-include::{snippets}/feed-get/request-headers.adoc[]
-include::{snippets}/feed-get/query-parameters.adoc[]
 include::{snippets}/feed-get/http-response.adoc[]
-include::{snippets}/feed-get/response-fields.adoc[]
 
 ==== 다음 페이지 예시
+include::{snippets}/feed-get-next-page/http-request.adoc[]
 include::{snippets}/feed-get-next-page/http-response.adoc[]
-include::{snippets}/feed-get-next-page/response-fields.adoc[]
+
+---
 
 == 10. Conversations & Messages
 
+[TIP]
+====
+권장 사용 흐름
+- 대화방 생성/조회 → 목록 조회
+- 메시지 조회/전송
+- 실시간 갱신은 SSE 이벤트 수신 후 필요한 API만 재조회하는 방식 권장
+====
+
 === 대화방 생성/조회(DIRECT)
 include::{snippets}/conversations-direct-200/http-request.adoc[]
-include::{snippets}/conversations-direct-200/request-headers.adoc[]
-include::{snippets}/conversations-direct-200/request-fields.adoc[]
 include::{snippets}/conversations-direct-200/http-response.adoc[]
-include::{snippets}/conversations-direct-200/response-fields.adoc[]
 
-=== 대화방 목록(커서 페이징)
+=== 대화방 목록
 include::{snippets}/conversations-list/http-request.adoc[]
-include::{snippets}/conversations-list/request-headers.adoc[]
-include::{snippets}/conversations-list/response-fields.adoc[]
 include::{snippets}/conversations-list/http-response.adoc[]
-include::{snippets}/conversations-list/response-fields.adoc[]
 
 ==== 다음 페이지 예시
+include::{snippets}/conversations-list-200-next-page/http-request.adoc[]
 include::{snippets}/conversations-list-200-next-page/http-response.adoc[]
-include::{snippets}/conversations-list-200-next-page/response-fields.adoc[]
 
-=== 메시지 목록(커서 페이징)
+==== 다음 페이지 followup 예시
+include::{snippets}/conversations-list-200-next-page-followup/http-request.adoc[]
+include::{snippets}/conversations-list-200-next-page-followup/http-response.adoc[]
+
+=== 대화 읽음 처리(READ)
+include::{snippets}/conversations-read/http-request.adoc[]
+include::{snippets}/conversations-read/http-response.adoc[]
+
+=== 안 읽은 메시지: before
+include::{snippets}/conversations-unread-before/http-request.adoc[]
+include::{snippets}/conversations-unread-before/http-response.adoc[]
+
+=== 안 읽은 메시지: before (messages get)
+include::{snippets}/conversations-unread-before-messages-get/http-request.adoc[]
+include::{snippets}/conversations-unread-before-messages-get/http-response.adoc[]
+
+=== 안 읽은 메시지: after
+include::{snippets}/conversations-unread-after/http-request.adoc[]
+include::{snippets}/conversations-unread-after/http-response.adoc[]
+
+=== 안 읽은 메시지: after (messages get)
+include::{snippets}/conversations-unread-after-messages-get/http-request.adoc[]
+include::{snippets}/conversations-unread-after-messages-get/http-response.adoc[]
+
+=== 메시지 목록
 include::{snippets}/messages-get/http-request.adoc[]
-include::{snippets}/messages-get/request-headers.adoc[]
-include::{snippets}/messages-get/path-parameters.adoc[]
-include::{snippets}/messages-get/query-parameters.adoc[]
 include::{snippets}/messages-get/http-response.adoc[]
-include::{snippets}/messages-get/response-fields.adoc[]
 
 ==== 다음 페이지 예시
+include::{snippets}/messages-get-next-page/http-request.adoc[]
 include::{snippets}/messages-get-next-page/http-response.adoc[]
-include::{snippets}/messages-get-next-page/response-fields.adoc[]
 
-==== 실패: conversation not found(404)
-include::{snippets}/messages-get-404-conversation-not-found/http-response.adoc[]
-include::{snippets}/messages-get-404-conversation-not-found/response-fields.adoc[]
-
-=== 메시지 목록 조회 시 자동 읽음 처리 예시
+==== 자동 읽음 처리 예시
+include::{snippets}/messages-get-auto-read/http-request.adoc[]
 include::{snippets}/messages-get-auto-read/http-response.adoc[]
+
+==== 실패: 대화방 없음(404)
+include::{snippets}/messages-get-404-conversation-not-found/http-request.adoc[]
+include::{snippets}/messages-get-404-conversation-not-found/http-response.adoc[]
+
+=== 메시지 숨김
+include::{snippets}/message-hide/http-request.adoc[]
+include::{snippets}/message-hide/http-response.adoc[]
+
+=== 메시지 삭제(모두에게)
+include::{snippets}/message-delete-for-all/http-request.adoc[]
+include::{snippets}/message-delete-for-all/http-response.adoc[]
+
+---
 
 == 11. Notifications
 
+[NOTE]
+====
+SSE 이벤트로 새 알림을 감지한 뒤, 화면에서는 알림 목록 API를 재조회하는 패턴을 권장합니다.
+====
+
 === 알림 목록
 include::{snippets}/notifications-get-200/http-request.adoc[]
-include::{snippets}/notifications-get-200/request-headers.adoc[]
-include::{snippets}/notifications-get-200/query-parameters.adoc[]
 include::{snippets}/notifications-get-200/http-response.adoc[]
-include::{snippets}/notifications-get-200/response-fields.adoc[]
 
 ==== 다음 페이지 예시
+include::{snippets}/notifications-get-200-next-page/http-request.adoc[]
 include::{snippets}/notifications-get-200-next-page/http-response.adoc[]
-include::{snippets}/notifications-get-200-next-page/response-fields.adoc[]
 
 === 알림 읽음 처리
 include::{snippets}/notifications-read-200/http-request.adoc[]
-include::{snippets}/notifications-read-200/request-headers.adoc[]
-include::{snippets}/notifications-read-200/path-parameters.adoc[]
 include::{snippets}/notifications-read-200/http-response.adoc[]
 
-=== 알림 전체 읽음
+=== 알림 전체 읽음 처리
 include::{snippets}/notifications-read-all-200/http-request.adoc[]
-include::{snippets}/notifications-read-all-200/request-headers.adoc[]
 include::{snippets}/notifications-read-all-200/http-response.adoc[]
 
-=== 읽은 알림 삭제
+=== 알림 삭제/읽음처리(200)
 include::{snippets}/notifications-delete-read-200/http-request.adoc[]
-include::{snippets}/notifications-delete-read-200/request-headers.adoc[]
 include::{snippets}/notifications-delete-read-200/http-response.adoc[]
+
+---
 
 == 12. SSE
 
+[IMPORTANT]
+====
+SSE 구독 엔드포인트는 인증이 필요합니다.
+브라우저에서는 `withCredentials: true`가 필요하고, 가능하면 Cookie 방식(동일 오리진)을 권장합니다.
+====
+
+[TIP]
+====
+프록시/nginx 환경에서는 SSE 버퍼링이 끊김의 원인이 될 수 있어
+`proxy_buffering off`, `proxy_read_timeout` 등을 권장합니다.
+(현재 프로젝트 nginx는 `/api/sse/`에 대해 buffering off 설정이 포함되어 있습니다.)
+====
+
 === SSE 구독
 include::{snippets}/sse-subscribe/http-request.adoc[]
-include::{snippets}/sse-subscribe/request-headers.adoc[]
 include::{snippets}/sse-subscribe/http-response.adoc[]

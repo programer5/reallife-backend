@@ -3,10 +3,12 @@ package com.example.backend.controller.auth;
 import com.example.backend.controller.DocsTestSupport;
 import com.example.backend.restdocs.ErrorResponseSnippet;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import jakarta.servlet.http.Cookie;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.restdocs.RestDocumentationContextProvider;
 import org.springframework.restdocs.RestDocumentationExtension;
@@ -18,11 +20,16 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.context.WebApplicationContext;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.springframework.restdocs.cookies.CookieDocumentation.cookieWithName;
+import static org.springframework.restdocs.cookies.CookieDocumentation.requestCookies;
 import static org.springframework.restdocs.headers.HeaderDocumentation.headerWithName;
-import static org.springframework.restdocs.headers.HeaderDocumentation.requestHeaders;
+import static org.springframework.restdocs.headers.HeaderDocumentation.responseHeaders;
 import static org.springframework.restdocs.mockmvc.MockMvcRestDocumentation.document;
 import static org.springframework.restdocs.mockmvc.MockMvcRestDocumentation.documentationConfiguration;
 import static org.springframework.restdocs.payload.JsonFieldType.STRING;
@@ -38,6 +45,12 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
  * - /api/auth/refresh (rotation)
  * - /api/auth/refresh (reuse -> 401)
  * - /api/auth/logout-all (전체 기기 로그아웃)
+ *
+ * + 쿠키 방식(브라우저/SSE 권장)
+ * - /api/auth/login-cookie
+ * - /api/auth/refresh-cookie
+ * - /api/auth/logout-cookie
+ * - /api/auth/logout-all-cookie
  */
 @SpringBootTest
 @ActiveProfiles("test")
@@ -90,6 +103,46 @@ class AuthControllerTest {
                 .andReturn();
 
         return objectMapper.readValue(res.getResponse().getContentAsByteArray(), Map.class);
+    }
+
+    private record AuthCookies(Cookie accessToken, Cookie refreshToken) {}
+
+    private AuthCookies loginCookieAndExtract(MockMvc mockMvc, String email, String snippetId) throws Exception {
+        var req = new HashMap<String, Object>();
+        req.put("email", email);
+        req.put("password", "password1234");
+
+        var result = mockMvc.perform(post("/api/auth/login-cookie")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(req)))
+                .andExpect(status().isOk())
+                // Set-Cookie 2개 이상(Access/Refresh)
+                .andExpect(r -> {
+                    List<String> setCookies = r.getResponse().getHeaders(HttpHeaders.SET_COOKIE);
+                    assertTrue(setCookies.size() >= 2, "Set-Cookie 헤더가 2개 이상이어야 합니다.");
+                })
+                .andDo(document(snippetId,
+                        requestFields(
+                                fieldWithPath("email").type(STRING).description("이메일"),
+                                fieldWithPath("password").type(STRING).description("비밀번호")
+                        ),
+                        responseHeaders(
+                                headerWithName(HttpHeaders.SET_COOKIE).description("access_token / refresh_token 쿠키")
+                        ),
+                        responseFields(
+                                fieldWithPath("message").type(STRING).description("결과 메시지")
+                        )
+                ))
+                .andReturn();
+
+        Cookie access = result.getResponse().getCookie("access_token");
+        Cookie refresh = result.getResponse().getCookie("refresh_token");
+
+        // access_token은 Path=/, refresh_token은 Path=/api/auth 로 내려오므로 둘 다 getCookie로 잡혀야 함
+        assertNotNull(access, "access_token 쿠키가 응답에 있어야 합니다.");
+        assertNotNull(refresh, "refresh_token 쿠키가 응답에 있어야 합니다.");
+
+        return new AuthCookies(access, refresh);
     }
 
     // ---------- tests ----------
@@ -197,15 +250,109 @@ class AuthControllerTest {
                         .header(DocsTestSupport.headerName(), DocsTestSupport.auth(accessToken)))
                 .andExpect(status().isOk())
                 .andDo(document("auth-logout-all",
-                        requestHeaders(
+                        // Bearer 방식은 기존 문서 유지
+                        org.springframework.restdocs.headers.HeaderDocumentation.requestHeaders(
                                 headerWithName(DocsTestSupport.headerName())
                                         .description("Bearer Access Token")
                         ),
-                        // ✅ response-fields.adoc 생성용
+                        // ✅ response-fields.adoc 생성용(응답에서는 null 가능)
                         relaxedResponseFields(
                                 fieldWithPath("accessToken").optional().type(STRING).description("응답에서는 null일 수 있음"),
                                 fieldWithPath("refreshToken").optional().type(STRING).description("응답에서는 null일 수 있음"),
                                 fieldWithPath("tokenType").optional().type(STRING).description("토큰 타입(Bearer)")
+                        )
+                ));
+    }
+
+    // ---------- cookie auth (browser/SSE recommended) ----------
+
+    @Test
+    void 로그인_API_성공_Cookie(RestDocumentationContextProvider restDocumentation) throws Exception {
+        MockMvc mockMvc = mockMvc(restDocumentation);
+        var user = signup(mockMvc);
+
+        // 문서화 + 쿠키 추출까지 한 번에
+        loginCookieAndExtract(mockMvc, user.email(), "auth-login-cookie");
+    }
+
+    @Test
+    void 토큰재발급_API_성공_Cookie(RestDocumentationContextProvider restDocumentation) throws Exception {
+        MockMvc mockMvc = mockMvc(restDocumentation);
+        var user = signup(mockMvc);
+
+        AuthCookies cookies = loginCookieAndExtract(mockMvc, user.email(), "auth-login-cookie"); // 이미 생성되면 덮어씀(테스트별 실행이라 OK)
+
+        mockMvc.perform(post("/api/auth/refresh-cookie")
+                        .cookie(cookies.refreshToken()))
+                .andExpect(status().isOk())
+                .andExpect(r -> {
+                    List<String> setCookies = r.getResponse().getHeaders(HttpHeaders.SET_COOKIE);
+                    assertTrue(setCookies.size() >= 2, "refresh-cookie 응답은 Set-Cookie 2개 이상이어야 합니다.");
+                })
+                .andDo(document("auth-refresh-cookie",
+                        requestCookies(
+                                cookieWithName("refresh_token").description("Refresh Token 쿠키")
+                        ),
+                        responseHeaders(
+                                headerWithName(HttpHeaders.SET_COOKIE).description("재발급된 access_token / refresh_token 쿠키")
+                        ),
+                        responseFields(
+                                fieldWithPath("message").type(STRING).description("결과 메시지")
+                        )
+                ));
+    }
+
+    @Test
+    void 로그아웃_API_성공_Cookie(RestDocumentationContextProvider restDocumentation) throws Exception {
+        MockMvc mockMvc = mockMvc(restDocumentation);
+        var user = signup(mockMvc);
+
+        AuthCookies cookies = loginCookieAndExtract(mockMvc, user.email(), "auth-login-cookie");
+
+        mockMvc.perform(post("/api/auth/logout-cookie")
+                        .cookie(cookies.accessToken(), cookies.refreshToken()))
+                .andExpect(status().isOk())
+                .andExpect(r -> {
+                    List<String> setCookies = r.getResponse().getHeaders(HttpHeaders.SET_COOKIE);
+                    assertTrue(setCookies.size() >= 2, "logout-cookie 응답은 쿠키 삭제 Set-Cookie 2개 이상이어야 합니다.");
+                })
+                .andDo(document("auth-logout-cookie",
+                        requestCookies(
+                                cookieWithName("access_token").description("Access Token 쿠키"),
+                                cookieWithName("refresh_token").description("Refresh Token 쿠키")
+                        ),
+                        responseHeaders(
+                                headerWithName(HttpHeaders.SET_COOKIE).description("만료 처리된 access_token / refresh_token 쿠키")
+                        ),
+                        responseFields(
+                                fieldWithPath("message").type(STRING).description("결과 메시지")
+                        )
+                ));
+    }
+
+    @Test
+    void 로그아웃올_API_성공_Cookie(RestDocumentationContextProvider restDocumentation) throws Exception {
+        MockMvc mockMvc = mockMvc(restDocumentation);
+        var user = signup(mockMvc);
+
+        AuthCookies cookies = loginCookieAndExtract(mockMvc, user.email(), "auth-login-cookie");
+
+        mockMvc.perform(post("/api/auth/logout-all-cookie")
+                        .cookie(cookies.accessToken()))
+                .andExpect(status().isOk())
+                .andExpect(r -> {
+                    List<String> setCookies = r.getResponse().getHeaders(HttpHeaders.SET_COOKIE);
+                    assertTrue(setCookies.size() >= 2, "logout-all-cookie 응답은 쿠키 삭제 Set-Cookie 2개 이상이어야 합니다.");
+                })
+                .andDo(document("auth-logout-all-cookie",
+                        requestCookies(
+                                cookieWithName("access_token").description("Access Token 쿠키")
+                        ),
+                        responseHeaders(
+                                headerWithName(HttpHeaders.SET_COOKIE).description("만료 처리된 access_token / refresh_token 쿠키")
+                        ),
+                        responseFields(
+                                fieldWithPath("message").type(STRING).description("결과 메시지")
                         )
                 ));
     }

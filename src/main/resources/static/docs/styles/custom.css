@@ -1,140 +1,230 @@
+/* =========================================================
+   Backend API Docs - Premium Theme (Asciidoctor)
+   - Clean, readable, pretty
+   - Left fixed TOC on wide screens
+   - Beautiful tables, code blocks, admonitions
+   ========================================================= */
+
 :root{
-  --text:#111827;
-  --muted:#6b7280;
-  --bg:#ffffff;
-  --card:#f9fafb;
-  --border:#e5e7eb;
-  --codebg:#0b1020;
+  --bg:#0b1020;
+  --bg2:#0a0f1e;
+  --panel:rgba(255,255,255,.06);
+  --panel2:rgba(255,255,255,.08);
+  --text:rgba(255,255,255,.92);
+  --muted:rgba(255,255,255,.70);
+  --muted2:rgba(255,255,255,.56);
+  --border:rgba(255,255,255,.12);
+  --shadow:0 14px 38px rgba(0,0,0,.34);
+
+  --accent:#8b5cf6;   /* purple */
+  --good:#22c55e;     /* green  */
+  --info:#60a5fa;     /* blue   */
+  --warn:#f59e0b;     /* amber  */
+
+  --codebg:rgba(10,18,38,.92);
+  --codebd:rgba(139,92,246,.35);
 }
 
-html, body {
-  background: var(--bg);
+@media (prefers-color-scheme: light){
+  :root{
+    --bg:#f6f7fb;
+    --bg2:#ffffff;
+    --panel:#ffffff;
+    --panel2:#ffffff;
+    --text:rgba(10,10,10,.92);
+    --muted:rgba(10,10,10,.70);
+    --muted2:rgba(10,10,10,.56);
+    --border:rgba(10,10,10,.10);
+    --shadow:0 12px 30px rgba(0,0,0,.10);
+    --codebg:#0b1020;
+    --codebd:rgba(139,92,246,.26);
+  }
 }
 
-body {
-  max-width: 920px;
+html,body{
+  margin:0; padding:0;
+  background:
+          radial-gradient(900px 520px at 10% -10%, rgba(139,92,246,.36), transparent 60%),
+          radial-gradient(820px 480px at 110% 10%, rgba(34,197,94,.18), transparent 55%),
+          var(--bg);
+  color:var(--text);
+  font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, "Noto Sans KR", Arial, "Apple SD Gothic Neo", sans-serif;
+  line-height:1.65;
+}
+
+a{ color: color-mix(in srgb, var(--accent) 80%, white 20%); text-decoration:none; }
+a:hover{ text-decoration:underline; color: color-mix(in srgb, var(--accent) 65%, white 35%); }
+
+#header, #content, #footer{
+  max-width: 980px;
   margin: 0 auto;
-  padding: 28px 18px 60px;
-  color: var(--text);
-  line-height: 1.7;
-  font-size: 16px;
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Noto Sans KR", Arial, sans-serif;
+  padding: 26px 18px;
 }
 
-h1 {
-  font-size: 34px;
-  letter-spacing: -0.02em;
-  margin-bottom: 10px;
+#content{ padding-top: 10px; }
+
+/* Headings */
+h1,h2,h3,h4,h5{
+  letter-spacing:-0.02em;
+  line-height:1.22;
+  color: color-mix(in srgb, var(--text) 92%, white 8%);
 }
 
-h2 {
-  font-size: 22px;
-  margin-top: 28px;
-  padding-top: 16px;
-  border-top: 1px solid var(--border);
+h1{
+  font-size:2.15rem;
+  margin:0 0 10px;
 }
 
-h3 {
-  font-size: 18px;
-  margin-top: 18px;
+h2{
+  font-size:1.58rem;
+  margin-top:2.2rem;
+  padding-top:14px;
+  border-top:1px solid var(--border);
 }
 
-p { margin: 10px 0; }
-a { color: #2563eb; text-decoration: none; }
-a:hover { text-decoration: underline; }
+h3{ font-size:1.2rem; margin-top:1.55rem; }
+h4{ font-size:1.02rem; margin-top:1.1rem; }
 
-#toc {
-  background: var(--card);
-  border: 1px solid var(--border);
-  border-radius: 14px;
-  padding: 16px 16px 6px;
-  margin: 18px 0 22px;
-}
-#toctitle {
-  font-size: 14px;
-  color: var(--muted);
-  margin-bottom: 8px;
+hr{
+  border:none;
+  border-top:1px solid var(--border);
+  margin:24px 0;
 }
 
-.listingblock, .literalblock, .exampleblock, .quoteblock, .sidebarblock {
-  margin: 14px 0;
+/* Tables */
+table{
+  width:100%;
+  border-collapse:separate;
+  border-spacing:0;
+  background:var(--panel);
+  border:1px solid var(--border);
+  border-radius:16px;
+  overflow:hidden;
+  box-shadow:var(--shadow);
 }
 
-.exampleblock > .content,
-.sidebarblock > .content {
-  background: var(--card);
-  border: 1px solid var(--border);
-  border-radius: 14px;
-  padding: 14px;
+th,td{
+  padding:12px 14px;
+  border-bottom:1px solid var(--border);
+  vertical-align:top;
 }
 
-/* 어떤 테마가 pre 안의 code에 회색을 덮는 경우가 있어서 강제 */
-pre code {
-  color: #f9fafb !important;
-  background: transparent !important;
-  border: none !important;
-  padding: 0 !important;
+th{
+  background: color-mix(in srgb, var(--panel2) 82%, black 18%);
+  font-weight:900;
 }
 
-/* code block (pre) - readable */
-pre {
-  background: #111827;          /* 다크 배경 */
-  color: #f9fafb;               /* 밝은 글자 */
-  border-radius: 14px;
-  padding: 14px;
-  overflow-x: auto;
-  box-shadow: none;
-  border: 1px solid #374151;
+tr:last-child td{ border-bottom:none; }
+
+/* Inline code */
+code{
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Noto Sans Mono", monospace;
+  background: color-mix(in srgb, var(--panel2) 80%, black 20%);
+  border:1px solid var(--border);
+  border-radius:10px;
+  padding:2px 8px;
+  color: color-mix(in srgb, var(--accent) 35%, var(--text) 65%);
 }
 
-/* inline code */
-code {
-  background: #f3f4f6;
-  color: #111827;
-  border: 1px solid #e5e7eb;
-  border-radius: 8px;
-  padding: 2px 6px;
+/* Code blocks */
+pre, pre code{
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Noto Sans Mono", monospace;
 }
 
-/* 혹시 highlight.js가 회색 오버레이를 얹는 경우 무력화 */
-.hljs {
-  background: transparent !important;
-  color: inherit !important;
+pre{
+  background: linear-gradient(180deg, var(--codebg), color-mix(in srgb, var(--codebg) 70%, black 30%));
+  border:1px solid var(--codebd);
+  border-radius:16px;
+  padding:14px 16px;
+  overflow-x:auto;
+  box-shadow:var(--shadow);
 }
 
-table {
-  width: 100%;
-  border-collapse: separate;
-  border-spacing: 0;
-  margin: 12px 0 20px;
-  overflow: hidden;
-  border-radius: 14px;
-  border: 1px solid var(--border);
+pre code{
+  background:transparent;
+  border:none;
+  padding:0;
+  color:rgba(255,255,255,.92);
 }
 
-th {
-  background: var(--card);
-  color: var(--muted);
-  font-weight: 600;
-  font-size: 13px;
-  letter-spacing: .02em;
+/* Admonitions */
+.admonitionblock{ margin: 16px 0; }
+
+.admonitionblock > table{
+  width:100%;
+  border-radius:16px;
+  overflow:hidden;
+  border:1px solid var(--border);
+  background:var(--panel);
+  box-shadow:var(--shadow);
 }
 
-th, td {
-  padding: 12px 12px;
-  border-bottom: 1px solid var(--border);
-  vertical-align: top;
+.admonitionblock td.icon{
+  width:56px;
+  text-align:center;
+  border-right:1px solid var(--border);
+  background: color-mix(in srgb, var(--panel2) 86%, black 14%);
 }
 
-tr:last-child td { border-bottom: none; }
+.admonitionblock td.content{ padding:12px 14px; }
+.admonitionblock .title{ font-weight:900; }
 
-.admonitionblock {
-  border-radius: 14px;
-  border: 1px solid var(--border);
-  background: var(--card);
-  padding: 10px 12px;
+.admonitionblock.tip > table{ border-left:6px solid var(--good); }
+.admonitionblock.note > table{ border-left:6px solid var(--info); }
+.admonitionblock.important > table{ border-left:6px solid var(--accent); }
+.admonitionblock.warning > table,
+.admonitionblock.caution > table{ border-left:6px solid var(--warn); }
+
+/* TOC */
+#toc{
+  margin-top:18px;
+  border:1px solid var(--border);
+  background:var(--panel);
+  border-radius:16px;
+  padding:14px 14px 10px;
+  box-shadow:var(--shadow);
 }
-.admonitionblock td.icon { width: 42px; }
-.admonitionblock td.content { color: var(--text); }
 
-.sect1 { margin-bottom: 10px; }
+#toc #toctitle{
+  font-size:1.05rem;
+  margin:6px 0 12px;
+  font-weight:900;
+}
+
+#toc a{ color:var(--muted); }
+#toc a:hover{ color:var(--text); }
+
+/* toc2 fixed left on wide screens */
+@media screen and (min-width: 1100px){
+  #toc.toc2{
+    position:fixed;
+    top:0;
+    left:0;
+    width:320px;
+    height:100%;
+    overflow:auto;
+    padding:18px 18px 14px;
+    margin:0;
+    border-radius:0;
+    border-right:1px solid var(--border);
+    background: color-mix(in srgb, var(--bg2) 88%, black 12%);
+    backdrop-filter: blur(10px);
+  }
+
+  #content{
+    margin-left:340px;
+    max-width:980px;
+    padding:26px 24px 72px;
+  }
+
+  #header, #footer{
+    margin-left:340px;
+    max-width:980px;
+    padding-left:24px;
+    padding-right:24px;
+  }
+}
+
+/* Lists */
+ul,ol{ padding-left:1.25rem; }
+li{ margin:6px 0; color:var(--text); }
