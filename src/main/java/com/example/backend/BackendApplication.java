@@ -1,13 +1,17 @@
 package com.example.backend;
 
 import com.example.backend.config.CookieProperties;
+import com.example.backend.config.CorsProperties;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.scheduling.annotation.EnableScheduling;
 
 @EnableScheduling
-@EnableConfigurationProperties(CookieProperties.class)
+@EnableConfigurationProperties({
+		CookieProperties.class,
+		CorsProperties.class
+})
 @SpringBootApplication
 public class BackendApplication {
 
