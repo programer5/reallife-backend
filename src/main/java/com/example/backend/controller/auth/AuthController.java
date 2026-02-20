@@ -7,6 +7,8 @@ import com.example.backend.controller.auth.dto.LoginResponse;
 import com.example.backend.controller.auth.dto.RefreshRequest;
 import com.example.backend.security.LoginRateLimiter;
 import com.example.backend.service.auth.AuthService;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpHeaders;
@@ -17,6 +19,8 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ResponseStatusException;
+
+import java.util.UUID;
 
 @RestController
 @RequestMapping("/api/auth")
@@ -33,7 +37,7 @@ public class AuthController {
     @PostMapping("/login")
     public LoginResponse login(
             @Valid @RequestBody LoginRequest request,
-            jakarta.servlet.http.HttpServletRequest httpRequest
+            HttpServletRequest httpRequest
     ) {
         String ip = clientIp(httpRequest);
 
@@ -51,8 +55,8 @@ public class AuthController {
     @PostMapping("/login-cookie")
     public LoginCookieResponse loginCookie(
             @Valid @RequestBody LoginRequest request,
-            jakarta.servlet.http.HttpServletRequest httpRequest,
-            jakarta.servlet.http.HttpServletResponse response
+            HttpServletRequest httpRequest,
+            HttpServletResponse response
     ) {
         var tokens = authService.loginWithRefresh(request.email(), request.password());
 
@@ -67,8 +71,8 @@ public class AuthController {
      */
     @PostMapping("/logout-cookie")
     public LoginCookieResponse logoutCookie(
-            jakarta.servlet.http.HttpServletRequest request,
-            jakarta.servlet.http.HttpServletResponse response
+            HttpServletRequest request,
+            HttpServletResponse response
     ) {
         String refreshRaw = extractCookie(request, "refresh_token");
         authService.revokeRefresh(refreshRaw);
@@ -81,8 +85,8 @@ public class AuthController {
 
     @PostMapping("/refresh-cookie")
     public LoginCookieResponse refreshCookie(
-            jakarta.servlet.http.HttpServletRequest request,
-            jakarta.servlet.http.HttpServletResponse response
+            HttpServletRequest request,
+            HttpServletResponse response
     ) {
         String refreshRaw = extractCookie(request, "refresh_token");
 
@@ -103,10 +107,10 @@ public class AuthController {
     @PostMapping("/logout-all-cookie")
     public LoginCookieResponse logoutAllCookie(
             @AuthenticationPrincipal String userId,
-            jakarta.servlet.http.HttpServletRequest request,
-            jakarta.servlet.http.HttpServletResponse response
+            HttpServletRequest request,
+            HttpServletResponse response
     ) {
-        authService.logoutAll(java.util.UUID.fromString(userId));
+        authService.logoutAll(UUID.fromString(userId));
 
         response.addHeader(HttpHeaders.SET_COOKIE, cookieFactory.deleteAccessCookie(request).toString());
         response.addHeader(HttpHeaders.SET_COOKIE, cookieFactory.deleteRefreshCookie(request).toString());
@@ -114,7 +118,18 @@ public class AuthController {
         return new LoginCookieResponse("OK");
     }
 
-    private static String extractCookie(jakarta.servlet.http.HttpServletRequest request, String name) {
+    @PostMapping("/logout-all")
+    public LoginResponse logoutAllBearer(
+            @AuthenticationPrincipal String userId
+    ) {
+        // userId는 JWT 인증 필터에서 Principal에 문자열(UUID)로 넣어주는 전제
+        authService.logoutAll(UUID.fromString(userId));
+
+        // 기존 테스트/문서가 response 필드를 기대하므로 형태는 유지
+        return new LoginResponse(null, null, "Bearer");
+    }
+
+    private static String extractCookie(HttpServletRequest request, String name) {
         var cookies = request.getCookies();
         if (cookies == null) return null;
         for (var c : cookies) {
@@ -123,7 +138,7 @@ public class AuthController {
         return null;
     }
 
-    private static String clientIp(jakarta.servlet.http.HttpServletRequest request) {
+    private static String clientIp(HttpServletRequest request) {
         String xff = request.getHeader("X-Forwarded-For");
         if (xff != null && !xff.isBlank()) return xff.split(",")[0].trim();
         return request.getRemoteAddr();
