@@ -31,6 +31,13 @@ logging:
     org.flywaydb: info
 
 app:
+  cookie:
+    secure-mode: auto
+    same-site: Lax
+    # domain: ""          # 필요하면 ".example.com"
+    access-max-age-seconds: 900
+    refresh-max-age-seconds: 1209600
+    refresh-path: /api/auth
   public-base-url: ${PUBLIC_BASE_URL:http://localhost}
   cors:
     allowed-origins: ${CORS_ALLOWED_ORIGINS:http://localhost:5173,http://localhost:3000}
