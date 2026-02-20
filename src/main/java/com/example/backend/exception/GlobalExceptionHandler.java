@@ -1,14 +1,18 @@
 package com.example.backend.exception;
 
 import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.context.request.async.AsyncRequestNotUsableException;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 
+import java.io.IOException;
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -90,6 +94,28 @@ public class GlobalExceptionHandler {
                         null
                 )
         );
+    }
+
+    @ExceptionHandler({
+            AsyncRequestNotUsableException.class,
+            IOException.class
+    })
+    public void ignoreSseDisconnect(Exception e, HttpServletRequest request, HttpServletResponse response) {
+        // SSE 구독 중 클라이언트 끊김은 정상 케이스. 에러 응답 만들지 않음.
+        String uri = request.getRequestURI();
+
+        boolean isSse = uri != null && uri.startsWith("/api/sse");
+        boolean isEventStream = response.getContentType() != null
+                && response.getContentType().contains(MediaType.TEXT_EVENT_STREAM_VALUE);
+
+        if (isSse || isEventStream) {
+            // 아무것도 반환하지 않고 조용히 종료 (로그도 INFO/ERROR 대신 DEBUG 권장)
+            return;
+        }
+
+        // SSE가 아닌 경우에는 기존 unknown handler로 보내거나,
+        // 여기서는 그냥 던져서 기존 흐름 유지해도 됨(프로젝트 스타일에 맞춰 선택)
+        throw new RuntimeException(e);
     }
 
     private ErrorResponse.FieldError toFieldError(FieldError fe) {

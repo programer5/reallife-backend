@@ -11,6 +11,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.Map;
+import java.util.UUID;
 
 @RestController
 @RequiredArgsConstructor
@@ -47,5 +48,10 @@ public class UserController {
     @GetMapping("/{handle}")
     public ProfileResponse getProfile(@PathVariable String handle) {
         return userProfileService.getProfileByHandle(handle);
+    }
+
+    @GetMapping("/id/{userId}")
+    public ProfileResponse getProfileById(@PathVariable UUID userId) {
+        return userProfileService.getProfileById(userId);
     }
 }

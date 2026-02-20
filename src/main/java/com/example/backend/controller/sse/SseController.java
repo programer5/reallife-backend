@@ -36,27 +36,29 @@ public class SseController {
             @RequestHeader(value = "Last-Event-ID", required = false) String lastEventId,
             HttpServletResponse response
     ) {
+        if (userId == null || userId.isBlank()) {
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "인증이 필요합니다.");
+        }
+
+        UUID meId = UUID.fromString(userId);
+
+        // nginx 등에서 SSE buffering 방지
+        response.setHeader("X-Accel-Buffering", "no");
+        response.setHeader(HttpHeaders.CACHE_CONTROL, "no-cache");
+
+        long timeout = 30L * 60 * 1000; // 30분
+        SseEmitter emitter = registry.register(meId, timeout);
+
+        // 1) 연결 확인 이벤트
+        Map<String, Object> payload = new HashMap<>();
+        payload.put("serverTime", LocalDateTime.now().toString());
+        if (lastEventId != null) {
+            payload.put("lastEventId", lastEventId);
+        }
+        registry.send(meId, "connected", payload, null);
+
+        // 2) 누락 이벤트 replay (Last-Event-ID 이후)
         try {
-            if (userId == null || userId.isBlank()) {
-                throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "인증이 필요합니다.");
-            }
-
-            UUID meId = UUID.fromString(userId);
-
-            response.setHeader("X-Accel-Buffering", "no");
-            response.setHeader(HttpHeaders.CACHE_CONTROL, "no-cache");
-
-            long timeout = 30L * 60 * 1000;
-            SseEmitter emitter = registry.register(meId, timeout);
-
-            // 연결 확인 이벤트
-            Map<String, Object> payload = new HashMap<>();
-            payload.put("serverTime", LocalDateTime.now().toString());
-            if (lastEventId != null) {
-                payload.put("lastEventId", lastEventId);
-            }
-            registry.send(meId, "connected", payload, null);
-
             var missed = eventStore.replayAfter(meId, lastEventId);
             for (var e : missed) {
                 registry.send(
@@ -66,12 +68,11 @@ public class SseController {
                         e.id()
                 );
             }
-
-            return emitter;
-        } catch (Exception e) {
-            // 이 로그가 찍히면 "컨트롤러 내부에서 터진 것" 확정
-            log.error("SSE subscribe failed. userId={}", userId, e);
-            throw e;
+        } catch (Exception ex) {
+            // replay 실패는 구독 자체를 실패시키지 않는 편이 UX에 좋음
+            log.warn("SSE replay failed. userId={} lastEventId={}", userId, lastEventId, ex);
         }
+
+        return emitter;
     }
 }

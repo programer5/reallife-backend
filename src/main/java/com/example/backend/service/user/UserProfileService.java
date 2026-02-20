@@ -47,6 +47,29 @@ public class UserProfileService {
         );
     }
 
+    // ✅ 추가: UUID로 프로필 조회
+    @Transactional(readOnly = true)
+    public ProfileResponse getProfileById(UUID userId) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
+
+        long followerCount = followRepository.countByFollowingIdAndDeletedFalse(user.getId());
+        long followingCount = followRepository.countByFollowerIdAndDeletedFalse(user.getId());
+
+        String profileImageUrl = toFileUrl(user.getProfileImageFileId());
+
+        return new ProfileResponse(
+                user.getId(),
+                user.getHandle(),
+                user.getName(),
+                user.getBio(),
+                user.getWebsite(),
+                profileImageUrl,
+                followerCount,
+                followingCount
+        );
+    }
+
     @Transactional
     public ProfileResponse updateMyProfile(UUID meId, ProfileUpdateRequest request) {
         User me = userRepository.findById(meId)

@@ -31,12 +31,17 @@ public class NotificationEventListener {
     /**
      * 메시지 저장 트랜잭션이 커밋된 이후에만 실행
      * 알림 저장은 별도 새 트랜잭션으로 실행
+     *
+     * ✅ 중요:
+     * - MESSAGE_RECEIVED 알림의 refId는 "conversationId"로 사용 (프론트에서 /chat/{id}로 이동하기 위함)
+     * - 같은 대화방에서 새 메시지가 올 때마다 알림이 다시 떠야 하므로 createOrRevive 사용
      */
     @Transactional(propagation = Propagation.REQUIRES_NEW)
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
     public void onMessageSent(MessageSentEvent event) {
 
-        log.info("🚨 NotificationEventListener CALLED | messageId={}", event.messageId());
+        log.info("🚨 NotificationEventListener CALLED | messageId={} convId={}",
+                event.messageId(), event.conversationId());
 
         List<UUID> targets = memberRepository
                 .findUserIdsByConversationId(event.conversationId())
@@ -45,15 +50,15 @@ public class NotificationEventListener {
                 .toList();
 
         for (UUID targetId : targets) {
-            notificationCommandService.createIfNotExists(
+            notificationCommandService.createOrRevive(
                     targetId,
                     NotificationType.MESSAGE_RECEIVED,
-                    event.messageId(),
+                    event.conversationId(),   // ✅ conversationId
                     "새 메시지가 도착했습니다."
             );
         }
 
-        log.info("🔔 notifications created | convId={} targets={}",
+        log.info("🔔 notifications upserted | convId={} targets={}",
                 event.conversationId(), targets.size());
     }
 }

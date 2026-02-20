@@ -51,7 +51,6 @@ public class Notification extends BaseEntity {
         this.type = type;
         this.refId = refId;
         this.body = body;
-        // deleted는 BaseEntity가 관리 (기본 false)
     }
 
     public static Notification create(UUID userId, NotificationType type, UUID refId, String body) {
@@ -74,5 +73,17 @@ public class Notification extends BaseEntity {
 
     public boolean isRead() {
         return readAt != null;
+    }
+
+    /**
+     * ✅ "되살리기" (FOLLOW 같은 알림에 필요)
+     * - 다시 팔로우하면 다시 알림이 떠야 하므로 readAt 초기화
+     * - deleted=true 였어도 복구
+     * - body 최신화
+     */
+    public void revive(String newBody) {
+        this.restore();       // BaseEntity: deleted=false 로 복구
+        this.readAt = null;   // 미읽음으로 되돌림
+        this.body = newBody;  // 메시지 갱신
     }
 }

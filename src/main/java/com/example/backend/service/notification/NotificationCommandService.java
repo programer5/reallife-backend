@@ -21,6 +21,9 @@ public class NotificationCommandService {
     private final NotificationRepository notificationRepository;
     private final ApplicationEventPublisher eventPublisher;
 
+    /**
+     * 기존 방식(메시지/좋아요 등): "없으면 생성"
+     */
     @Transactional
     public void createIfNotExists(UUID userId, NotificationType type, UUID refId, String body) {
 
@@ -30,19 +33,39 @@ public class NotificationCommandService {
 
         try {
             Notification saved = notificationRepository.save(Notification.create(userId, type, refId, body));
-
-            // ✅ 저장 성공했을 때만 이벤트 발행
-            eventPublisher.publishEvent(new NotificationCreatedEvent(
-                    saved.getId(),
-                    saved.getUserId(),
-                    saved.getType(),
-                    saved.getRefId(),
-                    saved.getBody(),
-                    saved.getCreatedAt()
-            ));
+            publishCreated(saved);
 
         } catch (DataIntegrityViolationException e) {
             log.info("🔁 duplicate notification ignored | userId={} type={} refId={}", userId, type, refId);
         }
+    }
+
+    /**
+     * ✅ 추천: FOLLOW 전용 "되살리기"
+     * - 이미 있으면 revive + 다시 이벤트 발행(SSE/화면 갱신용)
+     * - 없으면 새로 생성
+     */
+    @Transactional
+    public void createOrRevive(UUID userId, NotificationType type, UUID refId, String body) {
+        Notification n = notificationRepository.findByUserIdAndTypeAndRefId(userId, type, refId)
+                .map(existing -> {
+                    existing.revive(body);
+                    return existing;
+                })
+                .orElseGet(() -> Notification.create(userId, type, refId, body));
+
+        Notification saved = notificationRepository.save(n);
+        publishCreated(saved);
+    }
+
+    private void publishCreated(Notification saved) {
+        eventPublisher.publishEvent(new NotificationCreatedEvent(
+                saved.getId(),
+                saved.getUserId(),
+                saved.getType(),
+                saved.getRefId(),
+                saved.getBody(),
+                saved.getCreatedAt()
+        ));
     }
 }

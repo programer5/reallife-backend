@@ -13,6 +13,7 @@ public record NotificationListResponse(
     public record Item(
             UUID id,
             String type,
+            UUID refId,          // ✅ 추가
             String body,
             boolean read,
             LocalDateTime createdAt
@@ -23,6 +24,7 @@ public record NotificationListResponse(
                 .map(n -> new Item(
                         n.getId(),
                         n.getType().name(),
+                        n.getRefId(),     // ✅ 추가
                         n.getBody(),
                         n.isRead(),
                         n.getCreatedAt()

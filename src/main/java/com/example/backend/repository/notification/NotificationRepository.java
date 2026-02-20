@@ -25,4 +25,10 @@ public interface NotificationRepository extends JpaRepository<Notification, UUID
     // ✅ 추가(가벼운 존재 확인)
     boolean existsByIdAndUserIdAndDeletedFalse(UUID id, UUID userId);
 
+    /**
+     * ✅ FOLLOW 같은 알림 되살리기용
+     * deleted 여부 무관하게 한 번이라도 생성된 알림을 찾는다.
+     * (DB에 UNIQUE가 걸려있으면, deleted=true여도 insert가 막히는 경우가 있어 revive가 안전함)
+     */
+    Optional<Notification> findByUserIdAndTypeAndRefId(UUID userId, NotificationType type, UUID refId);
 }

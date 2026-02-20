@@ -3,6 +3,7 @@ package com.example.backend.config;
 import com.example.backend.security.JwtAuthenticationFilter;
 import com.example.backend.security.JwtTokenProvider;
 import com.example.backend.security.SecurityErrorHandler;
+import jakarta.servlet.DispatcherType;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -32,6 +33,7 @@ public class SecurityConfig {
                         .accessDeniedHandler(securityErrorHandler)
                 )
                 .authorizeHttpRequests(auth -> auth
+                        .dispatcherTypeMatchers(DispatcherType.ASYNC).permitAll()
                         .requestMatchers("/docs/**", "/static/**", "/favicon.ico", "/error").permitAll()
                         .requestMatchers("/api/users").permitAll()
 
