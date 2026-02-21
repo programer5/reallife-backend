@@ -205,7 +205,7 @@ git rm --cached -r uploads build
 현재 워크플로는 “빌드/테스트/문서” 중심이며, **실서버 배포(CD)** 단계는 별도로 두는 것을 추천합니다.
 
 #### CD 1단계(추천): Docker 이미지 빌드 → 서버에서 docker compose로 배포
-1) GitHub Actions에서 Docker 이미지를 빌드해서 **GHCR(ghcr.io)** 로 push  
+1) GitHub Actions에서 Docker 이미지를 빌드해서 **GHCR(ghcr.io)** 로 push
 2) 서버(VPS)에서 `docker compose pull && docker compose up -d`로 반영
 
 필요 GitHub Secrets(예시):
