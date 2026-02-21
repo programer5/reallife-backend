@@ -35,6 +35,10 @@ public class SecurityConfig {
                 .authorizeHttpRequests(auth -> auth
                         .dispatcherTypeMatchers(DispatcherType.ASYNC).permitAll()
                         .requestMatchers("/docs/**", "/static/**", "/favicon.ico", "/error").permitAll()
+
+                        // ✅ 헬스체크(무조건 공개)
+                        .requestMatchers("/api/health").permitAll()
+
                         .requestMatchers("/api/users").permitAll()
 
                         // ✅ auth: 공개
