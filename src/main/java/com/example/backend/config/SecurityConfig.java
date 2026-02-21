@@ -36,6 +36,7 @@ public class SecurityConfig {
                         .dispatcherTypeMatchers(DispatcherType.ASYNC).permitAll()
                         .requestMatchers("/docs/**", "/static/**", "/favicon.ico", "/error").permitAll()
 
+                        // ✅ health/version: 공개
                         .requestMatchers("/api/health", "/api/version").permitAll()
 
                         .requestMatchers("/api/users").permitAll()
