@@ -36,8 +36,7 @@ public class SecurityConfig {
                         .dispatcherTypeMatchers(DispatcherType.ASYNC).permitAll()
                         .requestMatchers("/docs/**", "/static/**", "/favicon.ico", "/error").permitAll()
 
-                        // ✅ 헬스체크(무조건 공개)
-                        .requestMatchers("/api/health").permitAll()
+                        .requestMatchers("/api/health", "/api/version").permitAll()
 
                         .requestMatchers("/api/users").permitAll()
 
