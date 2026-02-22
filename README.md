@@ -5,11 +5,21 @@ Spring Boot 기반 백엔드 서버입니다.
 
 ---
 
+## 0) 운영 원칙 (현재 상황 / 비용 최소화 / 수익화 목표)
+
+- 현재는 개발 단계이며 **도메인은 아직 구매하지 않았습니다.**
+- 가능한 한 **무료/저비용 인프라를 우선**합니다. (무료 VPS/Free Tier 등)
+- 실제 웹/앱으로 런칭 후에는 **운영비를 감당할 수 있도록 수익화가 필수**입니다.
+  - 초기: 광고/간단한 유료 기능/후원 등 현실적인 방식부터
+  - 중장기: 구독/프리미엄 기능/크리에이터 수익모델
+
+---
+
 ## 1) Tech Stack (현재)
 
 - **Java / Spring Boot**
   - Spring Web, Validation
-  - Spring Security (JWT)
+  - Spring Security
   - Spring Data JPA
 - **DB / Cache**
   - MySQL
@@ -21,9 +31,9 @@ Spring Boot 기반 백엔드 서버입니다.
   - Flyway
 - **API Docs**
   - Spring REST Docs (Asciidoctor)
-- **Infra (로컬)**
+- **Infra (로컬/서버)**
   - Docker / Docker Compose
-  - Nginx Reverse Proxy
+  - Nginx Reverse Proxy (프론트 정적서빙 + `/api` 프록시 + `/docs` 서빙)
 
 ---
 
@@ -31,15 +41,38 @@ Spring Boot 기반 백엔드 서버입니다.
 
 ### Auth / Account
 - 회원가입
-- 로그인(Access Token 발급)
+- 로그인(토큰 발급)
 - Refresh Token Rotation(재발급 토큰 회전)
 - Refresh Token 재사용 감지/차단
 - 전 기기 로그아웃(Logout-All)
 - 내 정보 조회: `GET /api/me`
 
+#### ✅ Cookie 기반 인증 (브라우저/SSE 권장)
+브라우저 SPA + SSE를 고려할 때 **HttpOnly 쿠키 기반 인증**을 권장합니다.
+
+- `POST /api/auth/login-cookie`
+  - `access_token`(HttpOnly) / `refresh_token`(HttpOnly) Set-Cookie
+- `POST /api/auth/refresh-cookie`
+  - refresh_token 쿠키로 access/refresh 재발급
+- `POST /api/auth/logout-cookie`
+- `POST /api/auth/logout-all-cookie`
+
+> 프론트(axios)에서는 `withCredentials: true` + 401 발생 시 `refresh-cookie` 호출 후 원요청 1회 재시도(무한루프 방지) 패턴을 권장합니다.
+
+#### Bearer 방식(대안)
+모바일 앱/서버-서버 호출 등 “쿠키를 쓰기 애매한 환경”에서 사용합니다.
+
+- `POST /api/auth/login` → accessToken 발급
+- 요청 헤더: `Authorization: Bearer <accessToken>`
+
+---
+
 ### Users / Social
 - 사용자 검색(커서 페이징)
 - 팔로우/언팔로우
+- 프로필 조회 (핸들 기반)
+
+---
 
 ### Posts / Feed
 - 게시글 생성/조회/삭제
@@ -59,12 +92,16 @@ Spring Boot 기반 백엔드 서버입니다.
 > `<img src="...">`는 Authorization 헤더를 넣기 어렵기 때문에, `/download`는 브라우저 직접 접근(헤더 없이)도 가능하도록 설계되어 있습니다.  
 > 추후 “비공개 계정/권한”이 필요해지면 Signed URL 방식으로 고도화할 수 있습니다.
 
+---
+
 ### DM / Messages
 - DIRECT 대화방 생성/조회(Idempotent)
 - 대화방 목록(커서 페이징)
 - 메시지 목록(커서 페이징)
 - 메시지 자동 읽음 처리(last_read_at 갱신)
 - 메시지 삭제(나만 삭제/모두 삭제)
+
+---
 
 ### Notifications / Realtime(SSE)
 - 알림 목록(커서 페이징)
@@ -103,13 +140,14 @@ docker compose ps
 |---|---|
 | Docs (Nginx) | http://localhost/docs |
 | API | http://localhost/api |
+| SSE | http://localhost/api/sse/subscribe |
 | File download | http://localhost/api/files/{fileId}/download |
 
 ---
 
-## 4) Postman 테스트 가이드(추천 흐름)
+## 4) Postman 테스트 가이드 (추천 흐름)
 
-### 4-1) 로그인 → 토큰 확보
+### 4-1) 로그인 → 토큰 확보(Bearer)
 - `POST {{baseUrl}}/api/auth/login`
 - 응답의 `accessToken`을 복사
 
@@ -144,23 +182,46 @@ docker compose ps
 
 ---
 
-## 5) API 문서(REST Docs)
+## 5) API 문서 (Spring REST Docs)
+
+Spring REST Docs는 다음 흐름으로 동작합니다:
+
+1) 테스트 실행 시 `document("snippet-id")`로 스니펫 생성  
+2) `build/generated-snippets/` 아래에 스니펫 폴더 생성  
+3) `src/docs/asciidoc/index.adoc`가 스니펫을 include  
+4) asciidoctor가 HTML 생성
 
 로컬에서 문서 생성:
 ```bash
 ./gradlew clean test asciidoctor
 ```
 
-- 결과: `build/docs/asciidoc/`
+- 스니펫: `build/generated-snippets/`
+- 결과: `build/docs/asciidoc/index.html`
 
 ---
 
-## 6) Git 체크(실서비스/오픈소스 안전)
+## 6) SSE 운영 팁 (Nginx/Proxy)
 
-### 6-1) 커밋 금지 파일
-- `.env`, `uploads/`, `build/`, 개인 설정 yml(`application-*.yml` 중 dev/prod/local 등)
+SSE는 연결을 오래 유지하므로 프록시 설정이 중요합니다.
 
-`.gitignore` 예시:
+권장(요약):
+- `proxy_buffering off;` (버퍼링 비활성화)
+- `proxy_read_timeout 3600s;` (충분히 크게)
+- `X-Accel-Buffering: no` 헤더
+
+---
+
+## 7) Git 체크 (실서비스/오픈소스 안전)
+
+✅ 커밋 금지(레포에 포함되면 안 됨):
+- `.env`
+- `uploads/`
+- `build/`
+- `src/main/resources/application-*.yml` 중 dev/prod/local 같이 비밀값 들어가는 파일
+- `.idea/`, `.vscode/`, `*.log`
+
+예시 `.gitignore`:
 ```gitignore
 .env
 uploads/
@@ -182,130 +243,19 @@ git rm --cached -r uploads build
 
 ---
 
-## 7) CI / Docs / CD
+## 8) CI / Docs / CD
 
-이 레포는 GitHub Actions 기반으로 **CI(테스트) + Docs 배포(REST Docs → GitHub Pages)** 가 이미 구성되어 있습니다.
+- CI: 테스트/문서 생성
+- Docs: `build/docs/asciidoc/`을 배포 (GitHub Pages 등)
 
-### 7-1) CI (현재)
-- `.github/workflows/ci.yml`
-  - Redis 서비스 컨테이너를 띄운 뒤
-  - `SPRING_PROFILES_ACTIVE=test`로 테스트 실행
-  - `./gradlew clean test asciidoctor`
-  - 생성된 REST Docs 결과물을 Artifact로 업로드
-
-### 7-2) Docs 배포 (현재)
-- `.github/workflows/docs.yml`
-  - main 브랜치 push 또는 수동 실행(`workflow_dispatch`) 시
-  - `./gradlew clean test asciidoctor`
-  - `build/docs/asciidoc/`을 GitHub Pages로 배포
-
-> GitHub Pages URL은 레포 Settings → Pages에서 확인할 수 있습니다.
-
-### 7-3) CD (추가 권장)
-현재 워크플로는 “빌드/테스트/문서” 중심이며, **실서버 배포(CD)** 단계는 별도로 두는 것을 추천합니다.
-
-#### CD 1단계(추천): Docker 이미지 빌드 → 서버에서 docker compose로 배포
-1) GitHub Actions에서 Docker 이미지를 빌드해서 **GHCR(ghcr.io)** 로 push
-2) 서버(VPS)에서 `docker compose pull && docker compose up -d`로 반영
-
-필요 GitHub Secrets(예시):
-- `GHCR_TOKEN` (또는 `GITHUB_TOKEN`로 대체 가능)
-- `DEPLOY_HOST`, `DEPLOY_USER`, `DEPLOY_SSH_KEY`, `DEPLOY_PATH`
-
-(복붙용) `cd.yml` 예시:
-```yaml
-name: CD
-on:
-  push:
-    branches: [ "main" ]
-
-jobs:
-  build-and-deploy:
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
-      packages: write
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-java@v4
-        with:
-          distribution: temurin
-          java-version: "17"
-          cache: gradle
-
-      - name: Build
-        run: ./gradlew clean bootJar
-
-      - name: Login to GHCR
-        run: echo "${{ secrets.GHCR_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
-
-      - name: Build & Push image
-        run: |
-          IMAGE=ghcr.io/${{ github.repository_owner }}/reallife-api:latest
-          docker build -t $IMAGE .
-          docker push $IMAGE
-
-      - name: Deploy via SSH (docker compose pull/up)
-        uses: appleboy/ssh-action@v1.2.0
-        with:
-          host: ${{ secrets.DEPLOY_HOST }}
-          username: ${{ secrets.DEPLOY_USER }}
-          key: ${{ secrets.DEPLOY_SSH_KEY }}
-          script: |
-            cd ${{ secrets.DEPLOY_PATH }}
-            docker compose pull
-            docker compose up -d
-            docker image prune -f
-```
-
-#### CD 2단계: Kubernetes로 이전
-- 이미지 빌드/푸시는 동일
-- 배포 단계에서 `kubectl apply -k k8s/overlays/prod` 또는 Helm upgrade 실행
-
-> 처음부터 K8s로 가기보다, **Docker Compose CD로 운영 흐름을 만든 뒤** K8s로 이전하는 것이 학습/운영 모두에 유리합니다.
+CD(실서버 배포)는 Docker Compose 기반으로 단계를 나눠서 추가하는 것을 권장합니다.
 
 ---
 
-## 8) Kafka / Event-Driven / MSA 확장 계획 (추가 예정)
+## 9) Kafka / Event-Driven / MSA 확장 계획 (추가 예정)
 
-> 지금은 “기능 완성 + 데이터 모델 안정화”가 1순위입니다.  
-> 그 다음 **Kafka를 이용해 도메인 이벤트를 발행하고**, 점진적으로 서비스 분리를 진행합니다.  
-> (처음부터 MSA로 시작하면 개발 속도/디버깅 비용이 급격히 증가할 수 있어, **단계적 전환**을 권장합니다.)
-
-### 8-1) 도입 목표
-- 서비스 간 결합도를 낮추고(비동기 이벤트), 확장성과 장애 격리를 높입니다.
-- “게시글 생성 → 알림/피드/검색 인덱싱” 같은 후처리를 이벤트로 분리합니다.
-
-### 8-2) 이벤트 설계(초안)
-- `user.created`
-- `follow.created`, `follow.deleted`
-- `post.created`, `post.deleted`
-- `comment.created`
-- `like.created`, `like.deleted`
-- `dm.message.created`
-- `notification.created`
-
-> 이벤트는 **Outbox 패턴**으로 발행(추천)
-
-### 8-3) 점진적 서비스 분리 후보(추천 순서)
-1) Notification Service
-2) Search/Indexing Service
-3) Feed Service
-4) Media Service(썸네일/리사이즈/스토리지)
-
----
-
-## 9) Kubernetes(K8s) 배포 계획 (추가 예정)
-
-### 9-1) 목표
-- Nginx Ingress + TLS(HTTPS)
-- API 서버 다중 레플리카 + 오토스케일(선택)
-- ConfigMap/Secret로 설정 분리
-
-### 9-2) 디렉터리 구조(예정)
-- `k8s/base/`
-- `k8s/overlays/dev`, `k8s/overlays/prod` (kustomize)
-- 또는 `helm/`
+지금은 “기능 완성 + 데이터 모델 안정화”가 1순위입니다.  
+그 다음 Kafka + Outbox 패턴 기반으로 이벤트 발행/소비 후 점진적 서비스 분리를 권장합니다.
 
 ---
 
@@ -316,7 +266,6 @@ jobs:
 - [ ] CD 추가(서버 배포 자동화) → 이후 K8s 전환
 - [ ] Kafka 도입: Outbox + 도메인 이벤트 발행/소비
 - [ ] Notification/Search/Feed 등 점진적 서비스 분리(MSA)
-- [ ] Vue.js 프론트엔드
 - [ ] HTTPS 실배포(도메인/서버 구성)
 
 ---
