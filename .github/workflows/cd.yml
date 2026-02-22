@@ -61,26 +61,21 @@ jobs:
     permissions:
       contents: read
 
-    # ✅ secrets는 env로만 받기
-    env:
-      DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
-      DEPLOY_USER: ${{ secrets.DEPLOY_USER }}
-      DEPLOY_SSH_KEY: ${{ secrets.DEPLOY_SSH_KEY }}
-      DEPLOY_PATH: ${{ secrets.DEPLOY_PATH }}
-
-    # ✅ job if에서는 env만 참조
-    if: ${{ env.DEPLOY_HOST != '' }}
-
     steps:
+      - name: Skip deploy (no server secrets yet)
+        if: ${{ secrets.DEPLOY_HOST == '' }}
+        run: echo "DEPLOY_HOST is empty. Skipping deploy."
+
       - name: Deploy via SSH
+        if: ${{ secrets.DEPLOY_HOST != '' }}
         uses: appleboy/ssh-action@v1.0.3
         with:
-          host: ${{ env.DEPLOY_HOST }}
-          username: ${{ env.DEPLOY_USER }}
-          key: ${{ env.DEPLOY_SSH_KEY }}
+          host: ${{ secrets.DEPLOY_HOST }}
+          username: ${{ secrets.DEPLOY_USER }}
+          key: ${{ secrets.DEPLOY_SSH_KEY }}
           script: |
             set -e
-            cd ${{ env.DEPLOY_PATH }}
+            cd ${{ secrets.DEPLOY_PATH }}
 
             git checkout main
             git pull origin main
