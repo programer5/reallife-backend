@@ -16,6 +16,11 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      - name: Debug - list repo files
+        run: |
+          pwd
+          ls -la
+
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
@@ -26,12 +31,12 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      # 1) backend app image
+      # ✅ Backend app image (this repo root is backend)
       - name: Build & Push backend app
         uses: docker/build-push-action@v6
         with:
-          context: ./backend
-          file: ./backend/Dockerfile
+          context: .
+          file: ./Dockerfile
           push: true
           tags: |
             ghcr.io/${{ github.repository }}/reallife-app:latest
@@ -39,24 +44,10 @@ jobs:
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
-      # 2) nginx(front+proxy) image
-      - name: Build & Push nginx (with front dist)
-        uses: docker/build-push-action@v6
-        with:
-          context: .
-          file: ./docker/nginx.Dockerfile
-          push: true
-          tags: |
-            ghcr.io/${{ github.repository }}/reallife-nginx:latest
-            ghcr.io/${{ github.repository }}/reallife-nginx:${{ github.sha }}
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
-
   deploy:
     needs: build-and-push
     runs-on: ubuntu-latest
 
-    # ✅ secrets는 env로 “주입만” 하고, if 표현식은 쓰지 않는다
     env:
       DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
       DEPLOY_USER: ${{ secrets.DEPLOY_USER }}
@@ -80,7 +71,6 @@ jobs:
           echo "${DEPLOY_SSH_KEY}" > ~/.ssh/id_rsa
           chmod 600 ~/.ssh/id_rsa
 
-          # host key 체크를 자동 통과(초기 세팅 편의). 운영에서 엄격하게 하려면 known_hosts 등록 권장.
           SSH_OPTS="-o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null"
 
           ssh ${SSH_OPTS} -i ~/.ssh/id_rsa "${DEPLOY_USER}@${DEPLOY_HOST}" << 'EOF'
@@ -90,10 +80,8 @@ jobs:
             git checkout main
             git pull origin main
 
-            docker compose -f backend/docker-compose.prod.yml pull
-            docker compose -f backend/docker-compose.prod.yml up -d
+            docker compose -f docker-compose.prod.yml pull
+            docker compose -f docker-compose.prod.yml up -d
 
-            docker compose -f backend/docker-compose.prod.yml ps
-            curl -fsS http://localhost/api/health
-            curl -fsS http://localhost/api/version || true
+            docker compose -f docker-compose.prod.yml ps
           EOF
