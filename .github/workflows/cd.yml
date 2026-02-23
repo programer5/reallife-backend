@@ -31,7 +31,7 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      # ✅ Backend app image (this repo root is backend)
+      # ✅ Backend app image (backend-only repo: Dockerfile at repo root)
       - name: Build & Push backend app
         uses: docker/build-push-action@v6
         with:
@@ -43,45 +43,3 @@ jobs:
             ghcr.io/${{ github.repository }}/reallife-app:${{ github.sha }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
-
-  deploy:
-    needs: build-and-push
-    runs-on: ubuntu-latest
-
-    env:
-      DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
-      DEPLOY_USER: ${{ secrets.DEPLOY_USER }}
-      DEPLOY_SSH_KEY: ${{ secrets.DEPLOY_SSH_KEY }}
-      DEPLOY_PATH: ${{ secrets.DEPLOY_PATH }}
-
-    steps:
-      - name: Optional deploy (skip if no server yet)
-        shell: bash
-        run: |
-          set -e
-
-          if [ -z "${DEPLOY_HOST}" ]; then
-            echo "DEPLOY_HOST is empty. No server configured yet -> skip deploy."
-            exit 0
-          fi
-
-          echo "Server configured. Start deploy..."
-
-          mkdir -p ~/.ssh
-          echo "${DEPLOY_SSH_KEY}" > ~/.ssh/id_rsa
-          chmod 600 ~/.ssh/id_rsa
-
-          SSH_OPTS="-o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null"
-
-          ssh ${SSH_OPTS} -i ~/.ssh/id_rsa "${DEPLOY_USER}@${DEPLOY_HOST}" << 'EOF'
-            set -e
-            cd "${DEPLOY_PATH}"
-
-            git checkout main
-            git pull origin main
-
-            docker compose -f docker-compose.prod.yml pull
-            docker compose -f docker-compose.prod.yml up -d
-
-            docker compose -f docker-compose.prod.yml ps
-          EOF
