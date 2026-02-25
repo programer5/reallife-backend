@@ -20,9 +20,10 @@ public class MessageQueryController {
             @PathVariable UUID conversationId,
             @RequestParam(required = false) String cursor,
             @RequestParam(defaultValue = "20") int size,
+            @RequestHeader(value = "X-Conversation-Unlock-Token", required = false) String unlockToken,
             Authentication authentication
     ) {
         UUID meId = UUID.fromString(authentication.getName());
-        return messageQueryService.list(conversationId, meId, cursor, size);
+        return messageQueryService.list(conversationId, meId, cursor, size, unlockToken);
     }
 }

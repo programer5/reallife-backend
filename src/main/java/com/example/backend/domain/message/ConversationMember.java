@@ -40,6 +40,17 @@ public class ConversationMember extends BaseEntity {
     @Column(name = "last_read_at")
     private LocalDateTime lastReadAt;
 
+    // ✅ DM Lock (per-user per-conversation)
+    @Column(name = "lock_enabled", nullable = false)
+    private boolean lockEnabled = false;
+
+    @Column(name = "lock_password_hash")
+    private String lockPasswordHash;
+
+    // 잠금 설정이 바뀌면 이전 unlock token 무효화
+    @Column(name = "lock_version")
+    private String lockVersion;
+
     private ConversationMember(UUID conversationId, UUID userId) {
         this.conversationId = conversationId;
         this.userId = userId;
@@ -55,5 +66,17 @@ public class ConversationMember extends BaseEntity {
 
     public void markReadAt(LocalDateTime at) {
         this.lastReadAt = at;
+    }
+
+    public void enableLock(String passwordHash) {
+        this.lockEnabled = true;
+        this.lockPasswordHash = passwordHash;
+        this.lockVersion = UUID.randomUUID().toString();
+    }
+
+    public void disableLock() {
+        this.lockEnabled = false;
+        this.lockPasswordHash = null;
+        this.lockVersion = UUID.randomUUID().toString(); // 기존 토큰 무효화
     }
 }

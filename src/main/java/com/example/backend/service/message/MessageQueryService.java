@@ -22,6 +22,7 @@ public class MessageQueryService {
     private final MessageQueryRepository messageQueryRepository;
     private final ConversationRepository conversationRepository;
     private final ConversationMemberRepository memberRepository;
+    private final ConversationLockService lockService;
 
     /**
      * GET /api/conversations/{conversationId}/messages
@@ -34,7 +35,8 @@ public class MessageQueryService {
             UUID conversationId,
             UUID meId,
             String cursor,
-            int size
+            int size,
+            String unlockToken
     ) {
         // ✅ 1) 존재 확인 먼저 (404)
         Conversation conversation = conversationRepository.findById(conversationId)
@@ -44,6 +46,9 @@ public class MessageQueryService {
         if (!memberRepository.existsByConversationIdAndUserId(conversationId, meId)) {
             throw new BusinessException(ErrorCode.MESSAGE_FORBIDDEN);
         }
+
+        // ✅ DM Lock: 잠금된 대화는 unlock token 없으면 차단
+        lockService.ensureUnlocked(conversationId, meId, unlockToken);
 
         int pageSize = Math.min(Math.max(size, 1), 50);
         Cursor decoded = Cursor.decode(cursor);

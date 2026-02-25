@@ -65,9 +65,9 @@ class MessageQueryControllerDocsTest {
         UUID conversationId = conversationService.createOrGetDirect(me.getId(), target.getId());
 
         // 메시지 3개 생성 (size=2면 hasNext=true)
-        messageCommandService.send(me.getId(), conversationId, new MessageSendRequest("메시지 1", List.of()));
-        messageCommandService.send(me.getId(), conversationId, new MessageSendRequest("메시지 2", List.of()));
-        messageCommandService.send(me.getId(), conversationId, new MessageSendRequest("메시지 3", List.of()));
+        messageCommandService.send(me.getId(), conversationId, new MessageSendRequest("메시지 1", List.of()), null);
+        messageCommandService.send(me.getId(), conversationId, new MessageSendRequest("메시지 2", List.of()), null);
+        messageCommandService.send(me.getId(), conversationId, new MessageSendRequest("메시지 3", List.of()), null);
 
         mockMvc(restDocumentation)
                 .perform(get("/api/conversations/{conversationId}/messages", conversationId)
@@ -122,9 +122,9 @@ class MessageQueryControllerDocsTest {
 
         UUID conversationId = conversationService.createOrGetDirect(me.getId(), target.getId());
 
-        messageCommandService.send(me.getId(), conversationId, new MessageSendRequest("메시지 1", List.of()));
-        messageCommandService.send(me.getId(), conversationId, new MessageSendRequest("메시지 2", List.of()));
-        messageCommandService.send(me.getId(), conversationId, new MessageSendRequest("메시지 3", List.of()));
+        messageCommandService.send(me.getId(), conversationId, new MessageSendRequest("메시지 1", List.of()), null);
+        messageCommandService.send(me.getId(), conversationId, new MessageSendRequest("메시지 2", List.of()), null);
+        messageCommandService.send(me.getId(), conversationId, new MessageSendRequest("메시지 3", List.of()), null);
 
         String first = mockMvc(restDocumentation)
                 .perform(get("/api/conversations/{conversationId}/messages", conversationId)

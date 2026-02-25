@@ -36,6 +36,8 @@ public enum ErrorCode {
 
     // Conversation
     CONVERSATION_NOT_FOUND(HttpStatus.NOT_FOUND, "MESSAGE_CONVERSATION_NOT_FOUND", "대화방을 찾을 수 없습니다."),
+    CONVERSATION_LOCKED(HttpStatus.LOCKED, "CONVERSATION_LOCKED", "잠금된 대화입니다."),
+    CONVERSATION_LOCK_PASSWORD_INVALID(HttpStatus.FORBIDDEN, "CONVERSATION_LOCK_PASSWORD_INVALID", "비밀번호가 올바르지 않습니다."),
 
     // File
     FILE_TOO_LARGE(HttpStatus.BAD_REQUEST, "FILE_TOO_LARGE", "파일 크기가 너무 큽니다."),

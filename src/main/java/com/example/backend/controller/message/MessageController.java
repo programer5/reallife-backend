@@ -3,7 +3,6 @@ package com.example.backend.controller.message;
 import com.example.backend.controller.message.dto.MessageSendRequest;
 import com.example.backend.controller.message.dto.MessageSendResponse;
 import com.example.backend.service.message.MessageCommandService;
-import com.example.backend.service.message.MessageQueryService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.Authentication;
@@ -17,13 +16,13 @@ import java.util.UUID;
 public class MessageController {
 
     private final MessageCommandService commandService;
-    private final MessageQueryService queryService;
 
     @PostMapping
     public MessageSendResponse send(@PathVariable UUID conversationId,
                                     @Valid @RequestBody MessageSendRequest req,
+                                    @RequestHeader(value = "X-Conversation-Unlock-Token", required = false) String unlockToken,
                                     Authentication authentication) {
         UUID meId = UUID.fromString(authentication.getName());
-        return commandService.send(meId, conversationId, req);
+        return commandService.send(meId, conversationId, req, unlockToken);
     }
 }

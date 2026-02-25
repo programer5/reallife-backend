@@ -37,13 +37,17 @@ public class MessageCommandService {
     private final UserRepository userRepository;
     private final ApplicationEventPublisher eventPublisher;
     private final ConversationRepository conversationRepository;
+    private final ConversationLockService lockService;
 
     @Transactional
-    public MessageSendResponse send(UUID meId, UUID conversationId, MessageSendRequest req) {
+    public MessageSendResponse send(UUID meId, UUID conversationId, MessageSendRequest req, String unlockToken) {
 
         if (!memberRepository.existsByConversationIdAndUserId(conversationId, meId)) {
             throw new BusinessException(ErrorCode.MESSAGE_FORBIDDEN);
         }
+
+        // ✅ DM Lock: 잠금된 대화는 unlock token 없으면 차단
+        lockService.ensureUnlocked(conversationId, meId, unlockToken);
 
         userRepository.findById(meId)
                 .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
