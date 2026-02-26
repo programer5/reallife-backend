@@ -1,14 +1,19 @@
 package com.example.backend.service.pin;
 
 import com.example.backend.domain.pin.ConversationPin;
+import com.example.backend.domain.pin.ConversationPinDismissal;
 import com.example.backend.domain.pin.PinStatus;
 import com.example.backend.domain.pin.event.PinCreatedEvent;
+import com.example.backend.exception.BusinessException;
+import com.example.backend.exception.ErrorCode;
+import com.example.backend.repository.pin.ConversationPinDismissalRepository;
 import com.example.backend.repository.pin.ConversationPinRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Duration;
 import java.time.LocalDateTime;
@@ -24,6 +29,7 @@ public class ConversationPinService {
     private final ConversationPinRepository pinRepository;
     private final PinDetectionService detectionService;
     private final ApplicationEventPublisher eventPublisher;
+    private final ConversationPinDismissalRepository dismissalRepository;
 
     public Optional<ConversationPin> tryDetectAndCreateFromMessage(UUID meId, UUID conversationId, String messageContent) {
         if (messageContent == null || messageContent.isBlank()) return Optional.empty();
@@ -73,10 +79,32 @@ public class ConversationPinService {
         return Optional.of(saved);
     }
 
-    public List<ConversationPin> listActivePins(UUID conversationId, int size) {
-        return pinRepository.findByConversationIdAndStatusAndDeletedFalseOrderByCreatedAtDesc(
+    @Transactional
+    public void markDone(UUID meId, UUID pinId) {
+        ConversationPin pin = pinRepository.findById(pinId)
+                .orElseThrow(() -> new BusinessException(ErrorCode.PIN_NOT_FOUND));
+        // (권장) meId가 해당 대화방 멤버인지 체크는 여기서 추가 가능
+        pin.markDone();
+    }
+
+    @Transactional
+    public void cancel(UUID meId, UUID pinId) {
+        ConversationPin pin = pinRepository.findById(pinId)
+                .orElseThrow(() -> new BusinessException(ErrorCode.PIN_NOT_FOUND));
+        pin.cancel();
+    }
+
+    @Transactional
+    public void dismiss(UUID meId, UUID pinId) {
+        // 이미 dismiss면 무시(멱등)
+        if (dismissalRepository.existsByPinIdAndUserId(pinId, meId)) return;
+        dismissalRepository.save(ConversationPinDismissal.of(pinId, meId));
+    }
+
+    public List<ConversationPin> listActivePins(UUID conversationId, UUID userId, int size) {
+        return pinRepository.findActivePinsVisibleToUser(
                 conversationId,
-                PinStatus.ACTIVE,
+                userId,
                 PageRequest.of(0, Math.max(1, Math.min(size, 50)))
         );
     }

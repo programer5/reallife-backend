@@ -39,6 +39,8 @@ public enum ErrorCode {
     CONVERSATION_LOCKED(HttpStatus.LOCKED, "CONVERSATION_LOCKED", "잠금된 대화입니다."),
     CONVERSATION_LOCK_PASSWORD_INVALID(HttpStatus.FORBIDDEN, "CONVERSATION_LOCK_PASSWORD_INVALID", "비밀번호가 올바르지 않습니다."),
 
+    PIN_NOT_FOUND(HttpStatus.NOT_FOUND, "PIN_NOT_FOUND", "핀을 찾을 수 없습니다."),
+
     // File
     FILE_TOO_LARGE(HttpStatus.BAD_REQUEST, "FILE_TOO_LARGE", "파일 크기가 너무 큽니다."),
     FILE_TYPE_NOT_ALLOWED(HttpStatus.BAD_REQUEST, "FILE_TYPE_NOT_ALLOWED", "허용되지 않는 파일 형식입니다."),
@@ -51,7 +53,6 @@ public enum ErrorCode {
     // Comment
     COMMENT_NOT_FOUND(HttpStatus.NOT_FOUND, "COMMENT_NOT_FOUND", "댓글을 찾을 수 없습니다."),
     COMMENT_NOT_OWNED(HttpStatus.FORBIDDEN, "COMMENT_NOT_OWNED", "본인 댓글만 삭제할 수 있습니다.");
-
 
     private final HttpStatus status;
     private final String code;

@@ -26,8 +26,7 @@ public class ConversationPinController {
         // MVP: 권한 체크는 ConversationMember 기반이 더 안전하지만
         // 기존 컨트롤러들과 통일하려면 Service에서 member 체크 붙여도 됨.
         UUID meId = UUID.fromString(userId);
-
-        List<ConversationPin> pins = pinService.listActivePins(conversationId, size);
+        List<ConversationPin> pins = pinService.listActivePins(conversationId, meId, size);
 
         return pins.stream()
                 .map(p -> new ConversationPinResponse(
