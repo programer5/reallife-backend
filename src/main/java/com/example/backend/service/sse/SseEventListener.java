@@ -81,20 +81,20 @@ public class SseEventListener {
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
     public void onPinCreated(PinCreatedEvent event) {
 
+        // ✅ 핀 생성은 "나 포함 전원"에게 보내야 내 화면도 즉시 갱신됨
         List<UUID> targets = memberRepository.findUserIdsByConversationId(event.conversationId());
 
-        Map<String, Object> payload = Map.of(
-                "pinId", event.pinId().toString(),
-                "conversationId", event.conversationId().toString(),
-                "createdBy", event.createdBy().toString(),
-                "type", event.type(),
-                "title", event.title(),
-                "placeText", event.placeText(),
-                "startAt", event.startAt() == null ? null : event.startAt().toString(),
-                "remindAt", event.remindAt() == null ? null : event.remindAt().toString(),
-                "status", event.status(),
-                "createdAt", event.createdAt().toString()
-        );
+        Map<String, Object> payload = new HashMap<>();
+        payload.put("pinId", event.pinId().toString());
+        payload.put("conversationId", event.conversationId().toString());
+        payload.put("createdBy", event.createdBy().toString());
+        payload.put("type", event.type());
+        payload.put("title", event.title());
+        payload.put("placeText", event.placeText()); // null 가능 OK
+        payload.put("startAt", event.startAt() == null ? null : event.startAt().toString());
+        payload.put("remindAt", event.remindAt() == null ? null : event.remindAt().toString());
+        payload.put("status", event.status());
+        payload.put("createdAt", event.createdAt().toString());
 
         for (UUID targetId : targets) {
             pushService.push(targetId, "pin-created", payload, event.pinId().toString());
@@ -106,18 +106,20 @@ public class SseEventListener {
 
         List<UUID> targets = memberRepository.findUserIdsByConversationId(event.conversationId());
 
-        Map<String, Object> payload = Map.of(
-                "pinId", event.pinId().toString(),
-                "conversationId", event.conversationId().toString(),
-                "actorId", event.actorId().toString(),
-                "action", event.action(),
-                "status", event.status(),
-                "title", event.title(),
-                "placeText", event.placeText(),
-                "startAt", event.startAt() == null ? null : event.startAt().toString(),
-                "remindAt", event.remindAt() == null ? null : event.remindAt().toString(),
-                "updatedAt", event.updatedAt().toString()
-        );
+        Map<String, Object> payload = new HashMap<>();
+        payload.put("pinId", event.pinId().toString());
+        payload.put("conversationId", event.conversationId().toString());
+        payload.put("actorId", event.actorId().toString());
+        payload.put("action", event.action());
+        payload.put("status", event.status());
+
+        // ✅ payload 보강(있으면 넣고, null이면 그냥 null)
+        payload.put("title", event.title());
+        payload.put("placeText", event.placeText());
+        payload.put("startAt", event.startAt() == null ? null : event.startAt().toString());
+        payload.put("remindAt", event.remindAt() == null ? null : event.remindAt().toString());
+
+        payload.put("updatedAt", event.updatedAt().toString());
 
         for (UUID targetId : targets) {
             pushService.push(targetId, "pin-updated", payload, event.pinId().toString());
