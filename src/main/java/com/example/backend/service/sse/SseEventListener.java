@@ -91,7 +91,7 @@ public class SseEventListener {
         payload.put("createdBy", event.createdBy().toString());
         payload.put("type", event.type());
         payload.put("title", event.title());
-        payload.put("placeText", event.placeText()); // null 가능 OK
+        payload.put("placeText", event.placeText());
         payload.put("startAt", event.startAt() == null ? null : event.startAt().toString());
         payload.put("remindAt", event.remindAt() == null ? null : event.remindAt().toString());
         payload.put("status", event.status());
@@ -105,7 +105,9 @@ public class SseEventListener {
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
     public void onPinUpdated(PinUpdatedEvent event) {
 
-        List<UUID> targets = memberRepository.findUserIdsByConversationId(event.conversationId());
+        List<UUID> targets = (event.targetUserId() != null)
+                ? List.of(event.targetUserId())
+                : memberRepository.findUserIdsByConversationId(event.conversationId());
 
         Map<String, Object> payload = new HashMap<>();
         payload.put("pinId", event.pinId().toString());
@@ -113,13 +115,10 @@ public class SseEventListener {
         payload.put("actorId", event.actorId().toString());
         payload.put("action", event.action());
         payload.put("status", event.status());
-
-        // ✅ payload 보강(있으면 넣고, null이면 그냥 null)
         payload.put("title", event.title());
         payload.put("placeText", event.placeText());
         payload.put("startAt", event.startAt() == null ? null : event.startAt().toString());
         payload.put("remindAt", event.remindAt() == null ? null : event.remindAt().toString());
-
         payload.put("updatedAt", event.updatedAt().toString());
 
         for (UUID targetId : targets) {

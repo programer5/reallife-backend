@@ -264,6 +264,49 @@ curl -i -b cookies.txt -H "Content-Type: application/json" \
 |`pin-updated` |핀 상태 변경/숨김(done/cancel/dismiss) |해당 대화방 핀 목록 재조회(또는 상단 pinned UI에서 해당 핀 제거/갱신)
 |`notification-created` |새 알림 생성 |알림 목록 재조회 / 뱃지 카운트 갱신
 |===
+[NOTE]
+====
+아래 payload 예시는 **실제 SSE event 데이터(JSON)** 기준입니다.
+SSE에서는 `event: <type>` 헤더로 이벤트 타입이 전달되고, 본문은 JSON 입니다.
+====
+
+===== pin-created payload 예시
+
+[source,json]
+----
+{
+  "pinId": "d31879a0-6555-4b5b-a4ce-ce5bc1afb43c",
+  "conversationId": "04bc3c4c-6c8d-4fc0-8295-02efcd668ff2",
+  "createdBy": "4263e045-f76a-476c-857a-f27690ba83fb",
+  "type": "SCHEDULE",
+  "title": "약속",
+  "placeText": "홍대",
+  "startAt": "2026-02-28T19:00:00",
+  "remindAt": "2026-02-28T18:00:00",
+  "status": "ACTIVE",
+  "createdAt": "2026-02-26T10:22:55.776"
+}
+----
+
+===== pin-updated payload 예시
+
+[source,json]
+----
+{
+  "pinId": "d31879a0-6555-4b5b-a4ce-ce5bc1afb43c",
+  "conversationId": "04bc3c4c-6c8d-4fc0-8295-02efcd668ff2",
+  "actorId": "4263e045-f76a-476c-857a-f27690ba83fb",
+  "action": "DONE",
+  "status": "DONE",
+  "title": "약속",
+  "placeText": "홍대",
+  "startAt": "2026-02-28T19:00:00",
+  "remindAt": "2026-02-28T18:00:00",
+  "updatedAt": "2026-02-26T10:30:10.123"
+}
+----
+
+
 
 [IMPORTANT]
 ====
@@ -628,6 +671,10 @@ include::{snippets}/pins-cancel/http-response.adoc[]
 === 핀 숨김(개인)
 include::{snippets}/pins-dismiss/http-request.adoc[]
 include::{snippets}/pins-dismiss/http-response.adoc[]
+
+=== 핀 장소 수정
+include::{snippets}/pins-update/http-request.adoc[]
+include::{snippets}/pins-update/http-response.adoc[]
 
 ---
 

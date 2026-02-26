@@ -7,6 +7,7 @@ import com.example.backend.domain.pin.event.PinCreatedEvent;
 import com.example.backend.domain.pin.event.PinUpdatedEvent;
 import com.example.backend.exception.BusinessException;
 import com.example.backend.exception.ErrorCode;
+import com.example.backend.repository.message.ConversationMemberRepository;
 import com.example.backend.repository.pin.ConversationPinDismissalRepository;
 import com.example.backend.repository.pin.ConversationPinRepository;
 import lombok.RequiredArgsConstructor;
@@ -31,6 +32,7 @@ public class ConversationPinService {
     private final PinDetectionService detectionService;
     private final ApplicationEventPublisher eventPublisher;
     private final ConversationPinDismissalRepository dismissalRepository;
+    private final ConversationMemberRepository memberRepository;
 
     public Optional<ConversationPin> tryDetectAndCreateFromMessage(UUID meId, UUID conversationId, String messageContent) {
         if (messageContent == null || messageContent.isBlank()) return Optional.empty();
@@ -85,6 +87,10 @@ public class ConversationPinService {
         ConversationPin pin = pinRepository.findById(pinId)
                 .orElseThrow(() -> new BusinessException(ErrorCode.PIN_NOT_FOUND));
 
+        if (!memberRepository.existsByConversationIdAndUserId(pin.getConversationId(), meId)) {
+            throw new BusinessException(ErrorCode.FORBIDDEN);
+        }
+
         pin.markDone();
 
         eventPublisher.publishEvent(new PinUpdatedEvent(
@@ -97,6 +103,7 @@ public class ConversationPinService {
                 pin.getPlaceText(),
                 pin.getStartAt(),
                 pin.getRemindAt(),
+                null, // broadcast
                 LocalDateTime.now()
         ));
     }
@@ -105,6 +112,10 @@ public class ConversationPinService {
     public void cancel(UUID meId, UUID pinId) {
         ConversationPin pin = pinRepository.findById(pinId)
                 .orElseThrow(() -> new BusinessException(ErrorCode.PIN_NOT_FOUND));
+
+        if (!memberRepository.existsByConversationIdAndUserId(pin.getConversationId(), meId)) {
+            throw new BusinessException(ErrorCode.FORBIDDEN);
+        }
 
         pin.cancel();
 
@@ -118,35 +129,71 @@ public class ConversationPinService {
                 pin.getPlaceText(),
                 pin.getStartAt(),
                 pin.getRemindAt(),
+                null, // broadcast
                 LocalDateTime.now()
         ));
     }
 
     @Transactional
     public void dismiss(UUID meId, UUID pinId) {
-        if (dismissalRepository.existsByPinIdAndUserId(pinId, meId)) return;
-
-        dismissalRepository.save(ConversationPinDismissal.of(pinId, meId));
-
-        // dismiss는 pin status가 바뀌는 건 아니라서 status=ACTIVE 유지
         ConversationPin pin = pinRepository.findById(pinId)
                 .orElseThrow(() -> new BusinessException(ErrorCode.PIN_NOT_FOUND));
 
+        if (!memberRepository.existsByConversationIdAndUserId(pin.getConversationId(), meId)) {
+            throw new BusinessException(ErrorCode.FORBIDDEN);
+        }
+
+        if (dismissalRepository.existsByPinIdAndUserId(pinId, meId)) return;
+        dismissalRepository.save(ConversationPinDismissal.of(pinId, meId));
+
+        // ✅ dismiss는 "나만" 숨김이므로 targetUserId 지정
         eventPublisher.publishEvent(new PinUpdatedEvent(
                 pin.getId(),
                 pin.getConversationId(),
                 meId,
                 "DISMISSED",
+                pin.getStatus().name(), // 보통 ACTIVE 유지
+                pin.getTitle(),
+                pin.getPlaceText(),
+                pin.getStartAt(),
+                pin.getRemindAt(),
+                meId, // only me
+                LocalDateTime.now()
+        ));
+    }
+
+    @Transactional
+    public void updatePlaceText(UUID meId, UUID pinId, String placeText) {
+        ConversationPin pin = pinRepository.findById(pinId)
+                .orElseThrow(() -> new BusinessException(ErrorCode.PIN_NOT_FOUND));
+
+        if (!memberRepository.existsByConversationIdAndUserId(pin.getConversationId(), meId)) {
+            throw new BusinessException(ErrorCode.FORBIDDEN);
+        }
+
+        pin.updatePlaceText(placeText);
+
+        eventPublisher.publishEvent(new PinUpdatedEvent(
+                pin.getId(),
+                pin.getConversationId(),
+                meId,
+                "UPDATED",
                 pin.getStatus().name(),
                 pin.getTitle(),
                 pin.getPlaceText(),
                 pin.getStartAt(),
                 pin.getRemindAt(),
+                null, // broadcast (다 같이 보는 핀이라면 broadcast가 맞음)
                 LocalDateTime.now()
         ));
     }
 
     public List<ConversationPin> listActivePins(UUID conversationId, UUID userId, int size) {
+
+        if (!memberRepository.existsByConversationIdAndUserId(conversationId, userId)) {
+            throw new BusinessException(ErrorCode.FORBIDDEN);
+        }
+
         return pinRepository.findActivePinsVisibleToUser(
                 conversationId,
                 userId,

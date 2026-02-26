@@ -81,4 +81,8 @@ public class ConversationPin extends BaseEntity {
     public void cancel() {
         this.status = PinStatus.CANCELED;
     }
+
+    public void updatePlaceText(String placeText) {
+        this.placeText = (placeText == null || placeText.isBlank()) ? null : placeText.trim();
+    }
 }

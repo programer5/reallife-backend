@@ -1,156 +1,198 @@
 package com.example.backend.service.pin;
 
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
-import java.time.LocalDate;
-import java.time.LocalDateTime;
-import java.time.LocalTime;
-import java.time.ZoneId;
-import java.util.List;
+import java.time.*;
+import java.util.Locale;
 import java.util.Optional;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-@Slf4j
 @Service
 public class PinDetectionService {
 
-    // 시간 패턴들 (MVP: 규칙 기반)
-    private static final Pattern P_TIME_HOUR = Pattern.compile("(오전|오후)?\\s*(\\d{1,2})\\s*시(\\s*(\\d{1,2})\\s*분)?");
-    private static final Pattern P_TIME_COLON = Pattern.compile("(\\d{1,2})\\s*:\\s*(\\d{2})");
+    // 시간 패턴
+    private static final Pattern P_TIME_HOUR =
+            Pattern.compile("(오전|오후)?\\s*(\\d{1,2})\\s*시(\\s*(\\d{1,2})\\s*분)?");
+    private static final Pattern P_TIME_COLON =
+            Pattern.compile("(\\d{1,2})\\s*:\\s*(\\d{2})");
 
-    // 날짜 패턴들
-    private static final Pattern P_DATE_SLASH = Pattern.compile("(\\d{1,2})\\s*/\\s*(\\d{1,2})");          // 2/28
-    private static final Pattern P_DATE_DASH = Pattern.compile("(\\d{4})\\s*-\\s*(\\d{1,2})\\s*-\\s*(\\d{1,2})"); // 2026-02-28
+    // 날짜 패턴
+    private static final Pattern P_DATE_SLASH =
+            Pattern.compile("(\\d{1,2})\\s*/\\s*(\\d{1,2})"); // 2/28
+    private static final Pattern P_DATE_DASH =
+            Pattern.compile("(\\d{4})\\s*-\\s*(\\d{1,2})\\s*-\\s*(\\d{1,2})"); // 2026-02-28
+    private static final Pattern P_RELATIVE_DAY =
+            Pattern.compile("(오늘|내일|모레)");
 
-    // 장소 후보(키워드 기반 MVP). 필요하면 쉽게 확장 가능.
-    private static final List<String> PLACE_KEYWORDS = List.of(
-            "홍대", "강남", "강남역", "신촌", "합정", "상수", "연남", "이태원", "성수", "건대", "잠실",
-            "종로", "광화문", "여의도", "서울역", "고속터미널", "사당", "교대", "선릉", "삼성", "역삼"
-    );
+    // 약속 맥락(오탐 방지)
+    private static final Pattern P_INTENT =
+            Pattern.compile("(보자|만나|약속|갈까|볼까|하자|모이|회식|밥|점심|저녁|술)");
 
-    // "~역" 형태를 잡기 위한 간단 패턴
-    private static final Pattern P_STATION = Pattern.compile("([가-힣]{2,6})역");
-
+    // ✅ 기존 코드 호환용 결과 타입
     public record DetectionResult(
-            String title,
-            String placeText,
-            LocalDateTime startAt
+            boolean detected,
+            String type,      // SCHEDULE
+            String title,     // "약속"
+            String placeText, // nullable
+            LocalDateTime startAt,  // nullable
+            LocalDateTime remindAt  // nullable
     ) {}
 
-    public Optional<DetectionResult> detect(String rawMessage) {
-        if (rawMessage == null) return Optional.empty();
-        String msg = rawMessage.trim();
-        if (msg.isBlank()) return Optional.empty();
-
-        String place = detectPlace(msg);
-        LocalDateTime startAt = detectDateTime(msg);
-
-        // MVP: 장소/시간 둘 중 하나라도 있으면 핀 생성
-        if ((place == null || place.isBlank()) && startAt == null) {
-            return Optional.empty();
-        }
-
-        return Optional.of(new DetectionResult("약속", place, startAt));
+    // ✅ 기존 호출부(ConversationPinService)가 쓰는 시그니처 유지
+    public Optional<DetectionResult> detect(String message) {
+        // 서버는 KST 기준으로 동작한다고 가정(프로젝트가 KR 서비스)
+        ZoneId zoneId = ZoneId.of("Asia/Seoul");
+        LocalDate today = LocalDate.now(zoneId);
+        return detect(message, zoneId, today);
     }
 
-    private String detectPlace(String msg) {
-        for (String k : PLACE_KEYWORDS) {
-            if (msg.contains(k)) return k;
-        }
+    // ✅ 새 로직(테스트 주입 가능)
+    public Optional<DetectionResult> detect(String message, ZoneId zoneId, LocalDate today) {
+        if (message == null) return Optional.empty();
 
-        Matcher m = P_STATION.matcher(msg);
-        if (m.find()) {
-            return m.group(1) + "역";
-        }
-        return null;
+        String text = normalize(message);
+        if (text.isBlank()) return Optional.empty();
+
+        // 1) 시간 필수
+        TimeParse tp = parseTime(text);
+        if (tp == null) return Optional.empty();
+
+        // 2) 날짜(없으면 today)
+        LocalDate date = parseDate(text, today);
+        LocalDateTime startAt = LocalDateTime.of(date, tp.time);
+
+        // 3) 장소 추정
+        String place = extractPlaceAfter(text, tp.matchEndIndex);
+
+        // 4) 오탐 방지: 의도도 없고 장소도 없으면 생성 X
+        boolean hasIntent = P_INTENT.matcher(text).find();
+        boolean hasPlace = place != null && !place.isBlank();
+        if (!hasIntent && !hasPlace) return Optional.empty();
+
+        return Optional.of(new DetectionResult(
+                true,
+                "SCHEDULE",
+                "약속",
+                hasPlace ? place : null,
+                startAt,
+                startAt.minusHours(1)
+        ));
     }
 
-    private LocalDateTime detectDateTime(String msg) {
-        LocalDate baseDate = detectBaseDate(msg);
-        LocalTime time = detectTime(msg);
+    // ---------- helpers ----------
 
-        if (baseDate == null && time == null) return null;
-
-        // 시간이 없으면 startAt null (장소만 핀) 허용
-        if (time == null) return null;
-
-        LocalDate date = (baseDate == null) ? LocalDate.now(ZoneId.of("Asia/Seoul")) : baseDate;
-        return LocalDateTime.of(date, time);
+    private static String normalize(String s) {
+        return s
+                .replace("\u00A0", " ")
+                .replaceAll("\\s+", " ")
+                .trim()
+                .toLowerCase(Locale.KOREAN);
     }
 
-    private LocalDate detectBaseDate(String msg) {
-        ZoneId zone = ZoneId.of("Asia/Seoul");
-        LocalDate today = LocalDate.now(zone);
-
-        if (msg.contains("오늘")) return today;
-        if (msg.contains("내일")) return today.plusDays(1);
-        if (msg.contains("모레")) return today.plusDays(2);
-
-        // 2026-02-28
-        Matcher dash = P_DATE_DASH.matcher(msg);
+    private static LocalDate parseDate(String text, LocalDate today) {
+        Matcher dash = P_DATE_DASH.matcher(text);
         if (dash.find()) {
             int y = Integer.parseInt(dash.group(1));
-            int mo = Integer.parseInt(dash.group(2));
+            int m = Integer.parseInt(dash.group(2));
             int d = Integer.parseInt(dash.group(3));
-            try {
-                return LocalDate.of(y, mo, d);
-            } catch (Exception ignore) {
-                return null;
-            }
+            return safeDate(y, m, d).orElse(today);
         }
 
-        // 2/28  (연도는 올해로 가정)
-        Matcher slash = P_DATE_SLASH.matcher(msg);
+        Matcher slash = P_DATE_SLASH.matcher(text);
         if (slash.find()) {
-            int mo = Integer.parseInt(slash.group(1));
+            int m = Integer.parseInt(slash.group(1));
             int d = Integer.parseInt(slash.group(2));
-            int y = today.getYear();
-            try {
-                LocalDate parsed = LocalDate.of(y, mo, d);
-                // 과거로 떨어지면 내년으로 보정(예: 12월에 "1/2")
-                if (parsed.isBefore(today.minusDays(1))) parsed = parsed.plusYears(1);
-                return parsed;
-            } catch (Exception ignore) {
-                return null;
-            }
+            return safeDate(today.getYear(), m, d).orElse(today);
         }
 
-        return null;
+        Matcher rel = P_RELATIVE_DAY.matcher(text);
+        if (rel.find()) {
+            return switch (rel.group(1)) {
+                case "오늘" -> today;
+                case "내일" -> today.plusDays(1);
+                case "모레" -> today.plusDays(2);
+                default -> today;
+            };
+        }
+
+        return today;
     }
 
-    private LocalTime detectTime(String msg) {
-        // 19:00
-        Matcher colon = P_TIME_COLON.matcher(msg);
+    private static Optional<LocalDate> safeDate(int y, int m, int d) {
+        try {
+            return Optional.of(LocalDate.of(y, m, d));
+        } catch (DateTimeException e) {
+            return Optional.empty();
+        }
+    }
+
+    private static TimeParse parseTime(String text) {
+        Matcher colon = P_TIME_COLON.matcher(text);
         if (colon.find()) {
             int h = Integer.parseInt(colon.group(1));
-            int m = Integer.parseInt(colon.group(2));
-            if (h >= 0 && h <= 23 && m >= 0 && m <= 59) {
-                return LocalTime.of(h, m);
-            }
+            int mm = Integer.parseInt(colon.group(2));
+            if (h < 0 || h > 23) return null;
+            if (mm < 0 || mm > 59) return null;
+            return new TimeParse(LocalTime.of(h, mm), colon.end());
         }
 
-        // "오후 7시 30분", "7시"
-        Matcher hour = P_TIME_HOUR.matcher(msg);
+        Matcher hour = P_TIME_HOUR.matcher(text);
         if (hour.find()) {
-            String ampm = hour.group(1);      // 오전/오후/null
+            String ampm = hour.group(1);
             int h = Integer.parseInt(hour.group(2));
-            String minGroup = hour.group(4);
-            int m = (minGroup == null) ? 0 : Integer.parseInt(minGroup);
+            String minStr = hour.group(4);
+            int mm = (minStr == null) ? 0 : Integer.parseInt(minStr);
 
-            if (m < 0 || m > 59) return null;
+            if (h < 0 || h > 12) return null;
+            if (mm < 0 || mm > 59) return null;
 
-            // 오전/오후 처리
-            if ("오후".equals(ampm) && h < 12) h += 12;
-            if ("오전".equals(ampm) && h == 12) h = 0;
+            int hh = h;
+            if ("오후".equals(ampm) && h < 12) hh = h + 12;
+            if ("오전".equals(ampm) && h == 12) hh = 0;
 
-            // ampm이 없으면 0~23 그대로 해석 (MVP)
-            if (h < 0 || h > 23) return null;
+            if (hh < 0 || hh > 23) return null;
 
-            return LocalTime.of(h, m);
+            return new TimeParse(LocalTime.of(hh, mm), hour.end());
         }
 
         return null;
     }
+
+    private static String extractPlaceAfter(String text, int timeEndIdx) {
+        if (timeEndIdx < 0 || timeEndIdx >= text.length()) return "";
+
+        String tail = text.substring(timeEndIdx).trim();
+        if (tail.isBlank()) return "";
+
+        // 조사/접속어 정리
+        tail = tail.replaceAll("^(에|에서|로|으로|랑|하고|과|와)\\s*", "").trim();
+
+        // 의도/기타 단어가 나오기 전까지만 장소로 추정
+        int cut = indexOfAny(tail,
+                "보자", "만나", "약속", "갈까", "볼까", "하자", "모이",
+                "연락", "전화", "가능", "까지"
+        );
+        if (cut >= 0) tail = tail.substring(0, cut).trim();
+
+        // 종결 조사 제거
+        tail = tail.replaceAll("\\s*(에서|에|로|으로)\\s*$", "").trim();
+
+        if (tail.length() > 25) tail = tail.substring(0, 25).trim();
+        if (tail.length() < 2) return "";
+        if (tail.matches("\\d+[\\d:\\s]*")) return "";
+
+        return tail;
+    }
+
+    private static int indexOfAny(String s, String... needles) {
+        int best = -1;
+        for (String n : needles) {
+            int i = s.indexOf(n);
+            if (i >= 0 && (best == -1 || i < best)) best = i;
+        }
+        return best;
+    }
+
+    private record TimeParse(LocalTime time, int matchEndIndex) {}
 }

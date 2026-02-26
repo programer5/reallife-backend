@@ -22,6 +22,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.context.WebApplicationContext;
 
 import java.time.LocalDateTime;
+import java.util.UUID;
 
 import static org.springframework.restdocs.headers.HeaderDocumentation.headerWithName;
 import static org.springframework.restdocs.headers.HeaderDocumentation.requestHeaders;
@@ -56,21 +57,32 @@ class ConversationPinActionControllerDocsTest {
                 .build();
     }
 
-    private ConversationPin seedPinForDocs() {
-        var me = docs.saveUser("pinact", "나");
-        var peer = docs.saveUser("pinact2", "상대");
+    private ConversationPin seedPinForDocs(UUID meId) {
+        var peer = docs.saveUser("pinact_peer", "상대");
 
-        Conversation c = conversationRepository.saveAndFlush(Conversation.direct());
-        memberRepository.saveAndFlush(ConversationMember.join(c.getId(), me.getId()));
-        memberRepository.saveAndFlush(ConversationMember.join(c.getId(), peer.getId()));
+        Conversation conversation = conversationRepository.saveAndFlush(Conversation.direct());
 
-        return pinRepository.saveAndFlush(ConversationPin.createSchedule(
-                c.getId(),
-                me.getId(),
-                "약속",
-                "홍대",
-                LocalDateTime.now().plusDays(1).withHour(19).withMinute(0).withSecond(0).withNano(0)
-        ));
+        memberRepository.saveAndFlush(
+                ConversationMember.join(conversation.getId(), meId)
+        );
+        memberRepository.saveAndFlush(
+                ConversationMember.join(conversation.getId(), peer.getId())
+        );
+
+        return pinRepository.saveAndFlush(
+                ConversationPin.createSchedule(
+                        conversation.getId(),
+                        meId,
+                        "약속",
+                        "홍대",
+                        LocalDateTime.now()
+                                .plusDays(1)
+                                .withHour(19)
+                                .withMinute(0)
+                                .withSecond(0)
+                                .withNano(0)
+                )
+        );
     }
 
     @Test
@@ -81,7 +93,7 @@ class ConversationPinActionControllerDocsTest {
         String token = docs.issueTokenFor(me);
 
         // 핀은 존재해야 하므로 별도 seed
-        ConversationPin pin = seedPinForDocs();
+        ConversationPin pin = seedPinForDocs(me.getId());
 
         mockMvc.perform(post("/api/pins/{pinId}/done", pin.getId())
                         .header(DocsTestSupport.headerName(), DocsTestSupport.auth(token))
@@ -106,7 +118,7 @@ class ConversationPinActionControllerDocsTest {
         var me = docs.saveUser("pinCancel", "나");
         String token = docs.issueTokenFor(me);
 
-        ConversationPin pin = seedPinForDocs();
+        ConversationPin pin = seedPinForDocs(me.getId());
 
         mockMvc.perform(post("/api/pins/{pinId}/cancel", pin.getId())
                         .header(DocsTestSupport.headerName(), DocsTestSupport.auth(token))
@@ -131,7 +143,7 @@ class ConversationPinActionControllerDocsTest {
         var me = docs.saveUser("pinDismiss", "나");
         String token = docs.issueTokenFor(me);
 
-        ConversationPin pin = seedPinForDocs();
+        ConversationPin pin = seedPinForDocs(me.getId());
 
         mockMvc.perform(post("/api/pins/{pinId}/dismiss", pin.getId())
                         .header(DocsTestSupport.headerName(), DocsTestSupport.auth(token))
