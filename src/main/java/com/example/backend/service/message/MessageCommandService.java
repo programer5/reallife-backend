@@ -15,31 +15,33 @@ import com.example.backend.repository.message.ConversationRepository;
 import com.example.backend.repository.message.MessageAttachmentRepository;
 import com.example.backend.repository.message.MessageRepository;
 import com.example.backend.repository.user.UserRepository;
+import com.example.backend.service.pin.ConversationPinService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.UUID;
+import java.util.*;
 
 @Slf4j
 @Service
+@Transactional
 @RequiredArgsConstructor
 public class MessageCommandService {
 
     private final MessageRepository messageRepository;
-    private final MessageAttachmentRepository attachmentRepository;
-    private final UploadedFileRepository uploadedFileRepository;
+    private final ConversationRepository conversationRepository;
     private final ConversationMemberRepository memberRepository;
     private final UserRepository userRepository;
-    private final ApplicationEventPublisher eventPublisher;
-    private final ConversationRepository conversationRepository;
+    private final UploadedFileRepository uploadedFileRepository;
+    private final MessageAttachmentRepository attachmentRepository;
     private final ConversationLockService lockService;
+    private final ApplicationEventPublisher eventPublisher;
 
-    @Transactional
+    // ✅ NEW: 핀 서비스
+    private final ConversationPinService pinService;
+
     public MessageSendResponse send(UUID meId, UUID conversationId, MessageSendRequest req, String unlockToken) {
 
         if (!memberRepository.existsByConversationIdAndUserId(conversationId, meId)) {
@@ -61,7 +63,7 @@ public class MessageCommandService {
 
         Message saved = messageRepository.save(Message.text(conversationId, meId, req.content()));
 
-        // ✅ Conversation 조회 (에러코드가 없으니 INVALID_REQUEST로 처리)
+        // ✅ Conversation 조회
         Conversation conversation = conversationRepository.findById(conversationId)
                 .orElseThrow(() -> new BusinessException(ErrorCode.CONVERSATION_NOT_FOUND));
 
@@ -69,6 +71,13 @@ public class MessageCommandService {
         String preview = req.content() == null ? "" : req.content();
         preview = preview.length() > 200 ? preview.substring(0, 200) : preview;
         conversation.updateLastMessage(saved.getId(), saved.getCreatedAt(), preview);
+
+        // ✅ NEW: 핀 감지/생성 (메시지 저장은 절대 깨지지 않게)
+        try {
+            pinService.tryDetectAndCreateFromMessage(meId, conversationId, saved.getContent());
+        } catch (Exception e) {
+            log.warn("pin detection failed (ignored) | conversationId={} messageId={}", conversationId, saved.getId(), e);
+        }
 
         // 첨부 저장 + 응답 구성
         List<MessageSendResponse.FileItem> files = new ArrayList<>();

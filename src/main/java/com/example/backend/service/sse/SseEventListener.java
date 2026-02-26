@@ -3,8 +3,9 @@ package com.example.backend.service.sse;
 import com.example.backend.domain.message.event.MessageDeletedEvent;
 import com.example.backend.domain.message.event.MessageSentEvent;
 import com.example.backend.domain.notification.event.NotificationCreatedEvent;
+import com.example.backend.domain.pin.event.PinCreatedEvent;
 import com.example.backend.repository.message.ConversationMemberRepository;
-import com.example.backend.sse.SsePushPort; // ✅ 변경
+import com.example.backend.sse.SsePushPort;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
@@ -20,7 +21,7 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class SseEventListener {
 
-    private final SsePushPort pushService; // ✅ 변경
+    private final SsePushPort pushService;
     private final ConversationMemberRepository memberRepository;
 
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
@@ -72,6 +73,30 @@ public class SseEventListener {
 
         for (UUID targetId : targets) {
             pushService.push(targetId, "message-deleted", payload, event.messageId().toString());
+        }
+    }
+
+    // ✅ NEW: pin-created (핀은 "나 포함 전원"에게 보내야 UX가 바로 반영됨)
+    @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
+    public void onPinCreated(PinCreatedEvent event) {
+
+        List<UUID> targets = memberRepository.findUserIdsByConversationId(event.conversationId());
+
+        Map<String, Object> payload = Map.of(
+                "pinId", event.pinId().toString(),
+                "conversationId", event.conversationId().toString(),
+                "createdBy", event.createdBy().toString(),
+                "type", event.type(),
+                "title", event.title(),
+                "placeText", event.placeText(),
+                "startAt", event.startAt() == null ? null : event.startAt().toString(),
+                "remindAt", event.remindAt() == null ? null : event.remindAt().toString(),
+                "status", event.status(),
+                "createdAt", event.createdAt().toString()
+        );
+
+        for (UUID targetId : targets) {
+            pushService.push(targetId, "pin-created", payload, event.pinId().toString());
         }
     }
 }
