@@ -4,6 +4,7 @@ import com.example.backend.domain.message.event.MessageDeletedEvent;
 import com.example.backend.domain.message.event.MessageSentEvent;
 import com.example.backend.domain.notification.event.NotificationCreatedEvent;
 import com.example.backend.domain.pin.event.PinCreatedEvent;
+import com.example.backend.domain.pin.event.PinUpdatedEvent;
 import com.example.backend.repository.message.ConversationMemberRepository;
 import com.example.backend.sse.SsePushPort;
 import lombok.RequiredArgsConstructor;
@@ -97,6 +98,25 @@ public class SseEventListener {
 
         for (UUID targetId : targets) {
             pushService.push(targetId, "pin-created", payload, event.pinId().toString());
+        }
+    }
+
+    @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
+    public void onPinUpdated(PinUpdatedEvent event) {
+
+        List<UUID> targets = memberRepository.findUserIdsByConversationId(event.conversationId());
+
+        Map<String, Object> payload = Map.of(
+                "pinId", event.pinId().toString(),
+                "conversationId", event.conversationId().toString(),
+                "actorId", event.actorId().toString(),
+                "action", event.action(),
+                "status", event.status(),
+                "updatedAt", event.updatedAt().toString()
+        );
+
+        for (UUID targetId : targets) {
+            pushService.push(targetId, "pin-updated", payload, event.pinId().toString());
         }
     }
 }

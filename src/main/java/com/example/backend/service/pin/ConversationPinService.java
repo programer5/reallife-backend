@@ -4,6 +4,7 @@ import com.example.backend.domain.pin.ConversationPin;
 import com.example.backend.domain.pin.ConversationPinDismissal;
 import com.example.backend.domain.pin.PinStatus;
 import com.example.backend.domain.pin.event.PinCreatedEvent;
+import com.example.backend.domain.pin.event.PinUpdatedEvent;
 import com.example.backend.exception.BusinessException;
 import com.example.backend.exception.ErrorCode;
 import com.example.backend.repository.pin.ConversationPinDismissalRepository;
@@ -83,22 +84,54 @@ public class ConversationPinService {
     public void markDone(UUID meId, UUID pinId) {
         ConversationPin pin = pinRepository.findById(pinId)
                 .orElseThrow(() -> new BusinessException(ErrorCode.PIN_NOT_FOUND));
-        // (권장) meId가 해당 대화방 멤버인지 체크는 여기서 추가 가능
+
         pin.markDone();
+
+        eventPublisher.publishEvent(new PinUpdatedEvent(
+                pin.getId(),
+                pin.getConversationId(),
+                meId,
+                "DONE",
+                pin.getStatus().name(),
+                LocalDateTime.now()
+        ));
     }
 
     @Transactional
     public void cancel(UUID meId, UUID pinId) {
         ConversationPin pin = pinRepository.findById(pinId)
                 .orElseThrow(() -> new BusinessException(ErrorCode.PIN_NOT_FOUND));
+
         pin.cancel();
+
+        eventPublisher.publishEvent(new PinUpdatedEvent(
+                pin.getId(),
+                pin.getConversationId(),
+                meId,
+                "CANCELED",
+                pin.getStatus().name(),
+                LocalDateTime.now()
+        ));
     }
 
     @Transactional
     public void dismiss(UUID meId, UUID pinId) {
-        // 이미 dismiss면 무시(멱등)
         if (dismissalRepository.existsByPinIdAndUserId(pinId, meId)) return;
+
         dismissalRepository.save(ConversationPinDismissal.of(pinId, meId));
+
+        // dismiss는 pin status가 바뀌는 건 아니라서 status=ACTIVE 유지
+        ConversationPin pin = pinRepository.findById(pinId)
+                .orElseThrow(() -> new BusinessException(ErrorCode.PIN_NOT_FOUND));
+
+        eventPublisher.publishEvent(new PinUpdatedEvent(
+                pin.getId(),
+                pin.getConversationId(),
+                meId,
+                "DISMISSED",
+                pin.getStatus().name(),
+                LocalDateTime.now()
+        ));
     }
 
     public List<ConversationPin> listActivePins(UUID conversationId, UUID userId, int size) {
