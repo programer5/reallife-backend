@@ -93,6 +93,10 @@ public class ConversationPinService {
                 meId,
                 "DONE",
                 pin.getStatus().name(),
+                pin.getTitle(),
+                pin.getPlaceText(),
+                pin.getStartAt(),
+                pin.getRemindAt(),
                 LocalDateTime.now()
         ));
     }
@@ -110,6 +114,10 @@ public class ConversationPinService {
                 meId,
                 "CANCELED",
                 pin.getStatus().name(),
+                pin.getTitle(),
+                pin.getPlaceText(),
+                pin.getStartAt(),
+                pin.getRemindAt(),
                 LocalDateTime.now()
         ));
     }
@@ -130,6 +138,10 @@ public class ConversationPinService {
                 meId,
                 "DISMISSED",
                 pin.getStatus().name(),
+                pin.getTitle(),
+                pin.getPlaceText(),
+                pin.getStartAt(),
+                pin.getRemindAt(),
                 LocalDateTime.now()
         ));
     }

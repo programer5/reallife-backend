@@ -112,6 +112,10 @@ public class SseEventListener {
                 "actorId", event.actorId().toString(),
                 "action", event.action(),
                 "status", event.status(),
+                "title", event.title(),
+                "placeText", event.placeText(),
+                "startAt", event.startAt() == null ? null : event.startAt().toString(),
+                "remindAt", event.remindAt() == null ? null : event.remindAt().toString(),
                 "updatedAt", event.updatedAt().toString()
         );
 
