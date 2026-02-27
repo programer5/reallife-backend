@@ -1,5 +1,6 @@
 package com.example.backend.service.message;
 
+import com.example.backend.common.PublicUrlBuilder;
 import com.example.backend.controller.message.dto.MessageSendRequest;
 import com.example.backend.controller.message.dto.MessageSendResponse;
 import com.example.backend.domain.file.UploadedFile;
@@ -42,6 +43,9 @@ public class MessageCommandService {
     // ✅ NEW: 핀 서비스
     private final ConversationPinService pinService;
 
+    // ✅ NEW: 파일 다운로드 URL 생성용
+    private final PublicUrlBuilder urlBuilder;
+
     public MessageSendResponse send(UUID meId, UUID conversationId, MessageSendRequest req, String unlockToken) {
 
         if (!memberRepository.existsByConversationIdAndUserId(conversationId, meId)) {
@@ -72,11 +76,13 @@ public class MessageCommandService {
         preview = preview.length() > 200 ? preview.substring(0, 200) : preview;
         conversation.updateLastMessage(saved.getId(), saved.getCreatedAt(), preview);
 
-        // ✅ NEW: 핀 감지/생성 (메시지 저장은 절대 깨지지 않게)
+        // ✅ NEW: 핀 후보 감지(Confirm 모드) - DB 저장 X
+        List<com.example.backend.controller.message.dto.PinCandidateResponse> pinCandidates;
         try {
-            pinService.tryDetectAndCreateFromMessage(meId, conversationId, saved.getContent());
+            pinCandidates = pinService.detectCandidates(saved.getId(), saved.getContent());
         } catch (Exception e) {
-            log.warn("pin detection failed (ignored) | conversationId={} messageId={}", conversationId, saved.getId(), e);
+            log.warn("pin candidate detection failed (ignored) | conversationId={} messageId={}", conversationId, saved.getId(), e);
+            pinCandidates = List.of();
         }
 
         // 첨부 저장 + 응답 구성
@@ -90,16 +96,19 @@ public class MessageCommandService {
 
             attachmentRepository.save(MessageAttachment.create(saved.getId(), fileId, i));
 
+            // ✅ UploadedFile에는 getUrl()이 없다 -> 다운로드 URL을 만들어서 내려준다
+            String downloadUrl = urlBuilder.absolute("/api/files/" + file.getId() + "/download");
+
             files.add(new MessageSendResponse.FileItem(
                     file.getId(),
-                    "/api/files/" + file.getId() + "/download",
+                    downloadUrl,
                     file.getOriginalFilename(),
                     file.getContentType(),
                     file.getSize()
             ));
         }
 
-        // 이벤트 발행
+        // ✅ SSE broadcast(메시지)
         eventPublisher.publishEvent(new MessageSentEvent(
                 saved.getId(),
                 saved.getConversationId(),
@@ -116,6 +125,7 @@ public class MessageCommandService {
                 saved.getSenderId(),
                 saved.getContent(),
                 files,
+                pinCandidates,
                 saved.getCreatedAt()
         );
     }

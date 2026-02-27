@@ -7,6 +7,7 @@ import com.example.backend.exception.ErrorCode;
 import com.example.backend.repository.message.ConversationMemberRepository;
 import com.example.backend.repository.message.ConversationRepository;
 import com.example.backend.repository.message.MessageQueryRepository;
+import com.example.backend.service.pin.ConversationPinService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -23,6 +24,7 @@ public class MessageQueryService {
     private final ConversationRepository conversationRepository;
     private final ConversationMemberRepository memberRepository;
     private final ConversationLockService lockService;
+    private final ConversationPinService pinService;
 
     /**
      * GET /api/conversations/{conversationId}/messages
@@ -50,7 +52,6 @@ public class MessageQueryService {
         // ✅ DM Lock: 잠금된 대화는 unlock token 없으면 차단
         lockService.ensureUnlocked(conversationId, meId, unlockToken);
 
-        int pageSize = Math.min(Math.max(size, 1), 50);
         Cursor decoded = Cursor.decode(cursor);
 
         var items = messageQueryRepository.fetchPage(
@@ -58,11 +59,26 @@ public class MessageQueryService {
                 meId,                 // ✅ 추가
                 decoded.createdAt(),
                 decoded.messageId(),
-                pageSize + 1
+                size
         );
 
-        boolean hasNext = items.size() > pageSize;
-        if (hasNext) items = items.subList(0, pageSize);
+        // ✅ NEW: 메시지에서 핀 후보 감지(Confirm 모드) - DB 저장 X
+        // 조회 시에도 동일한 후보를 보여주기 위해 여기서 계산한다.
+        items = items.stream()
+                .map(it -> new MessageListResponse.Item(
+                        it.messageId(),
+                        it.senderId(),
+                        it.content(),
+                        it.createdAt(),
+                        it.attachments(),
+                        pinService.detectCandidates(it.messageId(), it.content())
+                ))
+                .toList();
+
+        boolean hasNext = items.size() > size;
+        if (hasNext) {
+            items = items.subList(0, size);
+        }
 
         String nextCursor = null;
         if (hasNext && !items.isEmpty()) {
@@ -93,12 +109,13 @@ public class MessageQueryService {
                         UUID.fromString(parts[1])
                 );
             } catch (Exception e) {
-                // 커서가 이상하면 첫 페이지로 처리(멱등)
+                // 커서가 이상하면 첫 페이지로
                 return new Cursor(null, null);
             }
         }
 
         static String encode(LocalDateTime createdAt, UUID messageId) {
+            if (createdAt == null || messageId == null) return null;
             return createdAt + "|" + messageId;
         }
     }

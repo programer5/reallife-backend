@@ -1,5 +1,7 @@
 package com.example.backend.service.pin;
 
+import com.example.backend.controller.message.dto.ConversationPinResponse;
+import com.example.backend.controller.message.dto.PinCandidateResponse;
 import com.example.backend.domain.pin.ConversationPin;
 import com.example.backend.domain.pin.ConversationPinDismissal;
 import com.example.backend.domain.pin.PinStatus;
@@ -34,37 +36,76 @@ public class ConversationPinService {
     private final ConversationPinDismissalRepository dismissalRepository;
     private final ConversationMemberRepository memberRepository;
 
-    public Optional<ConversationPin> tryDetectAndCreateFromMessage(UUID meId, UUID conversationId, String messageContent) {
-        if (messageContent == null || messageContent.isBlank()) return Optional.empty();
+    public List<PinCandidateResponse> detectCandidates(UUID messageId, String messageContent) {
+        if (messageContent == null || messageContent.isBlank()) return List.of();
 
         Optional<PinDetectionService.DetectionResult> detected = detectionService.detect(messageContent);
-        if (detected.isEmpty()) return Optional.empty();
+        if (detected.isEmpty()) return List.of();
 
         PinDetectionService.DetectionResult r = detected.get();
 
-        // ✅ 간단 중복 방지: 직전 ACTIVE 핀이 2분 이내 + (startAt/place 동일)하면 스킵
+        return List.of(new PinCandidateResponse(
+                "msg:" + messageId,
+                r.type(),
+                r.title(),
+                r.placeText(),
+                r.startAt(),
+                r.remindAt(),
+                null,
+                List.of("rule_based")
+        ));
+    }
+
+    @Transactional
+    public ConversationPinResponse confirmFromMessage(
+            UUID meId,
+            UUID conversationId,
+            UUID messageId,
+            String messageContent,
+            String overrideTitle,
+            LocalDateTime overrideStartAt,
+            String overridePlaceText
+    ) {
+        if (!memberRepository.existsByConversationIdAndUserId(conversationId, meId)) {
+            throw new BusinessException(ErrorCode.FORBIDDEN);
+        }
+
+        if (messageContent == null || messageContent.isBlank()) {
+            throw new BusinessException(ErrorCode.INVALID_REQUEST);
+        }
+
+        PinDetectionService.DetectionResult detected = detectionService.detect(messageContent)
+                .orElseThrow(() -> new BusinessException(ErrorCode.INVALID_REQUEST));
+
+        String title = (overrideTitle != null && !overrideTitle.isBlank()) ? overrideTitle : detected.title();
+        LocalDateTime startAt = (overrideStartAt != null) ? overrideStartAt : detected.startAt();
+        String placeText = (overridePlaceText != null && !overridePlaceText.isBlank()) ? overridePlaceText : detected.placeText();
+
+        if (startAt == null) {
+            throw new BusinessException(ErrorCode.INVALID_REQUEST);
+        }
+
         Optional<ConversationPin> latest = pinRepository
                 .findTopByConversationIdAndStatusAndDeletedFalseOrderByCreatedAtDesc(conversationId, PinStatus.ACTIVE);
 
         if (latest.isPresent()) {
             ConversationPin last = latest.get();
-            if (isDuplicateWithinWindow(last, r.startAt(), r.placeText())) {
-                log.info("📌 pin skipped (duplicate) | conversationId={} lastPinId={}", conversationId, last.getId());
-                return Optional.empty();
+            if (isDuplicateWithinWindow(last, startAt, placeText)) {
+                log.info("📌 pin confirm skipped (duplicate) | conversationId={} lastPinId={}", conversationId, last.getId());
+                throw new BusinessException(ErrorCode.INVALID_REQUEST);
             }
         }
 
         ConversationPin pin = ConversationPin.createSchedule(
                 conversationId,
                 meId,
-                r.title(),
-                r.placeText(),
-                r.startAt()
+                title,
+                placeText,
+                startAt
         );
 
         ConversationPin saved = pinRepository.save(pin);
 
-        // ✅ SSE용 이벤트 (AFTER_COMMIT에서 broadcast)
         eventPublisher.publishEvent(new PinCreatedEvent(
                 saved.getId(),
                 saved.getConversationId(),
@@ -78,8 +119,45 @@ public class ConversationPinService {
                 saved.getCreatedAt()
         ));
 
-        log.info("📌 PinCreatedEvent published | pinId={} conversationId={}", saved.getId(), conversationId);
-        return Optional.of(saved);
+        return new ConversationPinResponse(
+                saved.getId(),
+                saved.getConversationId(),
+                saved.getCreatedBy(),
+                saved.getType().name(),
+                saved.getTitle(),
+                saved.getPlaceText(),
+                saved.getStartAt(),
+                saved.getRemindAt(),
+                saved.getStatus().name(),
+                saved.getCreatedAt()
+        );
+    }
+
+    @Transactional(readOnly = true)
+    public List<ConversationPin> listActivePins(UUID conversationId, UUID meId, int size) {
+        if (!memberRepository.existsByConversationIdAndUserId(conversationId, meId)) {
+            throw new BusinessException(ErrorCode.FORBIDDEN);
+        }
+
+        List<ConversationPin> pins = pinRepository.findByConversationIdAndStatusAndDeletedFalseOrderByCreatedAtDesc(
+                conversationId,
+                PinStatus.ACTIVE,
+                PageRequest.of(0, size)
+        );
+
+        if (pins.isEmpty()) return pins;
+
+        List<UUID> pinIds = pins.stream().map(ConversationPin::getId).toList();
+
+        // ✅ FIX: ConversationPinDismissal에는 conversationId가 없다
+        List<ConversationPinDismissal> dismissals = dismissalRepository.findAllByUserIdAndPinIdIn(meId, pinIds);
+        List<UUID> dismissedPinIds = dismissals.stream().map(ConversationPinDismissal::getPinId).toList();
+
+        if (dismissedPinIds.isEmpty()) return pins;
+
+        return pins.stream()
+                .filter(p -> !dismissedPinIds.contains(p.getId()))
+                .toList();
     }
 
     @Transactional
@@ -103,13 +181,13 @@ public class ConversationPinService {
                 pin.getPlaceText(),
                 pin.getStartAt(),
                 pin.getRemindAt(),
-                null, // broadcast
-                LocalDateTime.now()
+                null,               // ✅ targetUserId
+                pin.getUpdateAt()   // ✅ FIX: getUpdatedAt() 없음
         ));
     }
 
     @Transactional
-    public void cancel(UUID meId, UUID pinId) {
+    public void markCanceled(UUID meId, UUID pinId) {
         ConversationPin pin = pinRepository.findById(pinId)
                 .orElseThrow(() -> new BusinessException(ErrorCode.PIN_NOT_FOUND));
 
@@ -117,6 +195,7 @@ public class ConversationPinService {
             throw new BusinessException(ErrorCode.FORBIDDEN);
         }
 
+        // ✅ FIX: markCanceled() 없음 -> cancel()
         pin.cancel();
 
         eventPublisher.publishEvent(new PinUpdatedEvent(
@@ -129,8 +208,8 @@ public class ConversationPinService {
                 pin.getPlaceText(),
                 pin.getStartAt(),
                 pin.getRemindAt(),
-                null, // broadcast
-                LocalDateTime.now()
+                null,
+                pin.getUpdateAt()
         ));
     }
 
@@ -143,22 +222,22 @@ public class ConversationPinService {
             throw new BusinessException(ErrorCode.FORBIDDEN);
         }
 
-        if (dismissalRepository.existsByPinIdAndUserId(pinId, meId)) return;
-        dismissalRepository.save(ConversationPinDismissal.of(pinId, meId));
+        // ✅ FIX: conversationId 기반 조회 불가 -> pinId/userId로 upsert
+        dismissalRepository.findByPinIdAndUserId(pinId, meId)
+                .orElseGet(() -> dismissalRepository.save(ConversationPinDismissal.of(pinId, meId)));
 
-        // ✅ dismiss는 "나만" 숨김이므로 targetUserId 지정
         eventPublisher.publishEvent(new PinUpdatedEvent(
                 pin.getId(),
                 pin.getConversationId(),
                 meId,
                 "DISMISSED",
-                pin.getStatus().name(), // 보통 ACTIVE 유지
+                pin.getStatus().name(),
                 pin.getTitle(),
                 pin.getPlaceText(),
                 pin.getStartAt(),
                 pin.getRemindAt(),
-                meId, // only me
-                LocalDateTime.now()
+                meId,              // ✅ dismiss는 per-user
+                pin.getUpdateAt()
         ));
     }
 
@@ -183,39 +262,19 @@ public class ConversationPinService {
                 pin.getPlaceText(),
                 pin.getStartAt(),
                 pin.getRemindAt(),
-                null, // broadcast (다 같이 보는 핀이라면 broadcast가 맞음)
-                LocalDateTime.now()
+                null,
+                pin.getUpdateAt()
         ));
     }
 
-    public List<ConversationPin> listActivePins(UUID conversationId, UUID userId, int size) {
-
-        if (!memberRepository.existsByConversationIdAndUserId(conversationId, userId)) {
-            throw new BusinessException(ErrorCode.FORBIDDEN);
-        }
-
-        return pinRepository.findActivePinsVisibleToUser(
-                conversationId,
-                userId,
-                PageRequest.of(0, Math.max(1, Math.min(size, 50)))
-        );
-    }
-
     private boolean isDuplicateWithinWindow(ConversationPin last, LocalDateTime startAt, String placeText) {
-        LocalDateTime lastCreated = last.getCreatedAt();
-        if (lastCreated == null) return false;
+        if (last.getStartAt() == null || startAt == null) return false;
+        if (Duration.between(last.getCreatedAt(), LocalDateTime.now()).abs().toMinutes() > 2) return false;
 
-        Duration d = Duration.between(lastCreated, LocalDateTime.now());
-        if (d.toMinutes() > 2) return false;
+        boolean sameStartAt = last.getStartAt().equals(startAt);
+        boolean samePlace = (last.getPlaceText() == null && placeText == null)
+                || (last.getPlaceText() != null && last.getPlaceText().equals(placeText));
 
-        boolean sameStart =
-                (last.getStartAt() == null && startAt == null) ||
-                        (last.getStartAt() != null && last.getStartAt().equals(startAt));
-
-        boolean samePlace =
-                (last.getPlaceText() == null && (placeText == null || placeText.isBlank())) ||
-                        (last.getPlaceText() != null && last.getPlaceText().equals(placeText));
-
-        return sameStart && samePlace;
+        return sameStartAt && samePlace;
     }
 }

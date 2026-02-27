@@ -14,7 +14,10 @@ public record MessageListResponse(
             UUID senderId,
             String content,
             LocalDateTime createdAt,
-            List<Attachment> attachments
+            List<Attachment> attachments,
+
+            // ✅ NEW: 메시지에서 감지된 "핀 후보"(DB 저장 X)
+            List<PinCandidateResponse> pinCandidates
     ) {}
 
     public record Attachment(

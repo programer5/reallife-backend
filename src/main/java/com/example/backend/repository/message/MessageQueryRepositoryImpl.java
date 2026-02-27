@@ -5,6 +5,7 @@ import com.example.backend.domain.file.QUploadedFile;
 import com.example.backend.domain.message.QMessage;
 import com.example.backend.domain.message.QMessageAttachment;
 import com.example.backend.domain.message.QMessageHidden;
+import com.querydsl.core.Tuple;
 import com.querydsl.core.types.dsl.BooleanExpression;
 import com.querydsl.jpa.JPAExpressions;
 import com.querydsl.jpa.impl.JPAQueryFactory;
@@ -22,10 +23,6 @@ public class MessageQueryRepositoryImpl implements MessageQueryRepository {
         this.queryFactory = queryFactory;
     }
 
-    /**
-     * 기존 시그니처(호환용): meId 없이 조회.
-     * - 앞으로는 meId 버전을 사용하는 것을 권장
-     */
     @Override
     public List<MessageListResponse.Item> fetchPage(
             UUID conversationId,
@@ -33,16 +30,9 @@ public class MessageQueryRepositoryImpl implements MessageQueryRepository {
             UUID cursorMessageId,
             int size
     ) {
-        // meId가 없으면 "숨김 필터"를 적용할 수 없음.
-        // 기존 호출부가 전부 meId 버전으로 바뀌면 이 메서드는 삭제해도 됨.
         return fetchPage(conversationId, null, cursorCreatedAt, cursorMessageId, size);
     }
 
-    /**
-     * ✅ 신규: meId 포함 조회
-     * - deleted=false(모두 삭제 제외)
-     * - NOT EXISTS message_hidden (나만 삭제(숨김) 제외)
-     */
     @Override
     public List<MessageListResponse.Item> fetchPage(
             UUID conversationId,
@@ -58,72 +48,74 @@ public class MessageQueryRepositoryImpl implements MessageQueryRepository {
 
         BooleanExpression cursorCond = cursor(cursorCreatedAt, cursorMessageId, m);
 
-        // ✅ 숨김 필터: meId가 있을 때만 적용(호환용)
+        // ✅ 숨김 필터: meId 있을 때만 적용
         BooleanExpression notHiddenCond = notHiddenForMe(meId, h, m);
 
-        // 1) 메시지 id limit개(이미 최신순)
+        // 1) 메시지 id limit+1개
         List<UUID> messageIds = queryFactory
                 .select(m.id)
                 .from(m)
                 .where(
                         m.conversationId.eq(conversationId),
-                        m.deleted.isFalse(),      // ✅ 모두 삭제 제외
-                        notHiddenCond,            // ✅ 나만 삭제(숨김) 제외
-                        cursorCond
+                        // ✅ FIX: deletedFalse() 없음
+                        m.deleted.isFalse(),
+                        cursorCond,
+                        notHiddenCond
                 )
                 .orderBy(m.createdAt.desc(), m.id.desc())
-                .limit(limit)
+                .limit(limit + 1L)
                 .fetch();
 
         if (messageIds.isEmpty()) return List.of();
 
-        // 2) 메시지 본문들 (IN 조회는 순서 보장 X)
-        var messages = queryFactory
+        // 2) 메시지 본문
+        List<com.example.backend.domain.message.Message> messages = queryFactory
                 .selectFrom(m)
                 .where(m.id.in(messageIds))
                 .fetch();
 
-        // 3) 첨부 + 파일 메타를 한 번에(LEFT JOIN)
-        var rows = queryFactory
-                .select(
-                        a.messageId,
-                        a.fileId,
-                        a.sortOrder,
-                        f.originalFilename,
-                        f.contentType,
-                        f.size
-                )
-                .from(a)
-                .leftJoin(f).on(f.id.eq(a.fileId).and(f.deleted.isFalse()))
-                .where(a.messageId.in(messageIds))
-                .orderBy(a.messageId.asc(), a.sortOrder.asc())
-                .fetch();
-
-        Map<UUID, List<MessageListResponse.Attachment>> attMap = new HashMap<>();
-        for (var t : rows) {
-            UUID msgId = t.get(a.messageId);
-            UUID fileId = t.get(a.fileId);
-
-            if (fileId == null) continue;
-
-            String originalName = t.get(f.originalFilename);
-            String mimeType = t.get(f.contentType);
-            Long sizeBytes = t.get(f.size);
-
-            attMap.computeIfAbsent(msgId, k -> new ArrayList<>())
-                    .add(new MessageListResponse.Attachment(
-                            fileId,
-                            "/api/files/" + fileId + "/download",
-                            originalName,
-                            mimeType,
-                            sizeBytes == null ? 0L : sizeBytes
-                    ));
-        }
-
-        // messageIds는 최신순 정렬, messages는 IN 조회라 순서 보장 X
         Map<UUID, com.example.backend.domain.message.Message> msgMap = new HashMap<>();
         for (var mm : messages) msgMap.put(mm.getId(), mm);
 
+        // 3) 첨부 목록
+        // ✅ FIX: QUploadedFile에 url 없음 -> fileId만으로 download URL 생성
+        List<Tuple> tuples = queryFactory
+                .select(
+                        a.messageId,
+                        f.id,
+                        f.originalFilename,
+                        f.contentType,
+                        f.size,
+                        a.sortOrder
+                )
+                .from(a)
+                .join(f).on(f.id.eq(a.fileId))
+                .where(a.messageId.in(messageIds))
+                .orderBy(a.sortOrder.asc())
+                .fetch();
+
+        Map<UUID, List<MessageListResponse.Attachment>> attMap = new HashMap<>();
+
+        for (Tuple t : tuples) {
+            UUID messageId = t.get(a.messageId);
+            UUID fileId = t.get(f.id);
+            String originalFilename = t.get(f.originalFilename);
+            String contentType = t.get(f.contentType);
+            Long size = t.get(f.size);
+
+            String downloadUrl = "/api/files/" + fileId + "/download";
+
+            attMap.computeIfAbsent(messageId, k -> new ArrayList<>())
+                    .add(new MessageListResponse.Attachment(
+                            fileId,
+                            downloadUrl,
+                            originalFilename,
+                            contentType,
+                            size == null ? 0 : size
+                    ));
+        }
+
+        // 4) 결과 조립(메시지 id 순서 유지)
         List<MessageListResponse.Item> result = new ArrayList<>();
         for (UUID id : messageIds) {
             var mm = msgMap.get(id);
@@ -134,7 +126,8 @@ public class MessageQueryRepositoryImpl implements MessageQueryRepository {
                     mm.getSenderId(),
                     mm.getContent(),
                     mm.getCreatedAt(),
-                    attMap.getOrDefault(mm.getId(), List.of())
+                    attMap.getOrDefault(mm.getId(), List.of()),
+                    List.of() // pinCandidates는 MessageQueryService에서 채움
             ));
         }
 
@@ -149,19 +142,14 @@ public class MessageQueryRepositoryImpl implements MessageQueryRepository {
                 .or(m.createdAt.eq(cursorCreatedAt).and(m.id.lt(cursorId)));
     }
 
-    /**
-     * ✅ NOT EXISTS message_hidden (user_id = meId, message_id = m.id)
-     * - meId가 null이면(호환/테스트) 필터 미적용(null 반환)
-     */
     private BooleanExpression notHiddenForMe(UUID meId, QMessageHidden h, QMessage m) {
         if (meId == null) return null;
 
-        return JPAExpressions
-                .selectOne()
+        return JPAExpressions.selectOne()
                 .from(h)
                 .where(
-                        h.userId.eq(meId),
-                        h.messageId.eq(m.id)
+                        h.messageId.eq(m.id),
+                        h.userId.eq(meId)
                 )
                 .notExists();
     }

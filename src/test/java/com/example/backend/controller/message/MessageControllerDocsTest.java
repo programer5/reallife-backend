@@ -104,6 +104,15 @@ class MessageControllerDocsTest {
                                 fieldWithPath("attachments[].originalFilename").optional().type(STRING).description("원본 파일명"),
                                 fieldWithPath("attachments[].contentType").optional().type(STRING).description("MIME 타입"),
                                 fieldWithPath("attachments[].size").optional().type(NUMBER).description("파일 크기(bytes)"),
+                                fieldWithPath("pinCandidates").type(ARRAY).description("메시지에서 감지된 핀 후보 목록(없으면 빈 배열)"),
+                                fieldWithPath("pinCandidates[].candidateId").optional().type(STRING).description("후보 ID(클라이언트 key용)"),
+                                fieldWithPath("pinCandidates[].type").optional().type(STRING).description("후보 타입(SCHEDULE)"),
+                                fieldWithPath("pinCandidates[].title").optional().type(STRING).description("후보 제목"),
+                                fieldWithPath("pinCandidates[].placeText").optional().type(STRING).description("장소 텍스트"),
+                                fieldWithPath("pinCandidates[].startAt").optional().type(STRING).description("시작 시각"),
+                                fieldWithPath("pinCandidates[].remindAt").optional().type(STRING).description("리마인드 시각"),
+                                fieldWithPath("pinCandidates[].confidence").optional().type(NUMBER).description("신뢰도(옵션)"),
+                                fieldWithPath("pinCandidates[].reasonTags").optional().type(ARRAY).description("감지 근거 태그(옵션)"),
                                 fieldWithPath("createdAt").type(STRING).description("생성 시각")
                         )
                 ));

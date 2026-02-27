@@ -106,6 +106,15 @@ class MessageQueryControllerDocsTest {
                                 fieldWithPath("items[].attachments[].originalFilename").optional().type(STRING).description("원본 파일명"),
                                 fieldWithPath("items[].attachments[].contentType").optional().type(STRING).description("MIME 타입"),
                                 fieldWithPath("items[].attachments[].size").optional().type(NUMBER).description("파일 크기(bytes)"),
+                                fieldWithPath("items[].pinCandidates").type(ARRAY).description("메시지에서 감지된 핀 후보 목록(없으면 빈 배열)"),
+                                fieldWithPath("items[].pinCandidates[].candidateId").optional().type(STRING).description("후보 ID(클라이언트 key용)"),
+                                fieldWithPath("items[].pinCandidates[].type").optional().type(STRING).description("후보 타입(SCHEDULE)"),
+                                fieldWithPath("items[].pinCandidates[].title").optional().type(STRING).description("후보 제목"),
+                                fieldWithPath("items[].pinCandidates[].placeText").optional().type(STRING).description("장소 텍스트"),
+                                fieldWithPath("items[].pinCandidates[].startAt").optional().type(STRING).description("시작 시각"),
+                                fieldWithPath("items[].pinCandidates[].remindAt").optional().type(STRING).description("리마인드 시각"),
+                                fieldWithPath("items[].pinCandidates[].confidence").optional().type(NUMBER).description("신뢰도(옵션)"),
+                                fieldWithPath("items[].pinCandidates[].reasonTags").optional().type(ARRAY).description("감지 근거 태그(옵션)"),
 
                                 // ✅ optional() 중복 제거 (한 번만)
                                 fieldWithPath("nextCursor").optional().type(STRING).description("다음 페이지 커서(없으면 null)"),
@@ -173,7 +182,15 @@ class MessageQueryControllerDocsTest {
                                 fieldWithPath("items[].attachments[].originalFilename").optional().type(STRING).description("원본 파일명"),
                                 fieldWithPath("items[].attachments[].contentType").optional().type(STRING).description("MIME 타입"),
                                 fieldWithPath("items[].attachments[].size").optional().type(NUMBER).description("파일 크기(bytes)"),
-
+                                fieldWithPath("items[].pinCandidates").type(ARRAY).description("메시지에서 감지된 핀 후보 목록(없으면 빈 배열)"),
+                                fieldWithPath("items[].pinCandidates[].candidateId").optional().type(STRING).description("후보 ID(클라이언트 key용)"),
+                                fieldWithPath("items[].pinCandidates[].type").optional().type(STRING).description("후보 타입(SCHEDULE)"),
+                                fieldWithPath("items[].pinCandidates[].title").optional().type(STRING).description("후보 제목"),
+                                fieldWithPath("items[].pinCandidates[].placeText").optional().type(STRING).description("장소 텍스트"),
+                                fieldWithPath("items[].pinCandidates[].startAt").optional().type(STRING).description("시작 시각"),
+                                fieldWithPath("items[].pinCandidates[].remindAt").optional().type(STRING).description("리마인드 시각"),
+                                fieldWithPath("items[].pinCandidates[].confidence").optional().type(NUMBER).description("신뢰도(옵션)"),
+                                fieldWithPath("items[].pinCandidates[].reasonTags").optional().type(ARRAY).description("감지 근거 태그(옵션)"),
                                 // ✅ optional() 중복 제거 (한 번만)
                                 fieldWithPath("nextCursor").optional().type(STRING).description("다음 페이지 커서(없으면 null)"),
                                 fieldWithPath("hasNext").type(BOOLEAN).description("다음 페이지 존재 여부")

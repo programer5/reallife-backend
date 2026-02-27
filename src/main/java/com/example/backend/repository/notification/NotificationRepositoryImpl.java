@@ -83,18 +83,24 @@ public class NotificationRepositoryImpl implements NotificationRepositoryCustom 
                 .where(
                         n.userId.eq(userId),
                         n.deleted.isFalse(),
-                        cursorCondition(n, cursorCreatedAt, cursorId)
+                        cursorConditionByCreatedAtOnly(n, cursorCreatedAt)
                 )
-                .orderBy(n.createdAt.desc(), n.id.desc())
+                // ✅ 정렬은 기존처럼 유지 (id는 tie-breaker용)
+                .orderBy(
+                        n.createdAt.desc(),
+                        n.id.desc()
+                )
                 .limit(limit)
                 .fetch();
     }
 
-    private BooleanExpression cursorCondition(QNotification n, LocalDateTime cursorCreatedAt, UUID cursorId) {
-        if (cursorCreatedAt == null || cursorId == null) return null;
-
-        // (createdAt < cursorCreatedAt) OR (createdAt == cursorCreatedAt AND id < cursorId)
-        return n.createdAt.lt(cursorCreatedAt)
-                .or(n.createdAt.eq(cursorCreatedAt).and(n.id.lt(cursorId)));
+    /**
+     * ✅ FIX: H2/UUID 비교 이슈 회피
+     * - cursor는 createdAt만 사용
+     * - id 기반 lt 비교 제거
+     */
+    private BooleanExpression cursorConditionByCreatedAtOnly(QNotification n, LocalDateTime cursorCreatedAt) {
+        if (cursorCreatedAt == null) return null;
+        return n.createdAt.lt(cursorCreatedAt);
     }
 }

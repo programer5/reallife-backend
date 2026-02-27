@@ -21,7 +21,7 @@ public class ConversationPinActionController {
 
     @PostMapping("/cancel")
     public void cancel(@AuthenticationPrincipal String userId, @PathVariable UUID pinId) {
-        pinService.cancel(UUID.fromString(userId), pinId);
+        pinService.markCanceled(UUID.fromString(userId), pinId);
     }
 
     @PostMapping("/dismiss")
