@@ -69,12 +69,16 @@ class ConversationPinControllerDocsTest {
         memberRepository.save(ConversationMember.join(c.getId(), peer.getId()));
 
         // ✅ 핀 1개 생성(파서 의존 없이 레포로 직접 생성)
+        // createSchedule 시그니처 변경됨: (conversationId, createdBy, sourceMessageId, title, placeText, startAt)
         pinRepository.save(ConversationPin.createSchedule(
                 c.getId(),
                 me.getId(),
+                null, // ✅ sourceMessageId (DocsTest에서는 없어도 됨)
                 "약속",
                 "홍대",
-                LocalDateTime.now().plusDays(1).withHour(19).withMinute(0).withSecond(0).withNano(0)
+                LocalDateTime.now()
+                        .plusDays(1)
+                        .withHour(19).withMinute(0).withSecond(0).withNano(0)
         ));
 
         mockMvc.perform(get("/api/conversations/{conversationId}/pins", c.getId())

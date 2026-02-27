@@ -25,6 +25,9 @@ public interface ConversationPinRepository extends JpaRepository<ConversationPin
             PinStatus status
     );
 
+    // ✅ 같은 메시지 기반 핀 중복 생성 방지
+    boolean existsByConversationIdAndSourceMessageIdAndDeletedFalse(UUID conversationId, UUID sourceMessageId);
+
     // ✅ NEW: remindAt이 지난 ACTIVE 핀들(배치용)
     @Query("""
         select p

@@ -39,7 +39,9 @@ public enum ErrorCode {
     CONVERSATION_LOCKED(HttpStatus.LOCKED, "CONVERSATION_LOCKED", "잠금된 대화입니다."),
     CONVERSATION_LOCK_PASSWORD_INVALID(HttpStatus.FORBIDDEN, "CONVERSATION_LOCK_PASSWORD_INVALID", "비밀번호가 올바르지 않습니다."),
 
+    // Pin
     PIN_NOT_FOUND(HttpStatus.NOT_FOUND, "PIN_NOT_FOUND", "핀을 찾을 수 없습니다."),
+    PIN_ALREADY_SAVED(HttpStatus.CONFLICT, "PIN_ALREADY_SAVED", "이미 저장된 핀입니다."),
 
     // File
     FILE_TOO_LARGE(HttpStatus.BAD_REQUEST, "FILE_TOO_LARGE", "파일 크기가 너무 큽니다."),

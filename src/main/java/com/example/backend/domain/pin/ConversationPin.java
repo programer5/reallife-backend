@@ -18,7 +18,8 @@ import static lombok.AccessLevel.PROTECTED;
         name = "conversation_pins",
         indexes = {
                 @Index(name = "idx_pins_conversation_active_created", columnList = "conversation_id, status, created_at"),
-                @Index(name = "idx_pins_remind", columnList = "status, remind_at")
+                @Index(name = "idx_pins_remind", columnList = "status, remind_at"),
+                @Index(name = "idx_pins_conversation_source_message", columnList = "conversation_id, source_message_id")
         }
 )
 public class ConversationPin extends BaseEntity {
@@ -34,6 +35,10 @@ public class ConversationPin extends BaseEntity {
 
     @Column(name = "created_by", nullable = false)
     private UUID createdBy;
+
+    // ✅ 같은 메시지에서 생성된 핀 중복 방지용
+    @Column(name = "source_message_id")
+    private UUID sourceMessageId;
 
     @Enumerated(EnumType.STRING)
     @Column(name = "type", nullable = false)
@@ -58,6 +63,7 @@ public class ConversationPin extends BaseEntity {
     public static ConversationPin createSchedule(
             UUID conversationId,
             UUID createdBy,
+            UUID sourceMessageId,
             String title,
             String placeText,
             LocalDateTime startAt
@@ -65,6 +71,7 @@ public class ConversationPin extends BaseEntity {
         ConversationPin pin = new ConversationPin();
         pin.conversationId = conversationId;
         pin.createdBy = createdBy;
+        pin.sourceMessageId = sourceMessageId;
         pin.type = PinType.SCHEDULE;
         pin.title = (title == null || title.isBlank()) ? "약속" : title.trim();
         pin.placeText = (placeText == null || placeText.isBlank()) ? null : placeText.trim();

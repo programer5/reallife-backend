@@ -73,6 +73,7 @@ class ConversationPinActionControllerDocsTest {
                 ConversationPin.createSchedule(
                         conversation.getId(),
                         meId,
+                        null, // ✅ sourceMessageId 추가 (DocsTest seed에서는 null로 두면 됨)
                         "약속",
                         "홍대",
                         LocalDateTime.now()

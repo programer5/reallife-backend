@@ -73,6 +73,7 @@ class ConversationPinEditControllerDocsTest {
                 ConversationPin.createSchedule(
                         c.getId(),
                         me.getId(),
+                        null, // ✅ sourceMessageId 추가 (DocsTest에서는 null로 둬도 됨)
                         "약속",
                         null, // ✅ 장소 미정 상태에서 수정하는 케이스
                         LocalDateTime.now().plusDays(1).withHour(19).withMinute(0).withSecond(0).withNano(0)

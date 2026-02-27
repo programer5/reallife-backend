@@ -74,6 +74,12 @@ public class ConversationPinService {
             throw new BusinessException(ErrorCode.INVALID_REQUEST);
         }
 
+        // ✅ (1번) 같은 메시지에서 여러 번 저장 방지 (서버에서 확실히 차단)
+        // ConversationPin에 sourceMessageId 컬럼 추가 + Repository exists 메서드 추가가 되어 있어야 함
+        if (pinRepository.existsByConversationIdAndSourceMessageIdAndDeletedFalse(conversationId, messageId)) {
+            throw new BusinessException(ErrorCode.PIN_ALREADY_SAVED);
+        }
+
         PinDetectionService.DetectionResult detected = detectionService.detect(messageContent)
                 .orElseThrow(() -> new BusinessException(ErrorCode.INVALID_REQUEST));
 
@@ -96,9 +102,11 @@ public class ConversationPinService {
             }
         }
 
+        // ✅ sourceMessageId까지 저장되도록 createSchedule 시그니처가 (conversationId, meId, messageId, ...) 형태여야 함
         ConversationPin pin = ConversationPin.createSchedule(
                 conversationId,
                 meId,
+                messageId,     // ✅ sourceMessageId
                 title,
                 placeText,
                 startAt
@@ -149,7 +157,7 @@ public class ConversationPinService {
 
         List<UUID> pinIds = pins.stream().map(ConversationPin::getId).toList();
 
-        // ✅ FIX: ConversationPinDismissal에는 conversationId가 없다
+        // ✅ 너 프로젝트 원본 메서드명: findAllByUserIdAndPinIdIn
         List<ConversationPinDismissal> dismissals = dismissalRepository.findAllByUserIdAndPinIdIn(meId, pinIds);
         List<UUID> dismissedPinIds = dismissals.stream().map(ConversationPinDismissal::getPinId).toList();
 
@@ -171,6 +179,7 @@ public class ConversationPinService {
 
         pin.markDone();
 
+        // ✅ PinUpdatedEvent 시그니처에 맞춤
         eventPublisher.publishEvent(new PinUpdatedEvent(
                 pin.getId(),
                 pin.getConversationId(),
@@ -181,8 +190,8 @@ public class ConversationPinService {
                 pin.getPlaceText(),
                 pin.getStartAt(),
                 pin.getRemindAt(),
-                null,               // ✅ targetUserId
-                pin.getUpdateAt()   // ✅ FIX: getUpdatedAt() 없음
+                null,
+                pin.getUpdateAt()
         ));
     }
 
@@ -195,7 +204,6 @@ public class ConversationPinService {
             throw new BusinessException(ErrorCode.FORBIDDEN);
         }
 
-        // ✅ FIX: markCanceled() 없음 -> cancel()
         pin.cancel();
 
         eventPublisher.publishEvent(new PinUpdatedEvent(
@@ -222,7 +230,7 @@ public class ConversationPinService {
             throw new BusinessException(ErrorCode.FORBIDDEN);
         }
 
-        // ✅ FIX: conversationId 기반 조회 불가 -> pinId/userId로 upsert
+        // ✅ 너 프로젝트 원본: findByPinIdAndUserId / existsByPinIdAndUserId / ConversationPinDismissal.of(...)
         dismissalRepository.findByPinIdAndUserId(pinId, meId)
                 .orElseGet(() -> dismissalRepository.save(ConversationPinDismissal.of(pinId, meId)));
 
@@ -236,7 +244,7 @@ public class ConversationPinService {
                 pin.getPlaceText(),
                 pin.getStartAt(),
                 pin.getRemindAt(),
-                meId,              // ✅ dismiss는 per-user
+                meId, // dismiss는 per-user
                 pin.getUpdateAt()
         ));
     }
