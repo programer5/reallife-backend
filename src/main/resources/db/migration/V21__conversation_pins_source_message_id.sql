@@ -1,9 +1,52 @@
--- 같은 메시지에서 핀을 여러 번 생성하는 것을 방지하기 위한 컬럼/인덱스 추가
-ALTER TABLE conversation_pins
-    ADD COLUMN IF NOT EXISTS source_message_id UUID;
+-- V21__conversation_pins_source_message_id.sql (MySQL 8, UUID=CHAR(36))
 
--- 이미 있는 데이터에는 NULL 유지 (과거 데이터)
--- 한 대화방 내에서 동일 메시지 기반 핀은 1개만 허용
-CREATE UNIQUE INDEX IF NOT EXISTS uk_pins_conversation_source_message
-    ON conversation_pins (conversation_id, source_message_id)
-    WHERE deleted = false AND source_message_id IS NOT NULL;
+-- 1) 컬럼 추가 (MySQL은 IF NOT EXISTS 지원 X → INFORMATION_SCHEMA로 우회)
+SET @col_exists := (
+  SELECT COUNT(*)
+  FROM INFORMATION_SCHEMA.COLUMNS
+  WHERE TABLE_SCHEMA = DATABASE()
+    AND TABLE_NAME = 'conversation_pins'
+    AND COLUMN_NAME = 'source_message_id'
+);
+
+SET @sql := IF(
+  @col_exists = 0,
+  'ALTER TABLE conversation_pins ADD COLUMN source_message_id CHAR(36) NULL',
+  'SELECT 1'
+);
+
+PREPARE stmt FROM @sql;
+EXECUTE stmt;
+DEALLOCATE PREPARE stmt;
+
+-- 2) 유니크 인덱스 (Postgres partial unique index 대체)
+-- MySQL은 partial index가 없으니 "생성 컬럼"으로 조건을 인덱스에 포함시키는 방식이 가장 깔끔함.
+-- deleted=false AND source_message_id IS NOT NULL 조건을 만족할 때만 키가 생기게 만들어 유니크 제약을 걸어준다.
+
+SET @idx_exists := (
+  SELECT COUNT(*)
+  FROM INFORMATION_SCHEMA.STATISTICS
+  WHERE TABLE_SCHEMA = DATABASE()
+    AND TABLE_NAME = 'conversation_pins'
+    AND INDEX_NAME = 'uk_pins_conversation_source_message'
+);
+
+SET @sql := IF(
+  @idx_exists = 0,
+  '
+  ALTER TABLE conversation_pins
+    ADD COLUMN source_message_key CHAR(36)
+      GENERATED ALWAYS AS (
+        CASE
+          WHEN deleted = 0 AND source_message_id IS NOT NULL THEN source_message_id
+          ELSE NULL
+        END
+      ) STORED,
+    ADD UNIQUE INDEX uk_pins_conversation_source_message (conversation_id, source_message_key)
+  ',
+  'SELECT 1'
+);
+
+PREPARE stmt FROM @sql;
+EXECUTE stmt;
+DEALLOCATE PREPARE stmt;
