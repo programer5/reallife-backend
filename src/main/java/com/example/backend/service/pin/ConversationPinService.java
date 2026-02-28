@@ -74,12 +74,15 @@ public class ConversationPinService {
             throw new BusinessException(ErrorCode.INVALID_REQUEST);
         }
 
-        // ✅ (1번) 같은 메시지에서 여러 번 저장 방지 (서버에서 확실히 차단)
-        // ConversationPin에 sourceMessageId 컬럼 추가 + Repository exists 메서드 추가가 되어 있어야 함
-        if (pinRepository.existsByConversationIdAndSourceMessageIdAndDeletedFalse(conversationId, messageId)) {
-            throw new BusinessException(ErrorCode.PIN_ALREADY_SAVED);
+        // ✅ 1) 멱등: 같은 메시지 기반 핀이 이미 있으면 그대로 반환 (이 경우 이벤트 발행 X)
+        Optional<ConversationPin> existing =
+                pinRepository.findByConversationIdAndSourceMessageIdAndDeletedFalse(conversationId, messageId);
+
+        if (existing.isPresent()) {
+            return toResponse(existing.get());
         }
 
+        // ✅ 2) 메시지에서 일정 후보 파싱
         PinDetectionService.DetectionResult detected = detectionService.detect(messageContent)
                 .orElseThrow(() -> new BusinessException(ErrorCode.INVALID_REQUEST));
 
@@ -91,29 +94,34 @@ public class ConversationPinService {
             throw new BusinessException(ErrorCode.INVALID_REQUEST);
         }
 
-        Optional<ConversationPin> latest = pinRepository
-                .findTopByConversationIdAndStatusAndDeletedFalseOrderByCreatedAtDesc(conversationId, PinStatus.ACTIVE);
+        // ✅ 3) 같은 messageId로 중복 저장은 DB 유니크 + 멱등으로 해결하므로
+        // "비슷한 일정 중복"을 강제로 막는 로직은 제거하는 게 UX가 좋음.
+        // (원하면 나중에 '경고' UX로만 추가하자.)
 
-        if (latest.isPresent()) {
-            ConversationPin last = latest.get();
-            if (isDuplicateWithinWindow(last, startAt, placeText)) {
-                log.info("📌 pin confirm skipped (duplicate) | conversationId={} lastPinId={}", conversationId, last.getId());
-                throw new BusinessException(ErrorCode.INVALID_REQUEST);
-            }
-        }
-
-        // ✅ sourceMessageId까지 저장되도록 createSchedule 시그니처가 (conversationId, meId, messageId, ...) 형태여야 함
         ConversationPin pin = ConversationPin.createSchedule(
                 conversationId,
                 meId,
-                messageId,     // ✅ sourceMessageId
+                messageId,   // ✅ sourceMessageId
                 title,
                 placeText,
                 startAt
         );
 
-        ConversationPin saved = pinRepository.save(pin);
+        ConversationPin saved;
+        try {
+            saved = pinRepository.save(pin);
+        } catch (org.springframework.dao.DataIntegrityViolationException e) {
+            // ✅ 4) 동시성 유니크 충돌 → 이미 생성된 핀을 조회해서 그대로 반환(멱등 보장)
+            Optional<ConversationPin> again =
+                    pinRepository.findByConversationIdAndSourceMessageIdAndDeletedFalse(conversationId, messageId);
 
+            if (again.isPresent()) {
+                return toResponse(again.get());
+            }
+            throw e;
+        }
+
+        // ✅ 5) 새로 생성된 경우에만 이벤트 발행
         eventPublisher.publishEvent(new PinCreatedEvent(
                 saved.getId(),
                 saved.getConversationId(),
@@ -127,17 +135,21 @@ public class ConversationPinService {
                 saved.getCreatedAt()
         ));
 
+        return toResponse(saved);
+    }
+
+    private ConversationPinResponse toResponse(ConversationPin p) {
         return new ConversationPinResponse(
-                saved.getId(),
-                saved.getConversationId(),
-                saved.getCreatedBy(),
-                saved.getType().name(),
-                saved.getTitle(),
-                saved.getPlaceText(),
-                saved.getStartAt(),
-                saved.getRemindAt(),
-                saved.getStatus().name(),
-                saved.getCreatedAt()
+                p.getId(),
+                p.getConversationId(),
+                p.getCreatedBy(),
+                p.getType().name(),
+                p.getTitle(),
+                p.getPlaceText(),
+                p.getStartAt(),
+                p.getRemindAt(),
+                p.getStatus().name(),
+                p.getCreatedAt()
         );
     }
 
@@ -273,6 +285,34 @@ public class ConversationPinService {
                 null,
                 pin.getUpdateAt()
         ));
+    }
+
+    @Transactional(readOnly = true)
+    public ConversationPinResponse getPin(UUID meId, UUID pinId) {
+        ConversationPin p = pinRepository.findById(pinId)
+                .orElseThrow(() -> new BusinessException(ErrorCode.PIN_NOT_FOUND));
+
+        if (p.isDeleted()) {
+            throw new BusinessException(ErrorCode.PIN_NOT_FOUND);
+        }
+
+        // ✅ 대화방 멤버만 접근 가능
+        if (!memberRepository.existsByConversationIdAndUserId(p.getConversationId(), meId)) {
+            throw new BusinessException(ErrorCode.FORBIDDEN);
+        }
+
+        return new ConversationPinResponse(
+                p.getId(),
+                p.getConversationId(),
+                p.getCreatedBy(),
+                p.getType().name(),
+                p.getTitle(),
+                p.getPlaceText(),
+                p.getStartAt(),
+                p.getRemindAt(),
+                p.getStatus().name(),
+                p.getCreatedAt()
+        );
     }
 
     private boolean isDuplicateWithinWindow(ConversationPin last, LocalDateTime startAt, String placeText) {
