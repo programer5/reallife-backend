@@ -31,6 +31,12 @@ public class ConversationPinEditController {
             @PathVariable UUID pinId,
             @RequestBody ConversationPinUpdateRequest req
     ) {
-        pinService.updatePlaceText(UUID.fromString(userId), pinId, req.placeText());
+        pinService.updatePin(
+                UUID.fromString(userId),
+                pinId,
+                req.title(),
+                req.placeText(),
+                req.startAt()
+        );
     }
 }

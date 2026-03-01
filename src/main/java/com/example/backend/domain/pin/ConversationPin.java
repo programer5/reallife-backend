@@ -7,6 +7,7 @@ import lombok.NoArgsConstructor;
 import org.hibernate.annotations.UuidGenerator;
 
 import java.time.LocalDateTime;
+import java.util.Objects;
 import java.util.UUID;
 
 import static lombok.AccessLevel.PROTECTED;
@@ -94,5 +95,28 @@ public class ConversationPin extends BaseEntity {
 
     public void updatePlaceText(String placeText) {
         this.placeText = (placeText == null || placeText.isBlank()) ? null : placeText.trim();
+    }
+
+    public boolean updateSchedule(String title, String placeText, LocalDateTime startAt) {
+        String newTitle = (title == null || title.isBlank()) ? this.title : title.trim();
+        String newPlace = (placeText == null || placeText.isBlank()) ? null : placeText.trim();
+
+        LocalDateTime newRemindAt = (startAt == null) ? null : startAt.minusHours(1);
+
+        boolean scheduleChanged =
+                !Objects.equals(this.startAt, startAt) ||
+                        !Objects.equals(this.remindAt, newRemindAt);
+
+        this.title = newTitle;
+        this.placeText = newPlace;
+        this.startAt = startAt;
+        this.remindAt = newRemindAt;
+
+        // ✅ 일정이 바뀌면 재알림 허용
+        if (scheduleChanged) {
+            this.remindedAt = null;
+        }
+
+        return scheduleChanged;
     }
 }

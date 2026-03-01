@@ -287,6 +287,35 @@ public class ConversationPinService {
         ));
     }
 
+    @Transactional
+    public void updatePin(UUID meId, UUID pinId, String title, String placeText, LocalDateTime startAt) {
+        ConversationPin pin = pinRepository.findById(pinId)
+                .orElseThrow(() -> new BusinessException(ErrorCode.PIN_NOT_FOUND));
+
+        if (!memberRepository.existsByConversationIdAndUserId(pin.getConversationId(), meId)) {
+            throw new BusinessException(ErrorCode.FORBIDDEN);
+        }
+
+        // (선택) ACTIVE만 수정 허용하고 싶으면:
+        // if (pin.getStatus() != PinStatus.ACTIVE) throw new BusinessException(ErrorCode.INVALID_REQUEST);
+
+        pin.updateSchedule(title, placeText, startAt);
+
+        eventPublisher.publishEvent(new PinUpdatedEvent(
+                pin.getId(),
+                pin.getConversationId(),
+                meId,
+                "UPDATED",
+                pin.getStatus().name(),
+                pin.getTitle(),
+                pin.getPlaceText(),
+                pin.getStartAt(),
+                pin.getRemindAt(),
+                null,
+                pin.getUpdateAt()
+        ));
+    }
+
     @Transactional(readOnly = true)
     public ConversationPinResponse getPin(UUID meId, UUID pinId) {
         ConversationPin p = pinRepository.findById(pinId)

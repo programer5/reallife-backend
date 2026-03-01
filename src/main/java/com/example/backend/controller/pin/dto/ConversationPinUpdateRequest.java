@@ -1,5 +1,9 @@
 package com.example.backend.controller.pin.dto;
 
+import java.time.LocalDateTime;
+
 public record ConversationPinUpdateRequest(
-        String placeText
+        String title,
+        String placeText,
+        LocalDateTime startAt
 ) {}
