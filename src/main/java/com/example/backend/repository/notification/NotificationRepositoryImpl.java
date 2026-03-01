@@ -53,20 +53,18 @@ public class NotificationRepositoryImpl implements NotificationRepositoryCustom 
     }
 
     @Override
-    public int softDeleteRead(UUID userId) {
+    public int hardDeleteRead(UUID userId) {
         QNotification n = QNotification.notification;
 
-        long updated = queryFactory
-                .update(n)
-                .set(n.deleted, true)
+        long deleted = queryFactory
+                .delete(n)
                 .where(
                         n.userId.eq(userId),
-                        n.deleted.isFalse(),
                         n.readAt.isNotNull()
                 )
                 .execute();
 
-        return (int) updated;
+        return (int) deleted;
     }
 
     @Override

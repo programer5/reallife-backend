@@ -37,6 +37,6 @@ public class NotificationService {
 
     @Transactional
     public int deleteRead(UUID meId) {
-        return notificationRepository.softDeleteRead(meId);
+        return notificationRepository.hardDeleteRead(meId);
     }
 }

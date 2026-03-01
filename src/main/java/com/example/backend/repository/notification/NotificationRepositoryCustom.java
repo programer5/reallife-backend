@@ -12,7 +12,7 @@ public interface NotificationRepositoryCustom {
 
     int markAsReadIfUnread(UUID notificationId, UUID userId, LocalDateTime now);
 
-    int softDeleteRead(UUID userId);
+    int hardDeleteRead(UUID userId);
 
     // ✅ 커서 기반 조회(최신순): createdAt DESC, id DESC
     List<Notification> findMyNotificationsByCursor(
