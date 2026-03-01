@@ -295,7 +295,7 @@ public class ConversationPinService {
     }
 
     @Transactional
-    public void updatePin(UUID meId, UUID pinId, String title, String placeText, LocalDateTime startAt) {
+    public void updatePin(UUID meId, UUID pinId, String title, String placeText, LocalDateTime startAt, Integer remindMinutes) {
         ConversationPin pin = pinRepository.findById(pinId)
                 .orElseThrow(() -> new BusinessException(ErrorCode.PIN_NOT_FOUND));
 
@@ -306,7 +306,7 @@ public class ConversationPinService {
         // (선택) ACTIVE만 수정 허용하고 싶으면:
         // if (pin.getStatus() != PinStatus.ACTIVE) throw new BusinessException(ErrorCode.INVALID_REQUEST);
 
-        pin.updateSchedule(title, placeText, startAt);
+        pin.updateSchedule(title, placeText, startAt, remindMinutes);
 
         eventPublisher.publishEvent(new PinUpdatedEvent(
                 pin.getId(),

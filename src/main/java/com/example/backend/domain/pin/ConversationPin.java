@@ -103,22 +103,41 @@ public class ConversationPin extends BaseEntity {
         this.placeText = (placeText == null || placeText.isBlank()) ? null : placeText.trim();
     }
 
-    public boolean updateSchedule(String title, String placeText, LocalDateTime startAt) {
+    public boolean updateSchedule(String title, String placeText, LocalDateTime startAt, Integer remindMinutes) {
         String newTitle = (title == null || title.isBlank()) ? this.title : title.trim();
         String newPlace = (placeText == null || placeText.isBlank()) ? null : placeText.trim();
 
-        LocalDateTime newRemindAt = (startAt == null) ? null : startAt.minusHours(1);
+        // ✅ 1) startAt이 null이면 "시간 변경 없음" → 기존 startAt 유지
+        LocalDateTime effectiveStartAt = (startAt == null) ? this.startAt : startAt;
+
+        // ✅ 2) remindMinutes가 없으면 "기존 diff" 유지 (startAt-remindAt)
+        int effectiveMinutes = 60; // fallback
+        if (remindMinutes != null) {
+            int v = remindMinutes;
+            if (v == 5 || v == 10 || v == 30 || v == 60) effectiveMinutes = v;
+        } else {
+            if (this.startAt != null && this.remindAt != null) {
+                long diff = java.time.Duration.between(this.remindAt, this.startAt).toMinutes();
+                int d = (int) diff;
+                if (d == 5 || d == 10 || d == 30 || d == 60) effectiveMinutes = d;
+            }
+        }
+
+        LocalDateTime newRemindAt =
+                (effectiveStartAt == null) ? null : effectiveStartAt.minusMinutes(effectiveMinutes);
 
         boolean scheduleChanged =
-                !Objects.equals(this.startAt, startAt) ||
-                        !Objects.equals(this.remindAt, newRemindAt);
+                !Objects.equals(this.startAt, effectiveStartAt) ||
+                        !Objects.equals(this.remindAt, newRemindAt) ||
+                        !Objects.equals(this.title, newTitle) ||
+                        !Objects.equals(this.placeText, newPlace);
 
         this.title = newTitle;
         this.placeText = newPlace;
-        this.startAt = startAt;
+        this.startAt = effectiveStartAt;
         this.remindAt = newRemindAt;
 
-        // ✅ 일정이 바뀌면 재알림 허용
+        // ✅ 일정/리마인드가 바뀌면 재알림 허용
         if (scheduleChanged) {
             this.remindedAt = null;
         }

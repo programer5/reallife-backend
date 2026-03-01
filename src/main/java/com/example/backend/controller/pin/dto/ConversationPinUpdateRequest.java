@@ -5,5 +5,6 @@ import java.time.LocalDateTime;
 public record ConversationPinUpdateRequest(
         String title,
         String placeText,
-        LocalDateTime startAt
+        LocalDateTime startAt,
+        Integer remindMinutes // ✅ NEW
 ) {}

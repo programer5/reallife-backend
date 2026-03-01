@@ -36,7 +36,8 @@ public class ConversationPinEditController {
                 pinId,
                 req.title(),
                 req.placeText(),
-                req.startAt()
+                req.startAt(),
+                req.remindMinutes() // ✅ NEW
         );
     }
 }
