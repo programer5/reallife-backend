@@ -64,6 +64,8 @@ public class ConversationPin extends BaseEntity {
     @Column(name = "status", nullable = false)
     private PinStatus status;
 
+    private static final int DEFAULT_REMIND_MINUTES = 60;
+
     public static ConversationPin createSchedule(
             UUID conversationId,
             UUID createdBy,
@@ -84,11 +86,31 @@ public class ConversationPin extends BaseEntity {
 
         int minutes = (remindMinutes == 5 || remindMinutes == 10 || remindMinutes == 30 || remindMinutes == 60)
                 ? remindMinutes
-                : 60;
+                : DEFAULT_REMIND_MINUTES;
 
         pin.remindAt = (startAt == null) ? null : startAt.minusMinutes(minutes); // ✅ 변경
         pin.status = PinStatus.ACTIVE;
         return pin;
+    }
+
+    // ✅ 기존 코드 호환용 오버로드 (기본: 60분 전)
+    public static ConversationPin createSchedule(
+            UUID conversationId,
+            UUID createdBy,
+            UUID sourceMessageId,
+            String title,
+            String placeText,
+            LocalDateTime startAt
+    ) {
+        return createSchedule(
+                conversationId,
+                createdBy,
+                sourceMessageId,
+                title,
+                placeText,
+                startAt,
+                DEFAULT_REMIND_MINUTES
+        );
     }
 
     public void markDone() {
@@ -111,7 +133,7 @@ public class ConversationPin extends BaseEntity {
         LocalDateTime effectiveStartAt = (startAt == null) ? this.startAt : startAt;
 
         // ✅ 2) remindMinutes가 없으면 "기존 diff" 유지 (startAt-remindAt)
-        int effectiveMinutes = 60; // fallback
+        int effectiveMinutes = DEFAULT_REMIND_MINUTES; // fallback
         if (remindMinutes != null) {
             int v = remindMinutes;
             if (v == 5 || v == 10 || v == 30 || v == 60) effectiveMinutes = v;

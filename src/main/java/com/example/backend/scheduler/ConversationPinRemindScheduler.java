@@ -11,6 +11,7 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
+import java.time.Duration;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
@@ -47,8 +48,21 @@ public class ConversationPinRemindScheduler {
 
             String when = (pin.getStartAt() == null) ? "곧" : DT.format(pin.getStartAt());
             String place = (pin.getPlaceText() == null || pin.getPlaceText().isBlank()) ? "장소 미정" : pin.getPlaceText();
+            String title = (pin.getTitle() == null || pin.getTitle().isBlank()) ? "약속" : pin.getTitle();
 
-            String body = "⏰ 1시간 전이에요: " + place + " · " + when;
+            String ahead;
+            if (pin.getStartAt() == null || pin.getRemindAt() == null) {
+                ahead = "리마인드";
+            } else {
+                long mins = Duration.between(pin.getRemindAt(), pin.getStartAt()).toMinutes();
+                if (mins == 60) ahead = "1시간 전";
+                else if (mins == 30) ahead = "30분 전";
+                else if (mins == 10) ahead = "10분 전";
+                else if (mins == 5) ahead = "5분 전";
+                else ahead = mins + "분 전";
+            }
+
+            String body = "⏰ " + ahead + " · " + title + " · " + place + " · " + when;
 
             for (UUID userId : targets) {
                 notificationCommandService.createIfNotExists(

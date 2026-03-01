@@ -78,8 +78,7 @@ class ConversationPinControllerDocsTest {
                 "홍대",
                 LocalDateTime.now()
                         .plusDays(1)
-                        .withHour(19).withMinute(0).withSecond(0).withNano(0),
-                60
+                        .withHour(19).withMinute(0).withSecond(0).withNano(0)
         ));
 
         mockMvc.perform(get("/api/conversations/{conversationId}/pins", c.getId())
