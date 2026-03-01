@@ -39,6 +39,10 @@ public class ConversationPinRemindScheduler {
         int sent = 0;
 
         for (ConversationPin pin : duePins) {
+
+            int claimed = pinRepository.claimRemind(pin.getId(), now);
+            if (claimed == 0) continue;
+
             List<UUID> targets = memberRepository.findUserIdsByConversationId(pin.getConversationId());
 
             String when = (pin.getStartAt() == null) ? "곧" : DT.format(pin.getStartAt());

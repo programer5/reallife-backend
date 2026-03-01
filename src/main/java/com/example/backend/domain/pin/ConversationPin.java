@@ -56,6 +56,9 @@ public class ConversationPin extends BaseEntity {
     @Column(name = "remind_at")
     private LocalDateTime remindAt;
 
+    @Column(name = "reminded_at")
+    private LocalDateTime remindedAt;
+
     @Enumerated(EnumType.STRING)
     @Column(name = "status", nullable = false)
     private PinStatus status;

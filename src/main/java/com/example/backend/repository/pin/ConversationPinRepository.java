@@ -4,8 +4,10 @@ import com.example.backend.domain.pin.ConversationPin;
 import com.example.backend.domain.pin.PinStatus;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -41,6 +43,7 @@ public interface ConversationPinRepository extends JpaRepository<ConversationPin
            and p.status = com.example.backend.domain.pin.PinStatus.ACTIVE
            and p.remindAt is not null
            and p.remindAt <= :now
+           and p.remindedAt is null
          order by p.remindAt asc
     """)
     List<ConversationPin> findDueReminds(@Param("now") LocalDateTime now, Pageable pageable);
@@ -64,4 +67,14 @@ public interface ConversationPinRepository extends JpaRepository<ConversationPin
             @Param("userId") UUID userId,
             Pageable pageable
     );
+
+    @Modifying
+    @Transactional
+    @Query("""
+    update ConversationPin p
+       set p.remindedAt = :now
+     where p.id = :pinId
+       and p.remindedAt is null
+""")
+    int claimRemind(@Param("pinId") UUID pinId, @Param("now") LocalDateTime now);
 }
