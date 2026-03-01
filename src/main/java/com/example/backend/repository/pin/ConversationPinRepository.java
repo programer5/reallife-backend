@@ -77,4 +77,16 @@ public interface ConversationPinRepository extends JpaRepository<ConversationPin
        and p.remindedAt is null
 """)
     int claimRemind(@Param("pinId") UUID pinId, @Param("now") LocalDateTime now);
+
+    public interface PinConversationRow {
+        UUID getId();
+        UUID getConversationId();
+    }
+
+    @Query("""
+    select p.id as id, p.conversationId as conversationId
+      from ConversationPin p
+     where p.id in :pinIds
+""")
+    List<PinConversationRow> findConversationIdsByPinIds(@Param("pinIds") List<UUID> pinIds);
 }

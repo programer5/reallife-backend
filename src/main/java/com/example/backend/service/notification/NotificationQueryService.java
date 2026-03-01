@@ -2,20 +2,26 @@ package com.example.backend.service.notification;
 
 import com.example.backend.controller.notification.dto.NotificationCursorResponse;
 import com.example.backend.domain.notification.Notification;
+import com.example.backend.domain.notification.NotificationType;
 import com.example.backend.repository.notification.NotificationRepository;
+import com.example.backend.repository.pin.ConversationPinRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
+import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
 public class NotificationQueryService {
 
     private final NotificationRepository notificationRepository;
+    private final ConversationPinRepository pinRepository;
 
     @Transactional(readOnly = true)
     public NotificationCursorResponse getMyNotifications(UUID meId, String cursor, Integer size) {
@@ -34,7 +40,42 @@ public class NotificationQueryService {
 
         boolean hasUnread = notificationRepository.existsByUserIdAndReadAtIsNullAndDeletedFalse(meId);
 
-        return NotificationCursorResponse.of(page, hasNext, hasUnread);
+        // ✅ PIN 알림(refId=pinId)들만 pinId -> conversationId 매핑
+        List<UUID> pinIds = page.stream()
+                .filter(n -> n.getType() == NotificationType.PIN_CREATED || n.getType() == NotificationType.PIN_REMIND)
+                .map(Notification::getRefId)
+                .filter(id -> id != null)
+                .distinct()
+                .toList();
+
+        Map<UUID, UUID> pinCidMap = pinIds.isEmpty()
+                ? Collections.emptyMap()
+                : pinRepository.findConversationIdsByPinIds(pinIds).stream()
+                .collect(Collectors.toMap(
+                        ConversationPinRepository.PinConversationRow::getId,
+                        ConversationPinRepository.PinConversationRow::getConversationId
+                ));
+
+        // ✅ conversationId 포함해서 items 구성
+        List<NotificationCursorResponse.Item> items = page.stream()
+                .map(n -> new NotificationCursorResponse.Item(
+                        n.getId(),
+                        n.getType().name(),
+                        n.getRefId(),
+                        pinCidMap.get(n.getRefId()), // ✅ PIN_*면 값, 아니면 null
+                        n.getBody(),
+                        n.isRead(),
+                        n.getCreatedAt()
+                ))
+                .toList();
+
+        String nextCursor = null;
+        if (hasNext && !page.isEmpty()) {
+            Notification last = page.get(page.size() - 1);
+            nextCursor = last.getCreatedAt().toString() + "|" + last.getId();
+        }
+
+        return new NotificationCursorResponse(items, nextCursor, hasNext, hasUnread);
     }
 
     private int normalizeSize(Integer size) {
