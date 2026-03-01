@@ -70,7 +70,8 @@ public class ConversationPin extends BaseEntity {
             UUID sourceMessageId,
             String title,
             String placeText,
-            LocalDateTime startAt
+            LocalDateTime startAt,
+            int remindMinutes // ✅ NEW
     ) {
         ConversationPin pin = new ConversationPin();
         pin.conversationId = conversationId;
@@ -80,7 +81,12 @@ public class ConversationPin extends BaseEntity {
         pin.title = (title == null || title.isBlank()) ? "약속" : title.trim();
         pin.placeText = (placeText == null || placeText.isBlank()) ? null : placeText.trim();
         pin.startAt = startAt;
-        pin.remindAt = (startAt == null) ? null : startAt.minusHours(1);
+
+        int minutes = (remindMinutes == 5 || remindMinutes == 10 || remindMinutes == 30 || remindMinutes == 60)
+                ? remindMinutes
+                : 60;
+
+        pin.remindAt = (startAt == null) ? null : startAt.minusMinutes(minutes); // ✅ 변경
         pin.status = PinStatus.ACTIVE;
         return pin;
     }

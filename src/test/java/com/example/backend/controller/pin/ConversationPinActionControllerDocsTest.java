@@ -73,7 +73,7 @@ class ConversationPinActionControllerDocsTest {
                 ConversationPin.createSchedule(
                         conversation.getId(),
                         meId,
-                        null, // ✅ sourceMessageId 추가 (DocsTest seed에서는 null로 두면 됨)
+                        null,
                         "약속",
                         "홍대",
                         LocalDateTime.now()
@@ -81,7 +81,8 @@ class ConversationPinActionControllerDocsTest {
                                 .withHour(19)
                                 .withMinute(0)
                                 .withSecond(0)
-                                .withNano(0)
+                                .withNano(0),
+                        60
                 )
         );
     }

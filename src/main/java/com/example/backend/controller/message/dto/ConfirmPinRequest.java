@@ -12,5 +12,6 @@ public record ConfirmPinRequest(
         UUID messageId,
         String overrideTitle,
         LocalDateTime overrideStartAt,
-        String overridePlaceText
+        String overridePlaceText,
+        Integer overrideRemindMinutes // ✅ NEW
 ) {}

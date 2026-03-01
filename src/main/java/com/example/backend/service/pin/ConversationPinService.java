@@ -64,7 +64,8 @@ public class ConversationPinService {
             String messageContent,
             String overrideTitle,
             LocalDateTime overrideStartAt,
-            String overridePlaceText
+            String overridePlaceText,
+            Integer overrideRemindMinutes
     ) {
         if (!memberRepository.existsByConversationIdAndUserId(conversationId, meId)) {
             throw new BusinessException(ErrorCode.FORBIDDEN);
@@ -94,17 +95,23 @@ public class ConversationPinService {
             throw new BusinessException(ErrorCode.INVALID_REQUEST);
         }
 
-        // ✅ 3) 같은 messageId로 중복 저장은 DB 유니크 + 멱등으로 해결하므로
-        // "비슷한 일정 중복"을 강제로 막는 로직은 제거하는 게 UX가 좋음.
-        // (원하면 나중에 '경고' UX로만 추가하자.)
+        // ✅ NEW: 리마인드 분 계산 (허용 옵션만 / 기본 60)
+        int remindMinutes = 60;
+        if (overrideRemindMinutes != null) {
+            int v = overrideRemindMinutes;
+            if (v == 5 || v == 10 || v == 30 || v == 60) {
+                remindMinutes = v;
+            }
+        }
 
         ConversationPin pin = ConversationPin.createSchedule(
                 conversationId,
                 meId,
-                messageId,   // ✅ sourceMessageId
+                messageId,
                 title,
                 placeText,
-                startAt
+                startAt,
+                remindMinutes // ✅ NEW: 여기 추가됨
         );
 
         ConversationPin saved;

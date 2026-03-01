@@ -70,7 +70,8 @@ public class ConversationPinController {
                 message.getContent(),
                 req.overrideTitle(),
                 req.overrideStartAt(),
-                req.overridePlaceText()
+                req.overridePlaceText(),
+                req.overrideRemindMinutes() // ✅ NEW
         );
     }
 }
