@@ -62,6 +62,37 @@ public class PinDetectionService {
         LocalDate date = parseDate(text, today);
         LocalDateTime startAt = LocalDateTime.of(date, tp.time);
 
+        LocalDateTime now = LocalDateTime.now(zoneId);
+
+        // ✅ 약속 시간은 과거일 수 없음: 가장 가까운 미래로 보정
+        if (startAt.isBefore(now)) {
+            // 후보들 중 "가장 가까운 미래"를 선택
+            LocalDateTime best = null;
+
+            // 1) 오늘 그대로
+            LocalDateTime c1 = startAt;
+            if (!c1.isBefore(now)) best = c1;
+
+            // 2) (오전/오후 명시가 없고 12시간제라면) PM 후보도 고려
+            if (!tp.explicitAmPm() && tp.time.getHour() < 12) {
+                LocalDateTime c2 = LocalDateTime.of(date, tp.time.plusHours(12));
+                if (!c2.isBefore(now) && (best == null || c2.isBefore(best))) best = c2;
+            }
+
+            // 3) 내일 같은 시각도 고려
+            LocalDateTime c3 = startAt.plusDays(1);
+            if (!c3.isBefore(now) && (best == null || c3.isBefore(best))) best = c3;
+
+            // 4) 내일 PM 후보도 고려
+            if (!tp.explicitAmPm() && tp.time.getHour() < 12) {
+                LocalDateTime c4 = LocalDateTime.of(date.plusDays(1), tp.time.plusHours(12));
+                if (!c4.isBefore(now) && (best == null || c4.isBefore(best))) best = c4;
+            }
+
+            // best가 없으면(이론상 거의 없음) 내일로
+            startAt = (best != null) ? best : startAt.plusDays(1);
+        }
+
         // 3) 장소 추정
         String place = extractPlaceAfter(text, tp.matchEndIndex);
 
@@ -134,7 +165,7 @@ public class PinDetectionService {
             int mm = Integer.parseInt(colon.group(2));
             if (h < 0 || h > 23) return null;
             if (mm < 0 || mm > 59) return null;
-            return new TimeParse(LocalTime.of(h, mm), colon.end());
+            return new TimeParse(LocalTime.of(h, mm), colon.end(), true);
         }
 
         Matcher hour = P_TIME_HOUR.matcher(text);
@@ -153,7 +184,8 @@ public class PinDetectionService {
 
             if (hh < 0 || hh > 23) return null;
 
-            return new TimeParse(LocalTime.of(hh, mm), hour.end());
+            boolean explicit = (ampm != null && !ampm.isBlank());
+            return new TimeParse(LocalTime.of(hh, mm), hour.end(), explicit);
         }
 
         return null;
@@ -194,5 +226,5 @@ public class PinDetectionService {
         return best;
     }
 
-    private record TimeParse(LocalTime time, int matchEndIndex) {}
+    private record TimeParse(LocalTime time, int matchEndIndex, boolean explicitAmPm) {}
 }

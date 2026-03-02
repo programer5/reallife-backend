@@ -99,7 +99,7 @@ public class ConversationPinService {
         int remindMinutes = 60;
         if (overrideRemindMinutes != null) {
             int v = overrideRemindMinutes;
-            if (v == 5 || v == 10 || v == 30 || v == 60) {
+            if (v == 0 || v == 5 || v == 10 || v == 30 || v == 60) {
                 remindMinutes = v;
             }
         }

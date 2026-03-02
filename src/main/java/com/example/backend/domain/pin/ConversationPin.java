@@ -84,11 +84,15 @@ public class ConversationPin extends BaseEntity {
         pin.placeText = (placeText == null || placeText.isBlank()) ? null : placeText.trim();
         pin.startAt = startAt;
 
-        int minutes = (remindMinutes == 5 || remindMinutes == 10 || remindMinutes == 30 || remindMinutes == 60)
+        int minutes = (remindMinutes == 0 || remindMinutes == 5 || remindMinutes == 10 || remindMinutes == 30 || remindMinutes == 60)
                 ? remindMinutes
                 : DEFAULT_REMIND_MINUTES;
 
-        pin.remindAt = (startAt == null) ? null : startAt.minusMinutes(minutes); // ✅ 변경
+        if (minutes == 0) {
+            pin.remindAt = null; // ✅ 알림 없음
+        } else {
+            pin.remindAt = (startAt == null) ? null : startAt.minusMinutes(minutes);
+        }
         pin.status = PinStatus.ACTIVE;
         return pin;
     }
@@ -136,7 +140,7 @@ public class ConversationPin extends BaseEntity {
         int effectiveMinutes = DEFAULT_REMIND_MINUTES; // fallback
         if (remindMinutes != null) {
             int v = remindMinutes;
-            if (v == 5 || v == 10 || v == 30 || v == 60) effectiveMinutes = v;
+            if (v == 0 || v == 5 || v == 10 || v == 30 || v == 60) effectiveMinutes = v;
         } else {
             if (this.startAt != null && this.remindAt != null) {
                 long diff = java.time.Duration.between(this.remindAt, this.startAt).toMinutes();
@@ -146,7 +150,7 @@ public class ConversationPin extends BaseEntity {
         }
 
         LocalDateTime newRemindAt =
-                (effectiveStartAt == null) ? null : effectiveStartAt.minusMinutes(effectiveMinutes);
+                (effectiveStartAt == null) ? null : (effectiveMinutes == 0 ? null : effectiveStartAt.minusMinutes(effectiveMinutes));
 
         boolean scheduleChanged =
                 !Objects.equals(this.startAt, effectiveStartAt) ||
