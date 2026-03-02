@@ -62,7 +62,7 @@ public class PinDetectionService {
         LocalDate date = parseDate(text, today);
         LocalDateTime startAt = LocalDateTime.of(date, tp.time);
 
-        LocalDateTime now = LocalDateTime.now(zoneId);
+        LocalDateTime now = LocalDateTime.of(today, LocalTime.now(zoneId));
 
         // ✅ 약속 시간은 과거일 수 없음: 가장 가까운 미래로 보정
         if (startAt.isBefore(now)) {
@@ -94,7 +94,10 @@ public class PinDetectionService {
         }
 
         // 3) 장소 추정
-        String place = extractPlaceAfter(text, tp.matchEndIndex);
+        String placeAfter = extractPlaceAfter(text, tp.matchEndIndex);
+        String placeBefore = extractPlaceBefore(text, tp.matchStartIndex);
+
+        String place = pickBetterPlace(placeBefore, placeAfter);
 
         // 4) 오탐 방지: 의도도 없고 장소도 없으면 생성 X
         boolean hasIntent = P_INTENT.matcher(text).find();
@@ -165,7 +168,7 @@ public class PinDetectionService {
             int mm = Integer.parseInt(colon.group(2));
             if (h < 0 || h > 23) return null;
             if (mm < 0 || mm > 59) return null;
-            return new TimeParse(LocalTime.of(h, mm), colon.end(), true);
+            return new TimeParse(LocalTime.of(h, mm), colon.start(), colon.end(), true);
         }
 
         Matcher hour = P_TIME_HOUR.matcher(text);
@@ -185,7 +188,7 @@ public class PinDetectionService {
             if (hh < 0 || hh > 23) return null;
 
             boolean explicit = (ampm != null && !ampm.isBlank());
-            return new TimeParse(LocalTime.of(hh, mm), hour.end(), explicit);
+            return new TimeParse(LocalTime.of(hh, mm), hour.start(), hour.end(), explicit);
         }
 
         return null;
@@ -217,6 +220,54 @@ public class PinDetectionService {
         return tail;
     }
 
+    private static String extractPlaceBefore(String text, int timeStartIdx) {
+        if (timeStartIdx <= 0 || timeStartIdx > text.length()) return "";
+
+        String head = text.substring(0, timeStartIdx).trim();
+        if (head.isBlank()) return "";
+
+        // 날짜/상대일 제거 (문장 앞쪽에서 흔히 붙음)
+        head = head.replaceAll("^(오늘|내일|모레)\\s*", "").trim();
+        head = head.replaceAll("^\\d{4}\\s*-\\s*\\d{1,2}\\s*-\\s*\\d{1,2}\\s*", "").trim(); // 2026-02-28
+        head = head.replaceAll("^\\d{1,2}\\s*/\\s*\\d{1,2}\\s*", "").trim();               // 2/28
+
+        // "에서/에/로" 같은 조사로 끝나는 경우 제거
+        head = head.replaceAll("\\s*(에서|에|로|으로)\\s*$", "").trim();
+
+        // 문장 앞쪽에 불필요 접속어가 있으면 제거
+        head = head.replaceAll("^(에|에서|로|으로|랑|하고|과|와)\\s*", "").trim();
+
+        // 너무 길면 마지막 25자만 (장소는 대개 뒤쪽에 있음)
+        if (head.length() > 25) head = head.substring(head.length() - 25).trim();
+
+        // 숫자만 있는 건 장소로 안 봄
+        if (head.matches("\\d+[\\d:\\s]*")) return "";
+
+        // 너무 짧으면 제외
+        if (head.length() < 2) return "";
+
+        return head;
+    }
+
+    private static String pickBetterPlace(String before, String after) {
+        String b = (before == null) ? "" : before.trim();
+        String a = (after == null) ? "" : after.trim();
+
+        boolean hb = !b.isBlank();
+        boolean ha = !a.isBlank();
+
+        if (hb && !ha) return b;
+        if (!hb && ha) return a;
+        if (!hb) return "";
+
+        // 둘 다 있으면: 길이 적당(2~25) + 더 구체적인 쪽을 우선
+        // (멀티워드 장소 "모란 멕켄 치킨" 같은 케이스에서 길이가 긴 쪽이 유리)
+        if (b.length() != a.length()) return (b.length() > a.length()) ? b : a;
+
+        // 길이가 같으면 after 우선 (내일 7시 홍대 같은 기본 패턴)
+        return a;
+    }
+
     private static int indexOfAny(String s, String... needles) {
         int best = -1;
         for (String n : needles) {
@@ -226,5 +277,5 @@ public class PinDetectionService {
         return best;
     }
 
-    private record TimeParse(LocalTime time, int matchEndIndex, boolean explicitAmPm) {}
+    private record TimeParse(LocalTime time, int matchStartIndex, int matchEndIndex, boolean explicitAmPm) {}
 }
