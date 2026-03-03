@@ -30,16 +30,25 @@ public record NotificationCursorResponse(
             java.util.Map<UUID, UUID> pinCidMap
     ) {
         List<Item> items = page.stream()
-                .map(n -> new Item(
-                        n.getId(),
-                        n.getType().name(),
-                        n.getRefId(),
-                        n.getRef2Id(),               // ✅
-                        pinCidMap.get(n.getRefId()), // PIN이면 채워짐
-                        n.getBody(),
-                        n.isRead(),
-                        n.getCreatedAt()
-                ))
+                .map(n -> {
+                    UUID refId = n.getRefId();
+
+                    UUID conversationId =
+                            (n.getType().name().startsWith("PIN_"))
+                                    ? (refId == null ? null : pinCidMap.get(refId))
+                                    : ("MESSAGE_RECEIVED".equals(n.getType().name()) ? refId : null);
+
+                    return new Item(
+                            n.getId(),
+                            n.getType().name(),
+                            refId,
+                            n.getRef2Id(),
+                            conversationId,
+                            n.getBody(),
+                            n.isRead(),
+                            n.getCreatedAt()
+                    );
+                })
                 .toList();
 
         String nextCursor = null;

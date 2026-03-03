@@ -50,13 +50,13 @@ public class SseEventListener {
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
     public void onNotificationCreated(NotificationCreatedEvent event) {
 
-        Map<String, Object> payload = Map.of(
-                "notificationId", event.notificationId().toString(),
-                "type", event.type().name(),
-                "refId", event.refId().toString(),
-                "body", event.body(),
-                "createdAt", event.createdAt().toString()
-        );
+        Map<String, Object> payload = new HashMap<>();
+        payload.put("notificationId", event.notificationId().toString());
+        payload.put("type", event.type().name());
+        payload.put("refId", event.refId() == null ? null : event.refId().toString());
+        payload.put("ref2Id", event.ref2Id() == null ? null : event.ref2Id().toString()); // ✅ messageId
+        payload.put("body", event.body());
+        payload.put("createdAt", event.createdAt().toString());
 
         pushService.push(event.userId(), "notification-created", payload, event.notificationId().toString());
     }

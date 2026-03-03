@@ -71,8 +71,7 @@ public class NotificationQueryService {
                                     || n.getType() == NotificationType.PIN_REMIND
                                     || n.getType() == NotificationType.PIN_DISMISSED
                                     || n.getType() == NotificationType.PIN_CANCELED
-                                    || n.getType() == NotificationType.PIN_DONE
-                                    || n.getType() == NotificationType.PIN_UPDATED)
+                                    || n.getType() == NotificationType.PIN_DONE)
                                     ? pinCidMap.get(refId)
                                     : (n.getType() == NotificationType.MESSAGE_RECEIVED ? refId : null);
 

@@ -26,18 +26,7 @@ public class NotificationCommandService {
      */
     @Transactional
     public void createIfNotExists(UUID userId, NotificationType type, UUID refId, String body) {
-
-        if (notificationRepository.existsByUserIdAndTypeAndRefIdAndDeletedFalse(userId, type, refId)) {
-            return;
-        }
-
-        try {
-            Notification saved = notificationRepository.save(Notification.create(userId, type, refId, body));
-            publishCreated(saved);
-
-        } catch (DataIntegrityViolationException e) {
-            log.info("🔁 duplicate notification ignored | userId={} type={} refId={}", userId, type, refId);
-        }
+        createIfNotExists(userId, type, refId, null, body);
     }
 
     /**
@@ -47,15 +36,7 @@ public class NotificationCommandService {
      */
     @Transactional
     public void createOrRevive(UUID userId, NotificationType type, UUID refId, String body) {
-        Notification n = notificationRepository.findByUserIdAndTypeAndRefId(userId, type, refId)
-                .map(existing -> {
-                    existing.revive(body);
-                    return existing;
-                })
-                .orElseGet(() -> Notification.create(userId, type, refId, body));
-
-        Notification saved = notificationRepository.save(n);
-        publishCreated(saved);
+        createOrRevive(userId, type, refId, null, body);
     }
 
     @Transactional
