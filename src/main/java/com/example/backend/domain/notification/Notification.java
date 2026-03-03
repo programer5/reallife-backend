@@ -46,15 +46,23 @@ public class Notification extends BaseEntity {
     @Column(name = "read_at")
     private LocalDateTime readAt;
 
-    private Notification(UUID userId, NotificationType type, UUID refId, String body) {
+    @Column(name = "ref2_id")
+    private UUID ref2Id; // 예: messageId 등 (옵션)
+
+    private Notification(UUID userId, NotificationType type, UUID refId, UUID ref2Id, String body) {
         this.userId = userId;
         this.type = type;
         this.refId = refId;
+        this.ref2Id = ref2Id;
         this.body = body;
     }
 
+    public static Notification create(UUID userId, NotificationType type, UUID refId, UUID ref2Id, String body) {
+        return new Notification(userId, type, refId, ref2Id, body);
+    }
+
     public static Notification create(UUID userId, NotificationType type, UUID refId, String body) {
-        return new Notification(userId, type, refId, body);
+        return new Notification(userId, type, refId, null, body);
     }
 
     /** ✅ 멱등 */
@@ -85,5 +93,9 @@ public class Notification extends BaseEntity {
         this.restore();       // BaseEntity: deleted=false 로 복구
         this.readAt = null;   // 미읽음으로 되돌림
         this.body = newBody;  // 메시지 갱신
+    }
+
+    public void updateRef2Id(UUID ref2Id) {
+        this.ref2Id = ref2Id;
     }
 }

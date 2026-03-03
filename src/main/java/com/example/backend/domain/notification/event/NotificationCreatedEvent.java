@@ -10,7 +10,7 @@ public record NotificationCreatedEvent(
         UUID userId,
         NotificationType type,
         UUID refId,
+        UUID ref2Id,   // ✅ 추가
         String body,
         LocalDateTime createdAt
-) {
-}
+) {}

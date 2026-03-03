@@ -58,15 +58,35 @@ public class NotificationQueryService {
 
         // ✅ conversationId 포함해서 items 구성
         List<NotificationCursorResponse.Item> items = page.stream()
-                .map(n -> new NotificationCursorResponse.Item(
-                        n.getId(),
-                        n.getType().name(),
-                        n.getRefId(),
-                        pinCidMap.get(n.getRefId()), // ✅ PIN_*면 값, 아니면 null
-                        n.getBody(),
-                        n.isRead(),
-                        n.getCreatedAt()
-                ))
+                .map(n -> {
+                    UUID refId = n.getRefId();
+                    UUID ref2Id = n.getRef2Id();
+
+                    // ✅ conversationId 결정 규칙
+                    // - PIN_* : refId(=pinId) -> pinCidMap에서 conversationId 조회
+                    // - MESSAGE_RECEIVED : refId 자체가 conversationId
+                    // - 그 외 : null
+                    UUID conversationId =
+                            (n.getType() == NotificationType.PIN_CREATED
+                                    || n.getType() == NotificationType.PIN_REMIND
+                                    || n.getType() == NotificationType.PIN_DISMISSED
+                                    || n.getType() == NotificationType.PIN_CANCELED
+                                    || n.getType() == NotificationType.PIN_DONE
+                                    || n.getType() == NotificationType.PIN_UPDATED)
+                                    ? pinCidMap.get(refId)
+                                    : (n.getType() == NotificationType.MESSAGE_RECEIVED ? refId : null);
+
+                    return new NotificationCursorResponse.Item(
+                            n.getId(),               // UUID
+                            n.getType().name(),      // String
+                            refId,                   // UUID refId
+                            ref2Id,                  // UUID ref2Id (messageId 등)
+                            conversationId,          // UUID conversationId
+                            n.getBody(),             // String
+                            n.isRead(),              // boolean
+                            n.getCreatedAt()         // LocalDateTime
+                    );
+                })
                 .toList();
 
         String nextCursor = null;

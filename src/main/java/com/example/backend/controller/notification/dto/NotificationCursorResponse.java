@@ -16,7 +16,8 @@ public record NotificationCursorResponse(
             UUID id,
             String type,
             UUID refId,
-            UUID conversationId,   // ✅ 추가 (PIN_*일 때만 채움, 나머진 null)
+            UUID ref2Id,          // ✅ messageId
+            UUID conversationId,
             String body,
             boolean read,
             LocalDateTime createdAt
@@ -33,7 +34,8 @@ public record NotificationCursorResponse(
                         n.getId(),
                         n.getType().name(),
                         n.getRefId(),
-                        pinCidMap.get(n.getRefId()), // ✅ PIN_*면 채워지고, 아니면 null
+                        n.getRef2Id(),               // ✅
+                        pinCidMap.get(n.getRefId()), // PIN이면 채워짐
                         n.getBody(),
                         n.isRead(),
                         n.getCreatedAt()

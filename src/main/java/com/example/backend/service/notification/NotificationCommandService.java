@@ -58,12 +58,43 @@ public class NotificationCommandService {
         publishCreated(saved);
     }
 
+    @Transactional
+    public void createIfNotExists(UUID userId, NotificationType type, UUID refId, UUID ref2Id, String body) {
+        if (notificationRepository.existsByUserIdAndTypeAndRefIdAndDeletedFalse(userId, type, refId)) {
+            return;
+        }
+        try {
+            Notification saved = notificationRepository.save(Notification.create(userId, type, refId, ref2Id, body));
+            publishCreated(saved);
+        } catch (DataIntegrityViolationException e) {
+            log.info("🔁 duplicate notification ignored | userId={} type={} refId={}", userId, type, refId);
+        }
+    }
+
+    @Transactional
+    public void createOrRevive(UUID userId, NotificationType type, UUID refId, UUID ref2Id, String body) {
+        Notification n = notificationRepository.findByUserIdAndTypeAndRefId(userId, type, refId)
+                .map(existing -> {
+                    existing.revive(body);
+                    existing.updateRef2Id(ref2Id);
+                    return existing;
+                })
+                .orElseGet(() -> Notification.create(userId, type, refId, ref2Id, body));
+
+        // ✅ existing 케이스도 ref2Id 갱신되게 하려면 Notification에 메서드 하나 추가 추천
+//         existing.updateRef2Id(ref2Id);
+
+        Notification saved = notificationRepository.save(n);
+        publishCreated(saved);
+    }
+
     private void publishCreated(Notification saved) {
         eventPublisher.publishEvent(new NotificationCreatedEvent(
                 saved.getId(),
                 saved.getUserId(),
                 saved.getType(),
                 saved.getRefId(),
+                saved.getRef2Id(), // ✅ 추가
                 saved.getBody(),
                 saved.getCreatedAt()
         ));

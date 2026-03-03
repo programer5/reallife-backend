@@ -53,7 +53,8 @@ public class NotificationEventListener {
             notificationCommandService.createOrRevive(
                     targetId,
                     NotificationType.MESSAGE_RECEIVED,
-                    event.conversationId(),   // ✅ conversationId
+                    event.conversationId(),  // refId = conversationId (기존 유지)
+                    event.messageId(),       // ref2Id = messageId (✅ 추가)
                     "새 메시지가 도착했습니다."
             );
         }
