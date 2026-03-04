@@ -2,6 +2,8 @@ package com.example.backend.controller.message;
 
 import com.example.backend.controller.message.dto.MessageSendRequest;
 import com.example.backend.controller.message.dto.MessageSendResponse;
+import com.example.backend.controller.message.dto.MessageUpdateRequest;
+import com.example.backend.controller.message.dto.MessageUpdateResponse;
 import com.example.backend.service.message.MessageCommandService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -24,5 +26,17 @@ public class MessageController {
                                     Authentication authentication) {
         UUID meId = UUID.fromString(authentication.getName());
         return commandService.send(meId, conversationId, req, unlockToken);
+    }
+
+    @PatchMapping("/{messageId}")
+    public MessageUpdateResponse update(
+            @PathVariable UUID conversationId,
+            @PathVariable UUID messageId,
+            @RequestBody @Valid MessageUpdateRequest request,
+            Authentication authentication
+    ) {
+        // ✅ send()랑 동일한 방식 (너 프로젝트 표준)
+        UUID meId = UUID.fromString(authentication.getName());
+        return commandService.update(meId, conversationId, messageId, request);
     }
 }

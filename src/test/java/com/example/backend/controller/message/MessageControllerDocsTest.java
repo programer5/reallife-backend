@@ -2,6 +2,7 @@ package com.example.backend.controller.message;
 
 import com.example.backend.controller.DocsTestSupport;
 import com.example.backend.controller.message.dto.MessageSendRequest;
+import com.example.backend.controller.message.dto.MessageUpdateRequest;
 import com.example.backend.service.message.ConversationService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.Test;
@@ -26,16 +27,16 @@ import static org.springframework.restdocs.headers.HeaderDocumentation.headerWit
 import static org.springframework.restdocs.headers.HeaderDocumentation.requestHeaders;
 import static org.springframework.restdocs.mockmvc.MockMvcRestDocumentation.document;
 import static org.springframework.restdocs.mockmvc.MockMvcRestDocumentation.documentationConfiguration;
-import static org.springframework.restdocs.operation.preprocess.Preprocessors.prettyPrint;
-import static org.springframework.restdocs.operation.preprocess.Preprocessors.preprocessRequest;
-import static org.springframework.restdocs.operation.preprocess.Preprocessors.preprocessResponse;
+import static org.springframework.restdocs.operation.preprocess.Preprocessors.*;
 import static org.springframework.restdocs.payload.JsonFieldType.*;
 import static org.springframework.restdocs.payload.PayloadDocumentation.*;
 import static org.springframework.restdocs.request.RequestDocumentation.parameterWithName;
 import static org.springframework.restdocs.request.RequestDocumentation.pathParameters;
 import static org.springframework.security.test.web.servlet.setup.SecurityMockMvcConfigurers.springSecurity;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @SpringBootTest
 @ActiveProfiles("test")
@@ -114,6 +115,65 @@ class MessageControllerDocsTest {
                                 fieldWithPath("pinCandidates[].confidence").optional().type(NUMBER).description("신뢰도(옵션)"),
                                 fieldWithPath("pinCandidates[].reasonTags").optional().type(ARRAY).description("감지 근거 태그(옵션)"),
                                 fieldWithPath("createdAt").type(STRING).description("생성 시각")
+                        )
+                ));
+    }
+
+    @Test
+    void 메시지수정_200(RestDocumentationContextProvider restDocumentation) throws Exception {
+        MockMvc mockMvc = mockMvc(restDocumentation);
+
+        var me = docs.saveUser("updateme", "나");
+        var target = docs.saveUser("updatetarget", "상대");
+        String token = docs.issueTokenFor(me);
+
+        UUID conversationId = conversationService.createOrGetDirect(me.getId(), target.getId());
+
+        // 1) 먼저 메시지 1개 전송해서 messageId 확보
+        MessageSendRequest sendReq = new MessageSendRequest("수정 전 메시지", List.of());
+
+        String sendRes = mockMvc.perform(post("/api/conversations/{conversationId}/messages", conversationId)
+                        .header(HttpHeaders.AUTHORIZATION, DocsTestSupport.auth(token))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(sendReq)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.messageId").isNotEmpty())
+                .andReturn()
+                .getResponse()
+                .getContentAsString();
+
+        String messageId = objectMapper.readTree(sendRes).get("messageId").asText();
+
+        // 2) 수정 요청
+        MessageUpdateRequest updateReq = new MessageUpdateRequest("수정 후 메시지 (REST Docs)");
+
+        mockMvc.perform(patch("/api/conversations/{conversationId}/messages/{messageId}", conversationId, messageId)
+                        .header(HttpHeaders.AUTHORIZATION, DocsTestSupport.auth(token))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(updateReq)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.messageId").value(messageId))
+                .andExpect(jsonPath("$.conversationId").value(conversationId.toString()))
+                .andExpect(jsonPath("$.content").value("수정 후 메시지 (REST Docs)"))
+                .andExpect(jsonPath("$.editedAt").isNotEmpty())
+                .andDo(document("messages-update",
+                        preprocessRequest(prettyPrint()),
+                        preprocessResponse(prettyPrint()),
+                        requestHeaders(
+                                headerWithName(HttpHeaders.AUTHORIZATION).description("Bearer {accessToken}")
+                        ),
+                        pathParameters(
+                                parameterWithName("conversationId").description("대화방 ID(UUID)"),
+                                parameterWithName("messageId").description("메시지 ID(UUID)")
+                        ),
+                        requestFields(
+                                fieldWithPath("content").type(STRING).description("수정할 메시지 내용(최대 5000자)")
+                        ),
+                        responseFields(
+                                fieldWithPath("messageId").type(STRING).description("메시지 ID"),
+                                fieldWithPath("conversationId").type(STRING).description("대화방 ID"),
+                                fieldWithPath("content").type(STRING).description("수정된 메시지 내용"),
+                                fieldWithPath("editedAt").type(STRING).description("수정 시각")
                         )
                 ));
     }

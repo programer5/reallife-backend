@@ -3,6 +3,7 @@ package com.example.backend.service.sse;
 import com.example.backend.domain.message.event.ConversationReadEvent;
 import com.example.backend.domain.message.event.MessageDeletedEvent;
 import com.example.backend.domain.message.event.MessageSentEvent;
+import com.example.backend.domain.message.event.MessageUpdatedEvent;
 import com.example.backend.domain.notification.event.NotificationCreatedEvent;
 import com.example.backend.domain.pin.event.PinCreatedEvent;
 import com.example.backend.domain.pin.event.PinUpdatedEvent;
@@ -145,6 +146,27 @@ public class SseEventListener {
 
         for (UUID targetId : targets) {
             pushService.push(targetId, "conversation-read", payload, eventId);
+        }
+    }
+
+    @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
+    public void onMessageUpdated(MessageUpdatedEvent event) {
+
+        // ✅ 수정은 "나 포함 전원"에게 보내는 게 안전 (다중 디바이스/탭 정합성)
+        List<UUID> targets = memberRepository.findUserIdsByConversationId(event.conversationId());
+
+        Map<String, Object> payload = Map.of(
+                "messageId", event.messageId().toString(),
+                "conversationId", event.conversationId().toString(),
+                "editorId", event.editorId().toString(),
+                "content", event.content(),
+                "editedAt", event.editedAt() == null ? null : event.editedAt().toString()
+        );
+
+        String eventId = event.messageId() + ":" + (event.editedAt() == null ? "null" : event.editedAt());
+
+        for (UUID targetId : targets) {
+            pushService.push(targetId, "message-updated", payload, eventId);
         }
     }
 }

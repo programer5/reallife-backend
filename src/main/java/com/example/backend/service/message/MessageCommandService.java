@@ -3,6 +3,8 @@ package com.example.backend.service.message;
 import com.example.backend.common.PublicUrlBuilder;
 import com.example.backend.controller.message.dto.MessageSendRequest;
 import com.example.backend.controller.message.dto.MessageSendResponse;
+import com.example.backend.controller.message.dto.MessageUpdateRequest;
+import com.example.backend.controller.message.dto.MessageUpdateResponse;
 import com.example.backend.domain.file.UploadedFile;
 import com.example.backend.domain.message.Conversation;
 import com.example.backend.domain.message.Message;
@@ -23,7 +25,9 @@ import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.UUID;
 
 @Slf4j
 @Service
@@ -127,6 +131,68 @@ public class MessageCommandService {
                 files,
                 pinCandidates,
                 saved.getCreatedAt()
+        );
+    }
+
+    @Transactional
+    public MessageUpdateResponse update(UUID meId, UUID conversationId, UUID messageId, MessageUpdateRequest req) {
+
+        // 1) 대화 멤버 권한
+        if (!memberRepository.existsByConversationIdAndUserId(conversationId, meId)) {
+            throw new BusinessException(ErrorCode.MESSAGE_FORBIDDEN);
+        }
+
+        // 2) 메시지 존재 + 삭제 아닌 것
+        Message message = messageRepository.findByIdAndDeletedFalse(messageId)
+                .orElseThrow(() -> new BusinessException(ErrorCode.MESSAGE_NOT_FOUND));
+
+        // 3) 대화방 매칭
+        if (!message.getConversationId().equals(conversationId)) {
+            throw new BusinessException(ErrorCode.MESSAGE_NOT_FOUND);
+        }
+
+        // 4) 작성자만 수정 가능
+        if (!message.getSenderId().equals(meId)) {
+            throw new BusinessException(ErrorCode.MESSAGE_FORBIDDEN);
+        }
+
+        // 5) 내용 검증
+        String content = req.content() == null ? null : req.content().trim();
+        if (content == null || content.isBlank()) {
+            throw new BusinessException(ErrorCode.INVALID_REQUEST);
+        }
+        if (content.length() > 5000) {
+            throw new BusinessException(ErrorCode.INVALID_REQUEST);
+        }
+
+        // 6) 업데이트
+        var now = java.time.LocalDateTime.now();
+        message.updateContent(content, now);
+
+        // 7) lastMessagePreview라면 preview도 갱신
+        Conversation conversation = conversationRepository.findById(conversationId)
+                .orElseThrow(() -> new BusinessException(ErrorCode.CONVERSATION_NOT_FOUND));
+
+        if (conversation.getLastMessageId() != null && conversation.getLastMessageId().equals(messageId)) {
+            String preview = content.length() > 200 ? content.substring(0, 200) : content;
+            // lastMessageAt은 “생성 시각” 유지 (바꾸지 않음)
+            conversation.updateLastMessage(conversation.getLastMessageId(), conversation.getLastMessageAt(), preview);
+        }
+
+        // 8) SSE 이벤트 발행
+        eventPublisher.publishEvent(new com.example.backend.domain.message.event.MessageUpdatedEvent(
+                message.getId(),
+                message.getConversationId(),
+                meId,
+                message.getContent(),
+                message.getEditedAt()
+        ));
+
+        return new MessageUpdateResponse(
+                message.getId(),
+                message.getConversationId(),
+                message.getContent(),
+                message.getEditedAt()
         );
     }
 }

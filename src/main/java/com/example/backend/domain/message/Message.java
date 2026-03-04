@@ -44,6 +44,9 @@ public class Message extends BaseEntity {
     @Column(name = "deleted_at")
     private LocalDateTime deletedAt;
 
+    @Column(name = "edited_at")
+    private LocalDateTime editedAt;
+
     private Message(UUID conversationId, UUID senderId, MessageType type, String content) {
         this.conversationId = conversationId;
         this.senderId = senderId;
@@ -58,5 +61,10 @@ public class Message extends BaseEntity {
     public void deleteForAll(LocalDateTime now) {
         this.markDeleted();    // ✅ BaseEntity 메서드 사용
         this.deletedAt = now;
+    }
+
+    public void updateContent(String newContent, LocalDateTime now) {
+        this.content = newContent;
+        this.editedAt = now;
     }
 }
