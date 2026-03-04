@@ -1,5 +1,6 @@
 package com.example.backend.service.sse;
 
+import com.example.backend.domain.message.event.ConversationReadEvent;
 import com.example.backend.domain.message.event.MessageDeletedEvent;
 import com.example.backend.domain.message.event.MessageSentEvent;
 import com.example.backend.domain.notification.event.NotificationCreatedEvent;
@@ -123,6 +124,27 @@ public class SseEventListener {
 
         for (UUID targetId : targets) {
             pushService.push(targetId, "pin-updated", payload, event.pinId().toString());
+        }
+    }
+
+    @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
+    public void onConversationRead(ConversationReadEvent event) {
+
+        List<UUID> targets = memberRepository.findUserIdsByConversationId(event.conversationId())
+                .stream()
+                .filter(id -> !id.equals(event.userId())) // 읽은 당사자 제외
+                .toList();
+
+        Map<String, Object> payload = Map.of(
+                "conversationId", event.conversationId().toString(),
+                "userId", event.userId().toString(),
+                "lastReadAt", event.lastReadAt() == null ? null : event.lastReadAt().toString()
+        );
+
+        String eventId = event.conversationId() + ":" + event.userId() + ":" + (event.lastReadAt() == null ? "null" : event.lastReadAt());
+
+        for (UUID targetId : targets) {
+            pushService.push(targetId, "conversation-read", payload, eventId);
         }
     }
 }

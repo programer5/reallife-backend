@@ -35,4 +35,7 @@ public interface ConversationMemberRepository extends JpaRepository<Conversation
             @Param("readAt") LocalDateTime readAt
     );
 
+    @Query("select m from ConversationMember m where m.conversationId = :conversationId and m.deleted = false")
+    List<ConversationMember> findActiveMembers(@Param("conversationId") UUID conversationId);
+
 }

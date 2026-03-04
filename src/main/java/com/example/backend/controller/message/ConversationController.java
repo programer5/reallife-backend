@@ -1,9 +1,6 @@
 package com.example.backend.controller.message;
 
-import com.example.backend.controller.message.dto.ConversationListResponse;
-import com.example.backend.controller.message.dto.ConversationReadStateResponse;
-import com.example.backend.controller.message.dto.DirectConversationCreateRequest;
-import com.example.backend.controller.message.dto.DirectConversationCreateResponse;
+import com.example.backend.controller.message.dto.*;
 import com.example.backend.domain.message.ConversationMember;
 import com.example.backend.exception.BusinessException;
 import com.example.backend.exception.ErrorCode;
@@ -66,5 +63,25 @@ public class ConversationController {
                 .orElseThrow(() -> new BusinessException(ErrorCode.MESSAGE_FORBIDDEN));
 
         return new ConversationReadStateResponse(member.getLastReadAt());
+    }
+
+    @GetMapping("/{conversationId}/read-receipts")
+    public ConversationReadReceiptsResponse readReceipts(
+            @AuthenticationPrincipal String userId,
+            @PathVariable UUID conversationId
+    ) {
+        UUID meId = UUID.fromString(userId);
+
+        // 멤버십 체크
+        memberRepository.findByConversationIdAndUserId(conversationId, meId)
+                .orElseThrow(() -> new BusinessException(ErrorCode.MESSAGE_FORBIDDEN));
+
+        var members = memberRepository.findActiveMembers(conversationId);
+
+        var items = members.stream()
+                .map(m -> new ConversationReadReceiptsResponse.Item(m.getUserId(), m.getLastReadAt()))
+                .toList();
+
+        return new ConversationReadReceiptsResponse(items);
     }
 }

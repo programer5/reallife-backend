@@ -239,6 +239,16 @@ curl -i -b cookies.txt \
   "http://localhost/api/conversations/<conversationId>/messages?size=20"
 ----
 
+==== 3-3-1) 내 읽음 상태 조회 (unread divider 계산용)
+
+include::{snippets}/conversations-read-state-200/http-request.adoc[]
+include::{snippets}/conversations-read-state-200/http-response.adoc[]
+
+==== 3-3-2) 읽음 표시 조회 (1:1 DM - 상대 lastReadAt)
+
+include::{snippets}/conversations-read-receipts-200/http-request.adoc[]
+include::{snippets}/conversations-read-receipts-200/http-response.adoc[]
+
 ==== 3-4) 메시지 전송
 
 [source,bash]
@@ -263,6 +273,7 @@ curl -i -b cookies.txt -H "Content-Type: application/json" \
 |`pin-created` |핀 생성 |해당 대화방 핀 목록 재조회(또는 상단 pinned UI 즉시 갱신)
 |`pin-updated` |핀 상태 변경/숨김(done/cancel/dismiss) |해당 대화방 핀 목록 재조회(또는 상단 pinned UI에서 해당 핀 제거/갱신)
 |`notification-created` |새 알림 생성 |알림 목록 재조회 / 뱃지 카운트 갱신
+|`conversation-read` |상대가 대화방 읽음 처리(/read) |내 마지막 메시지에 “읽음” 표시 갱신(또는 read-receipts 재조회)
 |===
 [NOTE]
 ====
