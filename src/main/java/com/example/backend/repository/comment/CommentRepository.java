@@ -12,6 +12,9 @@ import java.util.UUID;
 
 public interface CommentRepository extends JpaRepository<Comment, UUID> {
 
+    boolean existsByIdAndPostIdAndDeletedFalse(UUID id, UUID postId);
+
+    // ===== LATEST =====
     @Query("""
         select new com.example.backend.controller.comment.dto.CommentListItem(
             c.id,
@@ -19,7 +22,9 @@ public interface CommentRepository extends JpaRepository<Comment, UUID> {
             u.handle,
             u.name,
             c.content,
-            c.createdAt
+            c.createdAt,
+            c.parentCommentId,
+            c.likeCount
         )
         from Comment c
         join User u on u.id = c.authorId
@@ -27,7 +32,7 @@ public interface CommentRepository extends JpaRepository<Comment, UUID> {
           and c.deleted = false
         order by c.createdAt desc, c.id desc
     """)
-    List<CommentListItem> findFirstPage(UUID postId, Pageable pageable);
+    List<CommentListItem> findFirstPageLatest(UUID postId, Pageable pageable);
 
     @Query("""
         select new com.example.backend.controller.comment.dto.CommentListItem(
@@ -36,7 +41,9 @@ public interface CommentRepository extends JpaRepository<Comment, UUID> {
             u.handle,
             u.name,
             c.content,
-            c.createdAt
+            c.createdAt,
+            c.parentCommentId,
+            c.likeCount
         )
         from Comment c
         join User u on u.id = c.authorId
@@ -48,8 +55,58 @@ public interface CommentRepository extends JpaRepository<Comment, UUID> {
           )
         order by c.createdAt desc, c.id desc
     """)
-    List<CommentListItem> findNextPage(
+    List<CommentListItem> findNextPageLatest(
             UUID postId,
+            LocalDateTime cursorCreatedAt,
+            UUID cursorId,
+            Pageable pageable
+    );
+
+    // ===== POPULAR =====
+    @Query("""
+        select new com.example.backend.controller.comment.dto.CommentListItem(
+            c.id,
+            c.authorId,
+            u.handle,
+            u.name,
+            c.content,
+            c.createdAt,
+            c.parentCommentId,
+            c.likeCount
+        )
+        from Comment c
+        join User u on u.id = c.authorId
+        where c.postId = :postId
+          and c.deleted = false
+        order by c.likeCount desc, c.createdAt desc, c.id desc
+    """)
+    List<CommentListItem> findFirstPagePopular(UUID postId, Pageable pageable);
+
+    @Query("""
+        select new com.example.backend.controller.comment.dto.CommentListItem(
+            c.id,
+            c.authorId,
+            u.handle,
+            u.name,
+            c.content,
+            c.createdAt,
+            c.parentCommentId,
+            c.likeCount
+        )
+        from Comment c
+        join User u on u.id = c.authorId
+        where c.postId = :postId
+          and c.deleted = false
+          and (
+                c.likeCount < :cursorLikeCount
+             or (c.likeCount = :cursorLikeCount and c.createdAt < :cursorCreatedAt)
+             or (c.likeCount = :cursorLikeCount and c.createdAt = :cursorCreatedAt and c.id < :cursorId)
+          )
+        order by c.likeCount desc, c.createdAt desc, c.id desc
+    """)
+    List<CommentListItem> findNextPagePopular(
+            UUID postId,
+            long cursorLikeCount,
             LocalDateTime cursorCreatedAt,
             UUID cursorId,
             Pageable pageable

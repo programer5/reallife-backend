@@ -10,15 +10,19 @@ public record CommentResponse(
         UUID postId,
         UUID userId,
         String content,
-        LocalDateTime createdAt
+        LocalDateTime createdAt,
+        UUID parentCommentId,
+        long likeCount
 ) {
     public static CommentResponse from(Comment comment) {
         return new CommentResponse(
                 comment.getId(),
-                comment.getPostId(),     // ✅ 여기!
+                comment.getPostId(),
                 comment.getAuthorId(),
                 comment.getContent(),
-                comment.getCreatedAt()
+                comment.getCreatedAt(),
+                comment.getParentCommentId(),
+                comment.getLikeCount()
         );
     }
 }

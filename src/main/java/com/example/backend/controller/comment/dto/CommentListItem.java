@@ -9,5 +9,7 @@ public record CommentListItem(
         String handle,
         String name,
         String content,
-        LocalDateTime createdAt
+        LocalDateTime createdAt,
+        UUID parentCommentId,
+        long likeCount
 ) {}

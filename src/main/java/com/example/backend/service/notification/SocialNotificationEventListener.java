@@ -66,6 +66,7 @@ public class SocialNotificationEventListener {
                 targetUserId,
                 NotificationType.POST_COMMENT,
                 e.commentId(),
+                e.postId(),
                 body
         );
     }

@@ -12,6 +12,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.HttpHeaders;
 import org.springframework.restdocs.RestDocumentationContextProvider;
 import org.springframework.restdocs.RestDocumentationExtension;
+import org.springframework.restdocs.payload.JsonFieldType;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 import org.springframework.test.web.servlet.MockMvc;
@@ -78,14 +79,24 @@ class CommentControllerDocsTest {
                                 parameterWithName("postId").description("게시글 ID")
                         ),
                         requestFields(
-                                fieldWithPath("content").description("댓글 내용")
+                                fieldWithPath("content")
+                                        .type(JsonFieldType.STRING)
+                                        .description("댓글 내용"),
+
+                                fieldWithPath("parentCommentId")
+                                        .type(JsonFieldType.STRING)
+                                        .optional()
+                                        .description("부모 댓글 ID (답글일 경우)")
                         ),
                         responseFields(
                                 fieldWithPath("commentId").description("댓글 ID"),
                                 fieldWithPath("postId").description("게시글 ID"),
                                 fieldWithPath("userId").description("작성자 유저 ID(UUID)"),
                                 fieldWithPath("content").description("댓글 내용"),
-                                fieldWithPath("createdAt").description("작성 시간(ISO-8601)")
+                                fieldWithPath("parentCommentId").optional().description("부모 댓글 ID(없으면 root)"),
+                                fieldWithPath("createdAt").description("작성 시간(ISO-8601)"),
+                                fieldWithPath("parentCommentId").optional().description("부모 댓글 ID(없으면 root)"),
+                                fieldWithPath("likeCount").description("좋아요 수")
                         )
                 ));
     }
@@ -119,7 +130,8 @@ class CommentControllerDocsTest {
                                 parameterWithName("cursor")
                                         .optional()
                                         .description("페이지 커서(opaque). 이전 응답의 nextCursor 값을 그대로 사용. 없으면 첫 페이지"),
-                                parameterWithName("size").optional().description("페이지 크기(기본 20, 최대 50)")
+                                parameterWithName("size").optional().description("페이지 크기(기본 20, 최대 50)"),
+                                parameterWithName("sort").optional().description("정렬(LATEST|POPULAR), 기본 LATEST")
                         ),
                         responseFields(
                                 fieldWithPath("items").description("댓글 목록"),
@@ -129,6 +141,8 @@ class CommentControllerDocsTest {
                                 fieldWithPath("items[].name").description("작성자 이름"),
                                 fieldWithPath("items[].content").description("댓글 내용"),
                                 fieldWithPath("items[].createdAt").description("작성 시간(ISO-8601)"),
+                                fieldWithPath("items[].parentCommentId").optional().description("부모 댓글 ID(없으면 root)"),
+                                fieldWithPath("items[].likeCount").description("좋아요 수"),
                                 fieldWithPath("nextCursor").optional().description("다음 페이지 커서"),
                                 fieldWithPath("hasNext").description("다음 페이지 존재 여부")
                         )
@@ -248,7 +262,8 @@ class CommentControllerDocsTest {
                         ),
                         queryParameters(
                                 parameterWithName("cursor").optional().description("페이지 커서(없으면 첫 페이지)"),
-                                parameterWithName("size").optional().description("페이지 크기(기본 20, 최대 50)")
+                                parameterWithName("size").optional().description("페이지 크기(기본 20, 최대 50)"),
+                                parameterWithName("sort").optional().description("정렬(LATEST|POPULAR), 기본 LATEST")
                         ),
                         responseFields(
                                 fieldWithPath("items").description("댓글 목록"),
@@ -258,6 +273,8 @@ class CommentControllerDocsTest {
                                 fieldWithPath("items[].name").description("작성자 이름"),
                                 fieldWithPath("items[].content").description("댓글 내용"),
                                 fieldWithPath("items[].createdAt").description("작성 시간(ISO-8601)"),
+                                fieldWithPath("items[].parentCommentId").optional().description("부모 댓글 ID(없으면 root)"),
+                                fieldWithPath("items[].likeCount").description("좋아요 수"),
                                 fieldWithPath("nextCursor").optional().description("다음 페이지 커서"),
                                 fieldWithPath("hasNext").description("다음 페이지 존재 여부")
                         )
@@ -286,7 +303,8 @@ class CommentControllerDocsTest {
                         ),
                         queryParameters(
                                 parameterWithName("cursor").description("이전 응답의 nextCursor 값(opaque)"),
-                                parameterWithName("size").optional().description("페이지 크기(기본 20, 최대 50)")
+                                parameterWithName("size").optional().description("페이지 크기(기본 20, 최대 50)"),
+                                parameterWithName("sort").optional().description("정렬(LATEST|POPULAR), 기본 LATEST")
                         ),
                         responseFields(
                                 fieldWithPath("items").description("댓글 목록"),
@@ -296,6 +314,8 @@ class CommentControllerDocsTest {
                                 fieldWithPath("items[].name").description("작성자 이름"),
                                 fieldWithPath("items[].content").description("댓글 내용"),
                                 fieldWithPath("items[].createdAt").description("작성 시간(ISO-8601)"),
+                                fieldWithPath("items[].parentCommentId").optional().description("부모 댓글 ID(없으면 root)"),
+                                fieldWithPath("items[].likeCount").description("좋아요 수"),
                                 fieldWithPath("nextCursor").optional().description("다음 페이지 커서"),
                                 fieldWithPath("hasNext").description("다음 페이지 존재 여부")
                         )
@@ -327,9 +347,97 @@ class CommentControllerDocsTest {
                         ),
                         queryParameters(
                                 parameterWithName("cursor").description("페이지 커서(opaque). 유효하지 않으면 400"),
-                                parameterWithName("size").optional().description("페이지 크기(기본 20, 최대 50)")
+                                parameterWithName("size").optional().description("페이지 크기(기본 20, 최대 50)"),
+                                parameterWithName("sort").optional().description("정렬(LATEST|POPULAR), 기본 LATEST")
                         ),
                         responseFields(ErrorResponseSnippet.common())
                 ));
     }
+
+@Test
+void 댓글_답글_생성_201(RestDocumentationContextProvider restDocumentation) throws Exception {
+    User me = docs.saveUser("replyer", "답글러");
+    String token = docs.issueTokenFor(me);
+
+    UUID postId = docs.savePost(me.getId(), "post for reply").getId();
+    UUID parentId = commentRepository.saveAndFlush(Comment.create(postId, me.getId(), "root")).getId();
+
+    mockMvc(restDocumentation)
+            .perform(post("/api/posts/{postId}/comments", postId)
+                    .contentType("application/json")
+                    .content(String.format("{\n  \"content\": \"reply!\",\n  \"parentCommentId\": \"%s\"\n}", parentId))
+                    .header(HttpHeaders.AUTHORIZATION, DocsTestSupport.auth(token)))
+            .andDo(print())
+            .andExpect(status().isCreated())
+            .andDo(document("comments-create-reply-201",
+                    preprocessRequest(prettyPrint()),
+                    preprocessResponse(prettyPrint()),
+                    requestHeaders(
+                            headerWithName(HttpHeaders.AUTHORIZATION).description("Bearer {accessToken}")
+                    ),
+                    pathParameters(
+                            parameterWithName("postId").description("게시글 ID")
+                    ),
+                    requestFields(
+                            fieldWithPath("content").description("댓글 내용"),
+                            fieldWithPath("parentCommentId").description("부모 댓글 ID")
+                    ),
+                    responseFields(
+                            fieldWithPath("commentId").description("댓글 ID"),
+                            fieldWithPath("postId").description("게시글 ID"),
+                            fieldWithPath("userId").description("작성자 유저 ID(UUID)"),
+                            fieldWithPath("content").description("댓글 내용"),
+                            fieldWithPath("createdAt").description("작성 시간(ISO-8601)"),
+                            fieldWithPath("parentCommentId").description("부모 댓글 ID"),
+                            fieldWithPath("likeCount").description("좋아요 수")
+                    )
+            ));
+}
+
+@Test
+void 댓글목록_인기정렬_조회_200(RestDocumentationContextProvider restDocumentation) throws Exception {
+    User me = docs.saveUser("pop", "인기");
+    String token = docs.issueTokenFor(me);
+
+    UUID postId = docs.savePost(me.getId(), "post for popular").getId();
+    commentRepository.saveAndFlush(Comment.create(postId, me.getId(), "a"));
+    commentRepository.saveAndFlush(Comment.create(postId, me.getId(), "b"));
+
+    mockMvc(restDocumentation)
+            .perform(get("/api/posts/{postId}/comments", postId)
+                    .param("size", "10")
+                    .param("sort", "POPULAR")
+                    .header(HttpHeaders.AUTHORIZATION, DocsTestSupport.auth(token)))
+            .andDo(print())
+            .andExpect(status().isOk())
+            .andDo(document("comments-list-200-popular",
+                    preprocessRequest(prettyPrint()),
+                    preprocessResponse(prettyPrint()),
+                    requestHeaders(
+                            headerWithName(HttpHeaders.AUTHORIZATION).description("Bearer {accessToken}")
+                    ),
+                    pathParameters(
+                            parameterWithName("postId").description("게시글 ID")
+                    ),
+                    queryParameters(
+                            parameterWithName("cursor").optional().description("페이지 커서(opaque)"),
+                            parameterWithName("size").optional().description("페이지 크기(기본 20, 최대 50)"),
+                            parameterWithName("sort").optional().description("정렬(LATEST|POPULAR)")
+                    ),
+                    responseFields(
+                            fieldWithPath("items").description("댓글 목록"),
+                            fieldWithPath("items[].commentId").description("댓글 ID"),
+                            fieldWithPath("items[].userId").description("작성자 유저 ID(UUID)"),
+                            fieldWithPath("items[].handle").description("작성자 핸들"),
+                            fieldWithPath("items[].name").description("작성자 이름"),
+                            fieldWithPath("items[].content").description("댓글 내용"),
+                            fieldWithPath("items[].createdAt").description("작성 시간(ISO-8601)"),
+                            fieldWithPath("items[].parentCommentId").optional().description("부모 댓글 ID(없으면 root)"),
+                            fieldWithPath("items[].likeCount").description("좋아요 수"),
+                            fieldWithPath("nextCursor").optional().description("다음 페이지 커서"),
+                            fieldWithPath("hasNext").description("다음 페이지 존재 여부")
+                    )
+            ));
+}
+
 }

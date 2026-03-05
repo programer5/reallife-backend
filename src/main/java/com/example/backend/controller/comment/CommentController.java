@@ -26,11 +26,11 @@ public class CommentController {
     public ResponseEntity<CommentListResponse> list(
             @PathVariable UUID postId,
             @RequestParam(required = false) String cursor,
-            @RequestParam(defaultValue = "20") int size
+            @RequestParam(defaultValue = "20") int size,
+            @RequestParam(required = false, defaultValue = "LATEST") String sort
     ) {
-        // size 상한(DoS 방지)
         int safeSize = Math.min(Math.max(size, 1), 50);
-        return ResponseEntity.ok(commentService.list(postId, cursor, safeSize));
+        return ResponseEntity.ok(commentService.list(postId, cursor, safeSize, sort));
     }
 
     @PostMapping("/posts/{postId}/comments")
@@ -62,7 +62,7 @@ public class CommentController {
             throw new BusinessException(ErrorCode.UNAUTHORIZED);
         }
         try {
-            return UUID.fromString(authentication.getName()); // JWT sub 가 UUID라는 전제
+            return UUID.fromString(authentication.getName());
         } catch (IllegalArgumentException e) {
             throw new BusinessException(ErrorCode.UNAUTHORIZED, "Invalid subject");
         }

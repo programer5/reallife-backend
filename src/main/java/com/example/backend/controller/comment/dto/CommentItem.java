@@ -12,7 +12,9 @@ public record CommentItem(
         String handle,
         String name,
         String content,
-        LocalDateTime createdAt
+        LocalDateTime createdAt,
+        UUID parentCommentId,
+        long likeCount
 ) {
     public static CommentItem from(Comment c, User u) {
         return new CommentItem(
@@ -21,7 +23,9 @@ public record CommentItem(
                 u.getHandle(),
                 u.getName(),
                 c.getContent(),
-                c.getCreatedAt()
+                c.getCreatedAt(),
+                c.getParentCommentId(),
+                c.getLikeCount()
         );
     }
 }
