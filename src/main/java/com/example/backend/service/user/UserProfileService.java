@@ -26,48 +26,17 @@ public class UserProfileService {
     private final PublicUrlBuilder urlBuilder;
 
     @Transactional(readOnly = true)
-    public ProfileResponse getProfileByHandle(String handle) {
+    public ProfileResponse getProfileByHandle(String handle, UUID meId) {
         User user = userRepository.findByHandle(handle)
                 .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
-
-        long followerCount = followRepository.countByFollowingIdAndDeletedFalse(user.getId());
-        long followingCount = followRepository.countByFollowerIdAndDeletedFalse(user.getId());
-
-        String profileImageUrl = toFileUrl(user.getProfileImageFileId());
-
-        return new ProfileResponse(
-                user.getId(),
-                user.getHandle(),
-                user.getName(),
-                user.getBio(),
-                user.getWebsite(),
-                profileImageUrl,
-                followerCount,
-                followingCount
-        );
+        return toProfileResponse(user, meId);
     }
 
-    // ✅ 추가: UUID로 프로필 조회
     @Transactional(readOnly = true)
-    public ProfileResponse getProfileById(UUID userId) {
+    public ProfileResponse getProfileById(UUID userId, UUID meId) {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
-
-        long followerCount = followRepository.countByFollowingIdAndDeletedFalse(user.getId());
-        long followingCount = followRepository.countByFollowerIdAndDeletedFalse(user.getId());
-
-        String profileImageUrl = toFileUrl(user.getProfileImageFileId());
-
-        return new ProfileResponse(
-                user.getId(),
-                user.getHandle(),
-                user.getName(),
-                user.getBio(),
-                user.getWebsite(),
-                profileImageUrl,
-                followerCount,
-                followingCount
-        );
+        return toProfileResponse(user, meId);
     }
 
     @Transactional
@@ -79,27 +48,32 @@ public class UserProfileService {
         if (newFileId != null) {
             UploadedFile file = uploadedFileRepository.findByIdAndDeletedFalse(newFileId)
                     .orElseThrow(() -> new BusinessException(ErrorCode.FILE_NOT_FOUND));
-
-            // 내 파일만 허용
             if (!file.getUploaderId().equals(meId)) {
                 throw new BusinessException(ErrorCode.FORBIDDEN);
             }
         }
 
-        me.updateProfile(request.bio(), request.website(), newFileId);
+        me.updateProfile(request.name(), request.bio(), request.website(), newFileId);
+        return toProfileResponse(me, meId);
+    }
 
-        long followerCount = followRepository.countByFollowingIdAndDeletedFalse(me.getId());
-        long followingCount = followRepository.countByFollowerIdAndDeletedFalse(me.getId());
+    private ProfileResponse toProfileResponse(User user, UUID meId) {
+        long followerCount = followRepository.countByFollowingIdAndDeletedFalse(user.getId());
+        long followingCount = followRepository.countByFollowerIdAndDeletedFalse(user.getId());
+        boolean followedByMe = meId != null
+                && !meId.equals(user.getId())
+                && followRepository.existsByFollowerIdAndFollowingIdAndDeletedFalse(meId, user.getId());
 
         return new ProfileResponse(
-                me.getId(),
-                me.getHandle(),
-                me.getName(),
-                me.getBio(),
-                me.getWebsite(),
-                toFileUrl(me.getProfileImageFileId()),
+                user.getId(),
+                user.getHandle(),
+                user.getName(),
+                user.getBio(),
+                user.getWebsite(),
+                toFileUrl(user.getProfileImageFileId()),
                 followerCount,
-                followingCount
+                followingCount,
+                followedByMe
         );
     }
 

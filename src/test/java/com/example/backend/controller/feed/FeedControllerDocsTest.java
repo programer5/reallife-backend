@@ -162,4 +162,54 @@ class FeedControllerDocsTest {
                         )
                 ));
     }
+
+
+    @Test
+    void 피드_조회_전체공개_비팔로우도_노출_200(RestDocumentationContextProvider restDocumentation) throws Exception {
+        var me = docs.saveUser("feedviewer", "피드조회자");
+        String token = docs.issueTokenFor(me);
+
+        var stranger = docs.saveUser("feedpublic", "전체공개작성자");
+
+        // 팔로우하지 않았지만 ALL 공개 글은 보여야 한다.
+        docs.savePost(stranger.getId(), "전체공개 글 1");
+        docs.savePost(stranger.getId(), "전체공개 글 2");
+
+        mockMvc(restDocumentation)
+                .perform(get("/api/feed")
+                        .param("size", "10")
+                        .header(HttpHeaders.AUTHORIZATION, DocsTestSupport.auth(token)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.items").isArray())
+                .andExpect(jsonPath("$.items[0].authorId").value(stranger.getId().toString()))
+                .andExpect(jsonPath("$.items[0].visibility").value("ALL"))
+                .andDo(document("feed-get-public-visible",
+                        preprocessRequest(prettyPrint()),
+                        preprocessResponse(prettyPrint()),
+                        requestHeaders(
+                                headerWithName(HttpHeaders.AUTHORIZATION).description("Bearer {accessToken}")
+                        ),
+                        queryParameters(
+                                parameterWithName("cursor").optional().description("페이지 커서(createdAt|id). 없으면 첫 페이지"),
+                                parameterWithName("size").optional().description("페이지 크기(기본 20, 최대 50)")
+                        ),
+                        responseFields(
+                                fieldWithPath("items").type(ARRAY).description("피드 아이템 목록(최신순)"),
+                                fieldWithPath("items[].postId").type(STRING).description("게시글 ID"),
+                                fieldWithPath("items[].authorId").type(STRING).description("작성자 ID"),
+                                fieldWithPath("items[].authorHandle").type(STRING).description("작성자 핸들"),
+                                fieldWithPath("items[].authorName").type(STRING).description("작성자 이름"),
+                                fieldWithPath("items[].content").type(STRING).description("내용"),
+                                fieldWithPath("items[].imageUrls").type(ARRAY).description("이미지 URL 목록"),
+                                fieldWithPath("items[].visibility").type(STRING).description("공개범위"),
+                                fieldWithPath("items[].createdAt").type(STRING).description("생성시각"),
+                                fieldWithPath("items[].likeCount").type(NUMBER).description("좋아요 수"),
+                                fieldWithPath("items[].commentCount").type(NUMBER).description("댓글 수"),
+                                fieldWithPath("items[].likedByMe").type(BOOLEAN).description("내가 좋아요 했는지"),
+                                fieldWithPath("nextCursor").optional().type(STRING).description("다음 페이지 커서(없으면 null)"),
+                                fieldWithPath("hasNext").type(BOOLEAN).description("다음 페이지 존재 여부")
+                        )
+                ));
+    }
+
 }

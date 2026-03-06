@@ -10,5 +10,6 @@ public record ProfileResponse(
         String website,
         String profileImageUrl,
         long followerCount,
-        long followingCount
+        long followingCount,
+        boolean followedByMe
 ) {}

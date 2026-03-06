@@ -38,13 +38,12 @@ public class PostQueryRepositoryImpl implements PostQueryRepository {
 
         BooleanExpression cursorCond = cursorCond(cursorCreatedAt, cursorId, p);
 
-        BooleanExpression authorCond =
-                f.followerId.eq(meId).and(f.followingId.eq(p.authorId))
-                        .or(p.authorId.eq(meId));
-
         BooleanExpression visibilityCond =
-                p.visibility.eq(PostVisibility.ALL)
-                        .or(p.authorId.eq(meId));
+                p.authorId.eq(meId)
+                        .or(p.visibility.eq(PostVisibility.ALL))
+                        .or(p.visibility.eq(PostVisibility.FOLLOWERS)
+                                .and(f.followerId.eq(meId))
+                                .and(f.followingId.eq(p.authorId)));
 
         return queryFactory
                 .select(p.id)
@@ -53,7 +52,6 @@ public class PostQueryRepositoryImpl implements PostQueryRepository {
                 .leftJoin(f).on(f.followerId.eq(meId).and(f.followingId.eq(p.authorId)))
                 .where(
                         p.deleted.isFalse(),
-                        authorCond,
                         visibilityCond,
                         cursorCond
                 )

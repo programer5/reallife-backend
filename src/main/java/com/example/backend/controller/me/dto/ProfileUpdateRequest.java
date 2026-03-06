@@ -5,6 +5,7 @@ import jakarta.validation.constraints.Size;
 import java.util.UUID;
 
 public record ProfileUpdateRequest(
+        @Size(max = 30) String name,
         @Size(max = 255) String bio,
         @Size(max = 255) String website,
         UUID profileImageFileId

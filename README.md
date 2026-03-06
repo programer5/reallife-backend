@@ -37,6 +37,8 @@ Spring Boot 기반 백엔드 서버입니다.
 
 ---
 
+아키텍처 전체 흐름은 `ARCHITECTURE.md`를 참고하세요.
+
 ## 2) 주요 기능 (현재)
 
 ### Auth / Account
@@ -70,7 +72,8 @@ Spring Boot 기반 백엔드 서버입니다.
 ### Users / Social
 - 사용자 검색(커서 페이징)
 - 팔로우/언팔로우
-- 프로필 조회 (핸들 기반)
+- 프로필 조회 (핸들 기반 / userId 기반)
+- 내 프로필 수정: `PATCH /api/me/profile` (name, bio, website, profileImageFileId)
 
 ---
 
@@ -109,6 +112,9 @@ Spring Boot 기반 백엔드 서버입니다.
 - 읽은 알림 일괄 삭제(soft delete)
 - SSE 구독: `GET /api/sse/subscribe`
   - 이벤트: `connected`, `ping`, `message-created`, `notification-created`
+- Action Reminder
+  - Conversation Pin의 `remind_at` 시각이 지나면 서버 스케줄러가 `PIN_REMIND` 알림을 자동 생성
+  - 동일 핀에 대한 중복 리마인드는 `reminded_at` / 멱등 로직으로 방지
 
 ---
 
@@ -181,6 +187,22 @@ docker compose ps
 ```
 
 ---
+
+## 4-4) Action Reminder 동작 방식
+
+RealLife의 액션 리마인더는 별도 "리마인더 테이블"을 두기보다 **Conversation Pin**을 기준으로 동작합니다.
+
+흐름:
+- 댓글/대화에서 일정성 액션 생성
+- `conversation_pins.start_at`, `conversation_pins.remind_at` 저장
+- 스케줄러(`ConversationPinRemindScheduler`)가 매분 due pin 조회
+- 각 대화 참여자에게 `PIN_REMIND` 알림 생성
+- SSE `notification-created` 이벤트로 프론트에 실시간 반영
+
+중요 포인트:
+- `reminded_at`이 이미 있으면 중복 발송하지 않음
+- 일정 수정 시 `reminded_at`을 비워 다시 리마인드 가능
+- 프론트는 Inbox / ConversationDetail에서 `PIN_REMIND`를 강조해서 보여줄 수 있음
 
 ## 5) API 문서 (Spring REST Docs)
 

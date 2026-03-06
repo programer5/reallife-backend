@@ -68,7 +68,7 @@ public class User extends BaseEntity {
     private String website;
 
     @Column(name = "profile_image_file_id", columnDefinition = "BINARY(16)")
-    private java.util.UUID profileImageFileId;
+    private UUID profileImageFileId;
 
     public User(String email, String handle, String password, String name) {
         this.email = email;
@@ -80,7 +80,10 @@ public class User extends BaseEntity {
         syncSearchFields(); // 생성자에서도 안전하게
     }
 
-    public void updateProfile(String bio, String website, java.util.UUID profileImageFileId) {
+    public void updateProfile(String name, String bio, String website, UUID profileImageFileId) {
+        if (name != null && !name.isBlank()) {
+            this.name = name.trim();
+        }
         this.bio = bio;
         this.website = website;
         this.profileImageFileId = profileImageFileId;

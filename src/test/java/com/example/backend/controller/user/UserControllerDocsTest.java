@@ -2,7 +2,10 @@ package com.example.backend.controller.user;
 
 import com.example.backend.controller.DocsTestSupport;
 import com.example.backend.restdocs.ErrorResponseSnippet;
+import com.example.backend.domain.follow.Follow;
+import com.example.backend.repository.follow.FollowRepository;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -44,6 +47,7 @@ class UserControllerDocsTest {
     @Autowired private WebApplicationContext context;
     @Autowired private ObjectMapper objectMapper;
     @Autowired private DocsTestSupport docs;
+    @Autowired private FollowRepository followRepository;
 
     private MockMvc mockMvc(RestDocumentationContextProvider restDocumentation) {
         return MockMvcBuilders.webAppContextSetup(context)
@@ -219,7 +223,45 @@ class UserControllerDocsTest {
                                 fieldWithPath("website").optional().type(STRING).description("웹사이트"),
                                 fieldWithPath("profileImageUrl").optional().type(STRING).description("프로필 이미지 URL(/api/files/{id}/download)"),
                                 fieldWithPath("followerCount").type(NUMBER).description("팔로워 수"),
-                                fieldWithPath("followingCount").type(NUMBER).description("팔로잉 수")
+                                fieldWithPath("followingCount").type(NUMBER).description("팔로잉 수"),
+                                fieldWithPath("followedByMe").type(BOOLEAN).description("내가 이 사용자를 팔로우 중인지")
+                        )
+                ));
+    }
+
+    @Test
+    @DisplayName("프로필 조회 - userId 경로 성공 200")
+    void 프로필_ID로_조회_성공_200(RestDocumentationContextProvider restDocumentation) throws Exception {
+        MockMvc mockMvc = mockMvc(restDocumentation);
+
+        var me = docs.saveUser("viewer", "조회자");
+        String token = docs.issueTokenFor(me);
+        var target = docs.saveUser("profileid", "아이디조회유저");
+        followRepository.saveAndFlush(Follow.create(me.getId(), target.getId()));
+
+        mockMvc.perform(get("/api/users/id/{userId}", target.getId())
+                        .header(DocsTestSupport.headerName(), DocsTestSupport.auth(token))
+                        .accept(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.id").value(target.getId().toString()))
+                .andExpect(jsonPath("$.followedByMe").value(true))
+                .andDo(org.springframework.test.web.servlet.result.MockMvcResultHandlers.print())
+                .andDo(document("users-profile-get-by-id", requestHeaders(
+                                headerWithName(DocsTestSupport.headerName()).description("Bearer {accessToken}")
+                        ),
+                        pathParameters(
+                                parameterWithName("userId").description("조회할 유저의 ID(UUID)")
+                        ),
+                        responseFields(
+                                fieldWithPath("id").type(STRING).description("유저 ID(UUID)"),
+                                fieldWithPath("handle").type(STRING).description("핸들"),
+                                fieldWithPath("name").type(STRING).description("이름"),
+                                fieldWithPath("bio").optional().type(STRING).description("소개"),
+                                fieldWithPath("website").optional().type(STRING).description("웹사이트"),
+                                fieldWithPath("profileImageUrl").optional().type(STRING).description("프로필 이미지 URL(/api/files/{id}/download)"),
+                                fieldWithPath("followerCount").type(NUMBER).description("팔로워 수"),
+                                fieldWithPath("followingCount").type(NUMBER).description("팔로잉 수"),
+                                fieldWithPath("followedByMe").type(BOOLEAN).description("내가 이 사용자를 팔로우 중인지")
                         )
                 ));
     }
