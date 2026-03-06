@@ -95,7 +95,6 @@ class CommentControllerDocsTest {
                                 fieldWithPath("content").description("댓글 내용"),
                                 fieldWithPath("parentCommentId").optional().description("부모 댓글 ID(없으면 root)"),
                                 fieldWithPath("createdAt").description("작성 시간(ISO-8601)"),
-                                fieldWithPath("parentCommentId").optional().description("부모 댓글 ID(없으면 root)"),
                                 fieldWithPath("likeCount").description("좋아요 수")
                         )
                 ));

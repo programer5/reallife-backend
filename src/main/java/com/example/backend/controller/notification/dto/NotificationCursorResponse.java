@@ -16,7 +16,7 @@ public record NotificationCursorResponse(
             UUID id,
             String type,
             UUID refId,
-            UUID ref2Id,          // ✅ messageId
+            UUID ref2Id,          // 보조 연관 리소스 ID (예: MESSAGE_RECEIVED=messageId, POST_COMMENT=postId)
             UUID conversationId,
             String body,
             boolean read,
