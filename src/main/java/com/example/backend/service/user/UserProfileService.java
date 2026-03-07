@@ -29,14 +29,14 @@ public class UserProfileService {
     public ProfileResponse getProfileByHandle(String handle, UUID meId) {
         User user = userRepository.findByHandle(handle)
                 .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
-        return toProfileResponse(user, meId);
+        return toProfile(user, meId);
     }
 
     @Transactional(readOnly = true)
     public ProfileResponse getProfileById(UUID userId, UUID meId) {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
-        return toProfileResponse(user, meId);
+        return toProfile(user, meId);
     }
 
     @Transactional
@@ -54,14 +54,13 @@ public class UserProfileService {
         }
 
         me.updateProfile(request.name(), request.bio(), request.website(), newFileId);
-        return toProfileResponse(me, meId);
+        return toProfile(me, meId);
     }
 
-    private ProfileResponse toProfileResponse(User user, UUID meId) {
+    private ProfileResponse toProfile(User user, UUID meId) {
         long followerCount = followRepository.countByFollowingIdAndDeletedFalse(user.getId());
         long followingCount = followRepository.countByFollowerIdAndDeletedFalse(user.getId());
-        boolean followedByMe = meId != null
-                && !meId.equals(user.getId())
+        boolean followedByMe = meId != null && !meId.equals(user.getId())
                 && followRepository.existsByFollowerIdAndFollowingIdAndDeletedFalse(meId, user.getId());
 
         return new ProfileResponse(

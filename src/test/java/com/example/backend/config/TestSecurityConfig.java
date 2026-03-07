@@ -7,7 +7,6 @@ import org.springframework.boot.test.context.TestConfiguration;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Profile; // ✅ 추가
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
-import org.springframework.http.HttpMethod;
 import org.springframework.security.web.SecurityFilterChain;
 
 @org.springframework.context.annotation.Import(SecurityConfig.class)
@@ -36,7 +35,7 @@ public class TestSecurityConfig {
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/docs/**", "/static/**").permitAll()
                         .requestMatchers("/api/users").permitAll()
-                        .requestMatchers(HttpMethod.GET, "/api/users/exists").permitAll()
+                        .requestMatchers(org.springframework.http.HttpMethod.GET, "/api/users/exists").permitAll()
                         .requestMatchers("/api/auth/login", "/api/auth/login-cookie").permitAll()
                         .requestMatchers("/api/auth/refresh", "/api/auth/refresh-cookie").permitAll()
                         .requestMatchers("/api/auth/logout-cookie", "/api/auth/logout-all", "/api/auth/logout-all-cookie").authenticated()

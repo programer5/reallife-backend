@@ -102,7 +102,7 @@ class MeControllerDocsTest {
         String token = docs.issueTokenFor(me);
 
         var req = new HashMap<String, Object>();
-        req.put("name", "바꾼 이름");
+        req.put("name", "나 수정");
         req.put("bio", "안녕하세요");
         req.put("website", "https://example.com");
         req.put("profileImageFileId", null); // 업로드 파일 연결은 FileControllerDocsTest에서 문서화
@@ -124,7 +124,7 @@ class MeControllerDocsTest {
                         requestFields(
                                 fieldWithPath("name").optional().type(STRING)
                                         .attributes(key("constraints").value("max 30"))
-                                        .description("표시 이름"),
+                                        .description("이름"),
                                 fieldWithPath("bio").optional().type(STRING)
                                         .attributes(key("constraints").value("max 255"))
                                         .description("소개"),
@@ -143,7 +143,7 @@ class MeControllerDocsTest {
                                 fieldWithPath("profileImageUrl").optional().type(STRING).description("프로필 이미지 URL(/api/files/{id}/download)"),
                                 fieldWithPath("followerCount").type(NUMBER).description("팔로워 수"),
                                 fieldWithPath("followingCount").type(NUMBER).description("팔로잉 수"),
-                                fieldWithPath("followedByMe").type(BOOLEAN).description("내가 이 사용자를 팔로우 중인지(내 프로필은 항상 false)")
+                                fieldWithPath("followedByMe").type(BOOLEAN).description("내가 이 사용자를 팔로우 중인지 여부(내 프로필은 항상 false)")
                         )
                 ));
     }
