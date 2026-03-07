@@ -28,8 +28,9 @@ public class PostController {
     }
 
     @GetMapping("/{postId}")
-    public PostCreateResponse get(@PathVariable UUID postId) {
-        return postService.getPost(postId);
+    public PostCreateResponse get(@PathVariable UUID postId, Authentication authentication) {
+        UUID meId = authentication != null ? UUID.fromString(authentication.getName()) : null;
+        return postService.getPost(postId, meId);
     }
 
     @DeleteMapping("/{postId}")

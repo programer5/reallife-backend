@@ -40,6 +40,7 @@ public class SecurityConfig {
                         .requestMatchers("/api/health", "/api/version").permitAll()
 
                         .requestMatchers("/api/users").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/users/exists").permitAll()
 
                         // ✅ auth: 공개
                         .requestMatchers("/api/auth/login", "/api/auth/login-cookie").permitAll()

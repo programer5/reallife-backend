@@ -86,6 +86,8 @@ class PostControllerDocsTest {
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.postId").exists())
                 .andExpect(jsonPath("$.authorId").exists())
+                .andExpect(jsonPath("$.authorHandle").value(user.getHandle()))
+                .andExpect(jsonPath("$.authorName").value(user.getName()))
                 .andExpect(jsonPath("$.visibility").value("FOLLOWERS"))
                 .andDo(org.springframework.test.web.servlet.result.MockMvcResultHandlers.print())
                 .andDo(document("posts-create",
@@ -105,10 +107,15 @@ class PostControllerDocsTest {
                         responseFields(
                                 fieldWithPath("postId").type(STRING).description("생성된 게시글 ID(UUID)"),
                                 fieldWithPath("authorId").type(STRING).description("작성자 ID(UUID)"),
+                                fieldWithPath("authorHandle").type(STRING).description("작성자 handle"),
+                                fieldWithPath("authorName").type(STRING).description("작성자 이름"),
                                 fieldWithPath("content").type(STRING).description("게시글 본문"),
                                 fieldWithPath("imageUrls").type(ARRAY).description("이미지 URL 목록(다운로드 URL로 반환될 수 있음)"),
                                 fieldWithPath("visibility").type(STRING).description("공개 범위"),
-                                fieldWithPath("createdAt").type(STRING).description("생성 시각(ISO-8601)")
+                                fieldWithPath("createdAt").type(STRING).description("생성 시각(ISO-8601)"),
+                                fieldWithPath("likeCount").description("좋아요 수"),
+                                fieldWithPath("commentCount").description("댓글 수"),
+                                fieldWithPath("likedByMe").description("내가 좋아요 눌렀는지 여부")
                         )
                 ));
     }
@@ -138,6 +145,10 @@ class PostControllerDocsTest {
         mockMvc.perform(get("/api/posts/{postId}", postId)
                 .header(DocsTestSupport.headerName(), DocsTestSupport.auth(token)))
                 .andExpect(status().isOk())
+                .andExpect(jsonPath("$.authorHandle").value(user.getHandle()))
+                .andExpect(jsonPath("$.authorName").value(user.getName()))
+                .andExpect(jsonPath("$.likeCount").value(0))
+                .andExpect(jsonPath("$.commentCount").value(0))
                 .andDo(org.springframework.test.web.servlet.result.MockMvcResultHandlers.print())
                 .andDo(document("posts-get",
                         preprocessRequest(prettyPrint()),
@@ -151,10 +162,15 @@ class PostControllerDocsTest {
                         responseFields(
                                 fieldWithPath("postId").type(STRING).description("게시글 ID(UUID)"),
                                 fieldWithPath("authorId").type(STRING).description("작성자 ID(UUID)"),
+                                fieldWithPath("authorHandle").type(STRING).description("작성자 handle"),
+                                fieldWithPath("authorName").type(STRING).description("작성자 이름"),
                                 fieldWithPath("content").type(STRING).description("게시글 본문"),
                                 fieldWithPath("imageUrls").type(ARRAY).description("이미지 URL 목록"),
                                 fieldWithPath("visibility").type(STRING).description("공개 범위"),
-                                fieldWithPath("createdAt").type(STRING).description("생성 시각(ISO-8601)")
+                                fieldWithPath("createdAt").type(STRING).description("생성 시각(ISO-8601)"),
+                                fieldWithPath("likeCount").description("좋아요 수"),
+                                fieldWithPath("commentCount").description("댓글 수"),
+                                fieldWithPath("likedByMe").description("내가 좋아요 눌렀는지 여부")
                         )
                 ));
     }

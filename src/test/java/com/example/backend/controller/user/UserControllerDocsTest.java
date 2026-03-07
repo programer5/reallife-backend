@@ -195,6 +195,38 @@ class UserControllerDocsTest {
                 ));
     }
 
+
+    @Test
+    void 핸들_중복확인_성공_200(RestDocumentationContextProvider restDocumentation) throws Exception {
+        MockMvc mockMvc = mockMvc(restDocumentation);
+
+        String handle = "exists_" + UUID.randomUUID().toString().substring(0, 8);
+        var req = new HashMap<String, Object>();
+        req.put("email", "exists+" + UUID.randomUUID() + "@test.com");
+        req.put("handle", handle);
+        req.put("password", "password1234");
+        req.put("name", "중복체크유저");
+
+        mockMvc.perform(post("/api/users")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(req)))
+                .andExpect(status().isOk());
+
+        mockMvc.perform(get("/api/users/exists").param("handle", handle))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.exists").value(true))
+                .andDo(document("users-exists",
+                        preprocessRequest(prettyPrint()),
+                        preprocessResponse(prettyPrint()),
+                        org.springframework.restdocs.request.RequestDocumentation.queryParameters(
+                                org.springframework.restdocs.request.RequestDocumentation.parameterWithName("handle").description("중복 확인할 handle")
+                        ),
+                        responseFields(
+                                fieldWithPath("exists").type(BOOLEAN).description("이미 사용 중인 handle인지 여부")
+                        )
+                ));
+    }
+
     @Test
     void 프로필_조회_성공_200(RestDocumentationContextProvider restDocumentation) throws Exception {
         MockMvc mockMvc = mockMvc(restDocumentation);

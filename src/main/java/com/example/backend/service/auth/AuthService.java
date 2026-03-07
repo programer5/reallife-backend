@@ -53,6 +53,10 @@ public class AuthService {
      */
     @Transactional
     public AuthTokens refreshRotate(String refreshRaw) {
+        if (refreshRaw == null || refreshRaw.isBlank()) {
+            throw new BusinessException(ErrorCode.UNAUTHORIZED);
+        }
+
         String hash = RefreshTokenGenerator.sha256Hex(refreshRaw);
 
         RefreshToken rt = refreshTokenRepository.findByTokenHash(hash)

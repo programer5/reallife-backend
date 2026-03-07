@@ -9,9 +9,14 @@ import java.util.UUID;
 public record PostCreateResponse(
         UUID postId,
         UUID authorId,
+        String authorHandle,
+        String authorName,
         String content,
         List<String> imageUrls,
         PostVisibility visibility,
-        LocalDateTime createdAt
+        LocalDateTime createdAt,
+        long likeCount,
+        long commentCount,
+        boolean likedByMe
 ) {
 }
