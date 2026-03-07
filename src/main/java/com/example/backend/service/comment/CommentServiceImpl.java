@@ -33,8 +33,8 @@ public class CommentServiceImpl implements CommentService {
     @Transactional
     @Override
     public CommentResponse create(UUID postId, UUID userId, CommentCreateRequest request) {
-        // ✅ post 존재
-        postRepository.findById(postId)
+        // ✅ post 존재 + 댓글 수 동기화 대상 확보
+        var post = postRepository.findById(postId)
                 .orElseThrow(() -> new BusinessException(ErrorCode.POST_NOT_FOUND));
 
         // ✅ user 존재 (선택이지만, 안정성 위해 유지)
@@ -53,6 +53,9 @@ public class CommentServiceImpl implements CommentService {
         Comment saved = commentRepository.save(
                 Comment.create(postId, userId, parentId, request.content())
         );
+
+        // ✅ 게시글 상세/피드의 commentCount가 재진입 후에도 맞게 유지되도록 DB 카운트 반영
+        post.increaseCommentCount();
 
         eventPublisher.publishEvent(new CommentCreatedEvent(postId, userId, saved.getId(), parentId));
 
@@ -109,7 +112,15 @@ public class CommentServiceImpl implements CommentService {
             throw new BusinessException(ErrorCode.COMMENT_NOT_OWNED);
         }
 
+        if (c.isDeleted()) {
+            throw new BusinessException(ErrorCode.COMMENT_NOT_FOUND);
+        }
+
         c.delete();
+
+        // ✅ 삭제 후에도 게시글 상세 commentCount가 맞게 유지되도록 DB 카운트 반영
+        postRepository.findById(c.getPostId())
+                .ifPresent(post -> post.decreaseCommentCount());
     }
 
     // ===== cursor helpers =====

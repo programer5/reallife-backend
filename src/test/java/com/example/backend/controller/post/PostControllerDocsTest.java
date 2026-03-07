@@ -142,13 +142,23 @@ class PostControllerDocsTest {
         String body = created.getResponse().getContentAsString();
         String postId = objectMapper.readTree(body).get("postId").asText();
 
+        // ✅ 댓글 생성 후 상세 commentCount가 DB 기준으로 유지되는지 같이 검증
+        var commentReq = new HashMap<String, Object>();
+        commentReq.put("content", "댓글 1");
+
+        mockMvc.perform(post("/api/posts/{postId}/comments", postId)
+                        .header(DocsTestSupport.headerName(), DocsTestSupport.auth(token))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(commentReq)))
+                .andExpect(status().isCreated());
+
         mockMvc.perform(get("/api/posts/{postId}", postId)
                 .header(DocsTestSupport.headerName(), DocsTestSupport.auth(token)))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.authorHandle").value(user.getHandle()))
                 .andExpect(jsonPath("$.authorName").value(user.getName()))
                 .andExpect(jsonPath("$.likeCount").value(0))
-                .andExpect(jsonPath("$.commentCount").value(0))
+                .andExpect(jsonPath("$.commentCount").value(1))
                 .andDo(org.springframework.test.web.servlet.result.MockMvcResultHandlers.print())
                 .andDo(document("posts-get",
                         preprocessRequest(prettyPrint()),
