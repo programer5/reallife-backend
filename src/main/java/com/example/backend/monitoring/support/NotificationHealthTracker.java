@@ -39,4 +39,11 @@ public class NotificationHealthTracker {
         AtomicReference<LocalDateTime> ref = byType.get(type);
         return ref == null ? null : ref.get();
     }
+
+    public void reset() {
+        lastCreatedAt.set(null);
+        for (AtomicReference<LocalDateTime> ref : byType.values()) {
+            ref.set(null);
+        }
+    }
 }

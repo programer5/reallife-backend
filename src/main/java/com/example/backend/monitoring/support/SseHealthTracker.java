@@ -46,4 +46,11 @@ public class SseHealthTracker {
     public LocalDateTime getLastEventSentAt() {
         return lastEventSentAt.get();
     }
+
+    public void reset() {
+        activeConnections.set(0);
+        lastRegisteredAt.set(null);
+        lastDisconnectedAt.set(null);
+        lastEventSentAt.set(null);
+    }
 }

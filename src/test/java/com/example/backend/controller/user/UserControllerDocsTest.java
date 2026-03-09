@@ -27,8 +27,7 @@ import static org.springframework.restdocs.mockmvc.MockMvcRestDocumentation.docu
 import static org.springframework.restdocs.operation.preprocess.Preprocessors.*;
 import static org.springframework.restdocs.payload.JsonFieldType.*;
 import static org.springframework.restdocs.payload.PayloadDocumentation.*;
-import static org.springframework.restdocs.request.RequestDocumentation.parameterWithName;
-import static org.springframework.restdocs.request.RequestDocumentation.pathParameters;
+import static org.springframework.restdocs.request.RequestDocumentation.*;
 import static org.springframework.security.test.web.servlet.setup.SecurityMockMvcConfigurers.springSecurity;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
@@ -71,7 +70,6 @@ class UserControllerDocsTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.email").value(email))
                 .andExpect(jsonPath("$.handle").value(handle))
-                .andDo(org.springframework.test.web.servlet.result.MockMvcResultHandlers.print())
                 .andDo(document("users-create",
                         preprocessRequest(prettyPrint()),
                         preprocessResponse(prettyPrint()),
@@ -106,7 +104,6 @@ class UserControllerDocsTest {
                 .andExpect(jsonPath("$.code").value("COMMON_INVALID_REQUEST"))
                 .andExpect(jsonPath("$.path").value("/api/users"))
                 .andExpect(jsonPath("$.fieldErrors[0].field").value("handle"))
-                .andDo(org.springframework.test.web.servlet.result.MockMvcResultHandlers.print())
                 .andDo(document("users-create-400-validation",
                         preprocessResponse(prettyPrint()),
                         relaxedResponseFields(
@@ -151,7 +148,6 @@ class UserControllerDocsTest {
                         .content(objectMapper.writeValueAsString(req2)))
                 .andExpect(status().isConflict())
                 .andExpect(jsonPath("$.code").value("USER_DUPLICATE_EMAIL"))
-                .andDo(org.springframework.test.web.servlet.result.MockMvcResultHandlers.print())
                 .andDo(document("users-create-409-duplicate-email",
                         responseFields(ErrorResponseSnippet.common())
                 ));
@@ -185,14 +181,36 @@ class UserControllerDocsTest {
                         .content(objectMapper.writeValueAsString(req2)))
                 .andExpect(status().isConflict())
                 .andExpect(jsonPath("$.code").value("USER_DUPLICATE_HANDLE"))
-                .andDo(org.springframework.test.web.servlet.result.MockMvcResultHandlers.print())
                 .andDo(document("users-create-409-duplicate-handle",
                         responseFields(ErrorResponseSnippet.common())
                 ));
     }
 
     @Test
-    void 프로필_조회_성공_200(RestDocumentationContextProvider restDocumentation) throws Exception {
+    void 아이디_handle_중복확인_200(RestDocumentationContextProvider restDocumentation) throws Exception {
+        MockMvc mockMvc = mockMvc(restDocumentation);
+
+        String handle = "exists_" + UUID.randomUUID().toString().substring(0, 8);
+
+        mockMvc.perform(get("/api/users/exists")
+                        .param("handle", handle)
+                        .accept(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.exists").value(false))
+                .andDo(document("users-exists",
+                        preprocessRequest(prettyPrint()),
+                        preprocessResponse(prettyPrint()),
+                        queryParameters(
+                                parameterWithName("handle").description("중복 확인할 사용자 handle")
+                        ),
+                        responseFields(
+                                fieldWithPath("exists").type(BOOLEAN).description("이미 존재하는 handle 인지 여부")
+                        )
+                ));
+    }
+
+    @Test
+    void 프로필_조회_handle_성공_200(RestDocumentationContextProvider restDocumentation) throws Exception {
         MockMvc mockMvc = mockMvc(restDocumentation);
 
         var user = docs.saveUser("profile", "프로필유저");
@@ -204,12 +222,50 @@ class UserControllerDocsTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.id").exists())
                 .andExpect(jsonPath("$.handle").value(user.getHandle()))
-                .andDo(org.springframework.test.web.servlet.result.MockMvcResultHandlers.print())
-                .andDo(document("users-profile-get", requestHeaders(
+                .andDo(document("users-profile-get",
+                        preprocessRequest(prettyPrint()),
+                        preprocessResponse(prettyPrint()),
+                        requestHeaders(
                                 headerWithName(DocsTestSupport.headerName()).description("Bearer {accessToken}")
                         ),
                         pathParameters(
                                 parameterWithName("handle").description("조회할 유저의 handle")
+                        ),
+                        responseFields(
+                                fieldWithPath("id").type(STRING).description("유저 ID(UUID)"),
+                                fieldWithPath("handle").type(STRING).description("핸들"),
+                                fieldWithPath("name").type(STRING).description("이름"),
+                                fieldWithPath("bio").optional().type(STRING).description("소개"),
+                                fieldWithPath("website").optional().type(STRING).description("웹사이트"),
+                                fieldWithPath("profileImageUrl").optional().type(STRING).description("프로필 이미지 URL(/api/files/{id}/download)"),
+                                fieldWithPath("followerCount").type(NUMBER).description("팔로워 수"),
+                                fieldWithPath("followingCount").type(NUMBER).description("팔로잉 수"),
+                                fieldWithPath("followedByMe").type(BOOLEAN).description("현재 사용자가 이 프로필을 팔로우 중인지 여부")
+                        )
+                ));
+    }
+
+    @Test
+    void 프로필_조회_userId_성공_200(RestDocumentationContextProvider restDocumentation) throws Exception {
+        MockMvc mockMvc = mockMvc(restDocumentation);
+
+        var user = docs.saveUser("profileid", "프로필ID유저");
+        String token = docs.issueTokenFor(user);
+
+        mockMvc.perform(get("/api/users/id/{userId}", user.getId())
+                        .header(DocsTestSupport.headerName(), DocsTestSupport.auth(token))
+                        .accept(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.id").value(user.getId().toString()))
+                .andExpect(jsonPath("$.handle").value(user.getHandle()))
+                .andDo(document("users-profile-get-by-id",
+                        preprocessRequest(prettyPrint()),
+                        preprocessResponse(prettyPrint()),
+                        requestHeaders(
+                                headerWithName(DocsTestSupport.headerName()).description("Bearer {accessToken}")
+                        ),
+                        pathParameters(
+                                parameterWithName("userId").description("조회할 유저의 ID(UUID)")
                         ),
                         responseFields(
                                 fieldWithPath("id").type(STRING).description("유저 ID(UUID)"),

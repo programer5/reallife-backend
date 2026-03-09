@@ -33,4 +33,10 @@ public class ReminderHealthTracker {
     public long getRecentCreatedCount() {
         return recentCreatedCount.get();
     }
+
+    public void reset() {
+        lastRunAt.set(null);
+        lastSuccessAt.set(null);
+        recentCreatedCount.set(0);
+    }
 }

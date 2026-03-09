@@ -425,6 +425,8 @@ include::{snippets}/users-create-409-duplicate-handle/http-response.adoc[]
 === 아이디(handle) 중복 확인
 include::{snippets}/users-exists/http-request.adoc[]
 include::{snippets}/users-exists/http-response.adoc[]
+include::{snippets}/users-exists/query-parameters.adoc[]
+include::{snippets}/users-exists/response-fields.adoc[]
 
 === 사용자 검색 (Cursor Paging)
 include::{snippets}/users-search-200/http-request.adoc[]
@@ -453,6 +455,8 @@ include::{snippets}/users-profile-get/http-response.adoc[]
 === 프로필 조회 (userId)
 include::{snippets}/users-profile-get-by-id/http-request.adoc[]
 include::{snippets}/users-profile-get-by-id/http-response.adoc[]
+include::{snippets}/users-profile-get-by-id/path-parameters.adoc[]
+include::{snippets}/users-profile-get-by-id/response-fields.adoc[]
 
 ---
 
@@ -804,3 +808,14 @@ include::{snippets}/comment-likes-delete-204/http-request.adoc[]
 include::{snippets}/comment-likes-delete-204/path-parameters.adoc[]
 include::{snippets}/comment-likes-delete-204/request-headers.adoc[]
 include::{snippets}/comment-likes-delete-204/http-response.adoc[]
+
+== Admin Health
+
+=== 운영 상태 요약 조회
+operation::admin-health-get[snippets='http-request,http-response,response-fields']
+
+=== 실시간 상태 조회
+operation::admin-health-realtime-get[snippets='http-request,http-response,response-fields']
+
+=== Reminder 상태 조회
+operation::admin-health-reminder-get[snippets='http-request,http-response,response-fields']
