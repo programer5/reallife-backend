@@ -1,5 +1,6 @@
 package com.example.backend.sse;
 
+import com.example.backend.monitoring.support.SseHealthTracker;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
@@ -15,13 +16,18 @@ import java.util.concurrent.CopyOnWriteArrayList;
 public class SseEmitterRegistry {
 
     private final Map<UUID, List<SseEmitter>> emittersByUser = new ConcurrentHashMap<>();
+    private final SseHealthTracker sseHealthTracker;
+
+    public SseEmitterRegistry(SseHealthTracker sseHealthTracker) {
+        this.sseHealthTracker = sseHealthTracker;
+    }
 
     public SseEmitter register(UUID userId, long timeoutMillis) {
         SseEmitter emitter = new SseEmitter(timeoutMillis);
 
         emittersByUser.computeIfAbsent(userId, k -> new CopyOnWriteArrayList<>()).add(emitter);
+        sseHealthTracker.onConnected();
 
-        // 연결 종료/타임아웃/에러 시 emitter 정리
         emitter.onCompletion(() -> remove(userId, emitter));
         emitter.onTimeout(() -> {
             remove(userId, emitter);
@@ -38,16 +44,10 @@ public class SseEmitterRegistry {
         return emitter;
     }
 
-    /**
-     * eventId 없이 전송 (기본)
-     */
     public void send(UUID userId, String eventName, Object data) {
         send(userId, eventName, data, null);
     }
 
-    /**
-     * eventId 포함 전송 (Last-Event-ID replay 대응)
-     */
     public void send(UUID userId, String eventName, Object data, String eventId) {
         List<SseEmitter> emitters = emittersByUser.getOrDefault(userId, List.of());
         if (emitters.isEmpty()) return;
@@ -62,20 +62,15 @@ public class SseEmitterRegistry {
 
                 event.data(data);
                 emitter.send(event);
+                sseHealthTracker.onEventSent();
 
             } catch (Exception ex) {
-                // ✅ SSE는 클라이언트가 끊기는 것이 정상적인 케이스가 많음.
-                // 예외를 밖으로 던지지 말고 emitter만 정리하고 끝낸다.
                 remove(userId, emitter);
                 try { emitter.complete(); } catch (Exception ignore) {}
             }
         }
     }
 
-    /**
-     * ✅ heartbeat/ping: 전체 연결에 ping 보내기
-     * (프록시/로드밸런서에서 idle timeout 방지)
-     */
     public void broadcastPing() {
         String id = String.valueOf(System.currentTimeMillis());
         Map<String, Object> payload = Map.of("ts", System.currentTimeMillis());
@@ -89,7 +84,11 @@ public class SseEmitterRegistry {
         List<SseEmitter> emitters = emittersByUser.get(userId);
         if (emitters == null) return;
 
-        emitters.remove(emitter);
+        boolean removed = emitters.remove(emitter);
+        if (removed) {
+            sseHealthTracker.onDisconnected();
+        }
+
         if (emitters.isEmpty()) {
             emittersByUser.remove(userId);
         }

@@ -2,6 +2,7 @@ package com.example.backend.scheduler;
 
 import com.example.backend.domain.notification.NotificationType;
 import com.example.backend.domain.pin.ConversationPin;
+import com.example.backend.monitoring.support.ReminderHealthTracker;
 import com.example.backend.repository.message.ConversationMemberRepository;
 import com.example.backend.repository.pin.ConversationPinRepository;
 import com.example.backend.service.notification.NotificationCommandService;
@@ -25,22 +26,26 @@ public class ConversationPinRemindScheduler {
     private final ConversationPinRepository pinRepository;
     private final ConversationMemberRepository memberRepository;
     private final NotificationCommandService notificationCommandService;
+    private final ReminderHealthTracker reminderHealthTracker;
 
     private static final DateTimeFormatter DT = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm");
     private static final int BATCH_SIZE = 200;
 
-    // ✅ 매분 실행(중복은 NotificationCommandService.createIfNotExists로 방지)
     @Scheduled(fixedDelay = 60_000)
     public void run() {
-        LocalDateTime now = LocalDateTime.now();
+        reminderHealthTracker.markRunStarted();
 
+        LocalDateTime now = LocalDateTime.now();
         List<ConversationPin> duePins = pinRepository.findDueReminds(now, PageRequest.of(0, BATCH_SIZE));
-        if (duePins.isEmpty()) return;
+
+        if (duePins.isEmpty()) {
+            reminderHealthTracker.markRunSuccess(0);
+            return;
+        }
 
         int sent = 0;
 
         for (ConversationPin pin : duePins) {
-
             int claimed = pinRepository.claimRemind(pin.getId(), now);
             if (claimed == 0) continue;
 
@@ -74,6 +79,8 @@ public class ConversationPinRemindScheduler {
                 sent++;
             }
         }
+
+        reminderHealthTracker.markRunSuccess(sent);
 
         log.info("🔔 PIN_REMIND scheduler processed | duePins={} notificationsAttempted={}", duePins.size(), sent);
     }

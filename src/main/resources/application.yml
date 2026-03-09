@@ -1,4 +1,22 @@
 spring:
+  application:
+    name: reallife-backend
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics
+  endpoint:
+    health:
+      probes:
+        enabled: true
+      show-details: when_authorized
+
+info:
+  app:
+    version: 0.0.1-SNAPSHOT
+
   Jackson:
     time-zone: Asia/Seoul
   servlet:

@@ -38,6 +38,7 @@ public class SecurityConfig {
 
                         // ✅ health/version: 공개
                         .requestMatchers("/api/health", "/api/version").permitAll()
+                        .requestMatchers("/actuator/health", "/actuator/health/**", "/actuator/info").permitAll()
 
                         .requestMatchers("/api/users").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/users/exists").permitAll()
@@ -55,6 +56,9 @@ public class SecurityConfig {
 
                         // ✅ SSE 보호
                         .requestMatchers("/api/sse/**").authenticated()
+
+                        // ✅ admin health 보호
+                        .requestMatchers("/admin/health/**").authenticated()
 
                         .anyRequest().authenticated()
                 )
