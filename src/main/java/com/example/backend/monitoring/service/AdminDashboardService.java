@@ -20,8 +20,9 @@ import org.springframework.core.env.Environment;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
+import java.util.LinkedHashMap;
 import java.util.List;
-import java.util.stream.Collectors;
+import java.util.Map;
 
 @Service
 @RequiredArgsConstructor
@@ -48,7 +49,7 @@ public class AdminDashboardService {
 
     public AdminDashboardResponse getDashboard() {
         LocalDateTime now = LocalDateTime.now();
-        LocalDateTime since = now.minusHours(24);
+        LocalDateTime since24h = now.minusHours(24);
 
         AdminHealthResponse adminHealth = adminHealthService.getAdminHealth();
         RealtimeHealthResponse realtime = realtimeHealthService.getRealtimeHealth();
@@ -63,21 +64,33 @@ public class AdminDashboardService {
         long notifications = notificationRepository.countByDeletedFalse();
 
         long unreadNotifications = notificationRepository.countByReadAtIsNullAndDeletedFalse();
-        long todayCreatedNotifications = notificationRepository.countByDeletedFalseAndCreatedAtAfter(since);
-        long todayCreatedMessages = messageRepository.countByDeletedFalseAndCreatedAtAfter(since);
-        long todayCreatedPosts = postRepository.countByDeletedFalseAndCreatedAtAfter(since);
+        long todayCreatedNotifications = notificationRepository.countByDeletedFalseAndCreatedAtAfter(since24h);
+        long todayCreatedMessages = messageRepository.countByDeletedFalseAndCreatedAtAfter(since24h);
+        long todayCreatedPosts = postRepository.countByDeletedFalseAndCreatedAtAfter(since24h);
 
         List<AdminDashboardResponse.RecentNotificationItem> recentNotifications =
-                notificationRepository.findTop10ByDeletedFalseOrderByCreatedAtDesc().stream()
+                notificationRepository.findTop10ByDeletedFalseOrderByCreatedAtDesc()
+                        .stream()
                         .map(this::toRecentNotificationItem)
-                        .collect(Collectors.toList());
+                        .toList();
+
+        Map<String, HealthStatus> checks = new LinkedHashMap<>();
+        if (adminHealth.getChecks() != null) {
+            checks.putAll(adminHealth.getChecks());
+        }
+
+        List<String> notes = List.of(
+                "Admin Dashboard 1차: 운영 상태 + 규모 + 최근 알림 요약",
+                "세부 health는 /admin/health, /admin/health/realtime, /admin/health/reminder 에서 확인"
+        );
 
         return AdminDashboardResponse.builder()
-                .status(adminHealth.getStatus())
+                .status(adminHealth.getStatus() == null ? HealthStatus.DEGRADED : adminHealth.getStatus())
                 .service(appName)
                 .version(appVersion)
                 .activeProfiles(List.of(environment.getActiveProfiles()))
                 .generatedAt(now)
+
                 .overview(AdminDashboardResponse.Overview.builder()
                         .activeSseConnections(realtime.getActiveSseConnections())
                         .unreadNotifications(unreadNotifications)
@@ -86,14 +99,16 @@ public class AdminDashboardService {
                         .todayCreatedMessages(todayCreatedMessages)
                         .todayCreatedPosts(todayCreatedPosts)
                         .build())
+
                 .health(AdminDashboardResponse.Health.builder()
-                        .checks(adminHealth.getChecks())
+                        .checks(checks)
                         .lastSseEventSentAt(realtime.getLastSseEventSentAt())
                         .lastReminderRunAt(reminder.getLastRunAt())
                         .lastReminderSuccessAt(reminder.getLastSuccessAt())
                         .recentReminderCreatedCount(reminder.getRecentCreatedCount())
                         .minutesSinceLastReminderRun(reminder.getMinutesSinceLastRun())
                         .build())
+
                 .totals(AdminDashboardResponse.Totals.builder()
                         .users(users)
                         .posts(posts)
@@ -103,13 +118,12 @@ public class AdminDashboardService {
                         .activePins(activePins)
                         .notifications(notifications)
                         .build())
+
                 .recent(AdminDashboardResponse.Recent.builder()
                         .notifications(recentNotifications)
                         .build())
-                .notes(List.of(
-                        "Admin Dashboard 1차: 운영 상태 + 규모 + 최근 알림 요약",
-                        "세부 health는 /admin/health, /admin/health/realtime, /admin/health/reminder 에서 확인"
-                ))
+
+                .notes(notes)
                 .build();
     }
 
