@@ -89,4 +89,7 @@ public interface ConversationPinRepository extends JpaRepository<ConversationPin
      where p.id in :pinIds
 """)
     List<PinConversationRow> findConversationIdsByPinIds(@Param("pinIds") List<UUID> pinIds);
+
+    long countByDeletedFalseAndStatus(PinStatus status);
+    long countByDeletedFalseAndStatusAndCreatedAtAfter(PinStatus status, LocalDateTime createdAt);
 }

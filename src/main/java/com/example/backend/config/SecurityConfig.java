@@ -59,6 +59,7 @@ public class SecurityConfig {
 
                         // ✅ admin health 보호
                         .requestMatchers("/admin/health/**").authenticated()
+                        .requestMatchers("/admin/dashboard/**").authenticated()
 
                         .anyRequest().authenticated()
                 )

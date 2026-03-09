@@ -111,4 +111,7 @@ public interface CommentRepository extends JpaRepository<Comment, UUID> {
             UUID cursorId,
             Pageable pageable
     );
+
+    long countByDeletedFalse();
+    long countByDeletedFalseAndCreatedAtAfter(LocalDateTime createdAt);
 }

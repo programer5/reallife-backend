@@ -36,4 +36,7 @@ public interface MessageRepository extends JpaRepository<Message, UUID> {
     Optional<Message>
     findTopByConversationIdAndDeletedFalseOrderByCreatedAtDesc(UUID conversationId);
 
+    long countByDeletedFalse();
+    long countByDeletedFalseAndCreatedAtAfter(LocalDateTime createdAt);
+
 }
