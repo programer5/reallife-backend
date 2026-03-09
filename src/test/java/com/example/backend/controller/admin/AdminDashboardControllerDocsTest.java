@@ -78,7 +78,6 @@ class AdminDashboardControllerDocsTest {
         notificationHealthTracker.markCreated(MESSAGE_RECEIVED);
         notificationHealthTracker.markCreated(PIN_REMIND);
 
-        // ✅ recent.notifications 배열이 비지 않도록 실제 알림 데이터 생성
         notificationCommandService.createIfNotExists(
                 admin.getId(),
                 MESSAGE_RECEIVED,
@@ -86,7 +85,6 @@ class AdminDashboardControllerDocsTest {
                 UUID.randomUUID(),
                 "운영 대시보드 문서화용 메시지 알림"
         );
-
         notificationCommandService.createIfNotExists(
                 admin.getId(),
                 PIN_REMIND,
@@ -127,6 +125,8 @@ class AdminDashboardControllerDocsTest {
                                 fieldWithPath("health.lastReminderSuccessAt").optional().description("마지막 reminder scheduler 성공 시각"),
                                 fieldWithPath("health.recentReminderCreatedCount").type(NUMBER).description("최근 reminder 생성 수"),
                                 fieldWithPath("health.minutesSinceLastReminderRun").type(NUMBER).description("마지막 reminder 실행 이후 경과 분"),
+                                fieldWithPath("health.summaryNotes").type(ARRAY).description("health 요약 메모"),
+                                fieldWithPath("health.summaryNotes[]").description("health 요약 메모 항목"),
 
                                 fieldWithPath("totals").type(OBJECT).description("누적 규모 지표"),
                                 fieldWithPath("totals.users").type(NUMBER).description("전체 사용자 수"),
@@ -145,6 +145,18 @@ class AdminDashboardControllerDocsTest {
                                 fieldWithPath("recent.notifications[].body").type(STRING).description("알림 본문"),
                                 fieldWithPath("recent.notifications[].read").type(BOOLEAN).description("읽음 여부"),
                                 fieldWithPath("recent.notifications[].createdAt").description("생성 시각"),
+
+                                fieldWithPath("insights").type(OBJECT).description("운영 인사이트"),
+                                fieldWithPath("insights.notificationTypeCounts").type(ARRAY).description("최근 알림 타입 집계"),
+                                fieldWithPath("insights.notificationTypeCounts[].type").type(STRING).description("알림 타입"),
+                                fieldWithPath("insights.notificationTypeCounts[].count").type(NUMBER).description("해당 타입 개수"),
+                                fieldWithPath("insights.notificationTypeCounts[].ratio").type(NUMBER).description("최근 알림 내 비율(%)"),
+                                fieldWithPath("insights.topNotificationType").type(STRING).description("가장 우세한 최근 알림 타입"),
+                                fieldWithPath("insights.unreadPressure").type(STRING).description("미읽음 알림 압력 (LOW, MEDIUM, HIGH)"),
+                                fieldWithPath("insights.realtimeHealth").type(STRING).description("실시간 상태 요약"),
+                                fieldWithPath("insights.reminderHealth").type(STRING).description("Reminder 상태 요약"),
+                                fieldWithPath("insights.opsFocusTitle").type(STRING).description("현재 운영 우선 포커스 제목"),
+                                fieldWithPath("insights.opsFocusReason").type(STRING).description("현재 운영 우선 포커스 이유"),
 
                                 fieldWithPath("notes").type(ARRAY).description("운영 참고 메모"),
                                 fieldWithPath("notes[]").description("운영 참고 메모 항목")

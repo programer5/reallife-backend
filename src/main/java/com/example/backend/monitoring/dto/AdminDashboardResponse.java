@@ -24,6 +24,7 @@ public class AdminDashboardResponse {
     private Health health;
     private Totals totals;
     private Recent recent;
+    private Insights insights;
     private List<String> notes;
 
     @Getter
@@ -48,6 +49,7 @@ public class AdminDashboardResponse {
         private LocalDateTime lastReminderSuccessAt;
         private long recentReminderCreatedCount;
         private long minutesSinceLastReminderRun;
+        private List<String> summaryNotes;
     }
 
     @Getter
@@ -80,5 +82,27 @@ public class AdminDashboardResponse {
         private String body;
         private boolean read;
         private LocalDateTime createdAt;
+    }
+
+    @Getter
+    @Builder
+    @AllArgsConstructor
+    public static class Insights {
+        private List<NotificationTypeCount> notificationTypeCounts;
+        private String topNotificationType;
+        private String unreadPressure;
+        private String realtimeHealth;
+        private String reminderHealth;
+        private String opsFocusTitle;
+        private String opsFocusReason;
+    }
+
+    @Getter
+    @Builder
+    @AllArgsConstructor
+    public static class NotificationTypeCount {
+        private NotificationType type;
+        private long count;
+        private int ratio;
     }
 }

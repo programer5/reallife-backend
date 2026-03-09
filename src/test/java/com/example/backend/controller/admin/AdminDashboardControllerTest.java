@@ -4,6 +4,7 @@ import com.example.backend.controller.DocsTestSupport;
 import com.example.backend.monitoring.support.NotificationHealthTracker;
 import com.example.backend.monitoring.support.ReminderHealthTracker;
 import com.example.backend.monitoring.support.SseHealthTracker;
+import com.example.backend.service.notification.NotificationCommandService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -15,6 +16,8 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.context.WebApplicationContext;
+
+import java.util.UUID;
 
 import static com.example.backend.domain.notification.NotificationType.MESSAGE_RECEIVED;
 import static com.example.backend.domain.notification.NotificationType.PIN_REMIND;
@@ -34,6 +37,7 @@ class AdminDashboardControllerTest {
     @Autowired SseHealthTracker sseHealthTracker;
     @Autowired ReminderHealthTracker reminderHealthTracker;
     @Autowired NotificationHealthTracker notificationHealthTracker;
+    @Autowired NotificationCommandService notificationCommandService;
 
     private MockMvc mockMvc;
 
@@ -66,6 +70,21 @@ class AdminDashboardControllerTest {
         notificationHealthTracker.markCreated(MESSAGE_RECEIVED);
         notificationHealthTracker.markCreated(PIN_REMIND);
 
+        notificationCommandService.createIfNotExists(
+                admin.getId(),
+                MESSAGE_RECEIVED,
+                UUID.randomUUID(),
+                UUID.randomUUID(),
+                "대시보드 테스트용 메시지 알림"
+        );
+        notificationCommandService.createIfNotExists(
+                admin.getId(),
+                PIN_REMIND,
+                UUID.randomUUID(),
+                UUID.randomUUID(),
+                "대시보드 테스트용 리마인더 알림"
+        );
+
         mockMvc.perform(get("/admin/dashboard")
                         .header(DocsTestSupport.headerName(), DocsTestSupport.auth(token)))
                 .andExpect(status().isOk())
@@ -86,6 +105,7 @@ class AdminDashboardControllerTest {
                 .andExpect(jsonPath("$.health.checks").exists())
                 .andExpect(jsonPath("$.health.recentReminderCreatedCount").exists())
                 .andExpect(jsonPath("$.health.minutesSinceLastReminderRun").exists())
+                .andExpect(jsonPath("$.health.summaryNotes").isArray())
 
                 .andExpect(jsonPath("$.totals").exists())
                 .andExpect(jsonPath("$.totals.users").exists())
@@ -98,6 +118,15 @@ class AdminDashboardControllerTest {
 
                 .andExpect(jsonPath("$.recent").exists())
                 .andExpect(jsonPath("$.recent.notifications").isArray())
+
+                .andExpect(jsonPath("$.insights").exists())
+                .andExpect(jsonPath("$.insights.notificationTypeCounts").isArray())
+                .andExpect(jsonPath("$.insights.topNotificationType").exists())
+                .andExpect(jsonPath("$.insights.unreadPressure").exists())
+                .andExpect(jsonPath("$.insights.realtimeHealth").exists())
+                .andExpect(jsonPath("$.insights.reminderHealth").exists())
+                .andExpect(jsonPath("$.insights.opsFocusTitle").exists())
+                .andExpect(jsonPath("$.insights.opsFocusReason").exists())
 
                 .andExpect(jsonPath("$.notes").isArray());
     }
