@@ -36,35 +36,33 @@ public class SecurityConfig {
                         .dispatcherTypeMatchers(DispatcherType.ASYNC).permitAll()
                         .requestMatchers("/docs/**", "/static/**", "/favicon.ico", "/error").permitAll()
 
-                        // ✅ health/version: 공개
                         .requestMatchers("/api/health", "/api/version").permitAll()
                         .requestMatchers("/actuator/health", "/actuator/health/**", "/actuator/info").permitAll()
 
                         .requestMatchers("/api/users").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/users/exists").permitAll()
 
-                        // ✅ auth: 공개
                         .requestMatchers("/api/auth/login", "/api/auth/login-cookie").permitAll()
                         .requestMatchers("/api/auth/refresh", "/api/auth/refresh-cookie").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/files/*/download").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/files/*/thumbnail").permitAll()
 
-                        // ✅ auth: 보호(인증 필요)
                         .requestMatchers("/api/auth/logout-cookie").authenticated()
                         .requestMatchers("/api/auth/logout-all").authenticated()
                         .requestMatchers("/api/auth/logout-all-cookie").authenticated()
 
-                        // ✅ SSE 보호
                         .requestMatchers("/api/sse/**").authenticated()
 
-                        // ✅ admin health 보호
                         .requestMatchers("/admin/health/**").authenticated()
                         .requestMatchers("/admin/dashboard/**").authenticated()
+                        .requestMatchers("/admin/errors/**").authenticated()
 
                         .anyRequest().authenticated()
                 )
-                .addFilterBefore(new JwtAuthenticationFilter(jwtTokenProvider),
-                        org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter.class);
+                .addFilterBefore(
+                        new JwtAuthenticationFilter(jwtTokenProvider),
+                        org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter.class
+                );
 
         return http.build();
     }

@@ -1,7 +1,9 @@
 package com.example.backend.exception;
 
+import com.example.backend.service.error.ErrorLogService;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -16,19 +18,37 @@ import java.io.IOException;
 import java.time.LocalDateTime;
 import java.util.List;
 
-@Slf4j // ✅ 추가
+@Slf4j
 @RestControllerAdvice
+@RequiredArgsConstructor
 public class GlobalExceptionHandler {
+
+    private final ErrorLogService errorLogService;
 
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ErrorResponse> handleUnknown(Exception e, HttpServletRequest req) {
         ErrorCode ec = ErrorCode.INTERNAL_ERROR;
 
-        // ✅ 이 1줄이 없어서 스택트레이스가 안 보였던 거야
         log.error("Unhandled exception. path={}", req.getRequestURI(), e);
 
+        try {
+            errorLogService.record(
+                    e.getClass().getSimpleName(),
+                    e.getMessage(),
+                    req.getRequestURI()
+            );
+        } catch (Exception logEx) {
+            log.error("Failed to persist error log. path={}", req.getRequestURI(), logEx);
+        }
+
         return ResponseEntity.status(ec.status()).body(
-                new ErrorResponse(ec.code(), e.getMessage(), LocalDateTime.now(), req.getRequestURI(), null)
+                new ErrorResponse(
+                        ec.code(),
+                        e.getMessage(),
+                        LocalDateTime.now(),
+                        req.getRequestURI(),
+                        null
+                )
         );
     }
 
@@ -37,9 +57,14 @@ public class GlobalExceptionHandler {
         ErrorCode ec = e.getErrorCode();
 
         return ResponseEntity.status(ec.status()).body(
-                new ErrorResponse(ec.code(), e.getMessage(), LocalDateTime.now(), req.getRequestURI(), null)
+                new ErrorResponse(
+                        ec.code(),
+                        e.getMessage(),
+                        LocalDateTime.now(),
+                        req.getRequestURI(),
+                        null
+                )
         );
-
     }
 
     @ExceptionHandler(MethodArgumentNotValidException.class)
@@ -83,8 +108,6 @@ public class GlobalExceptionHandler {
     ) {
         ErrorCode ec = ErrorCode.INVALID_REQUEST;
 
-        // e.getMessage()는 "Invalid UUID string: 1" 같이 내부 구현 메시지가 섞여서 길 수 있음
-        // → message는 공통 메시지로 통일하는 게 운영/보안/문서 측면에서 좋음
         return ResponseEntity.status(ec.status()).body(
                 new ErrorResponse(
                         ec.code(),
@@ -101,7 +124,6 @@ public class GlobalExceptionHandler {
             IOException.class
     })
     public void ignoreSseDisconnect(Exception e, HttpServletRequest request, HttpServletResponse response) {
-        // SSE 구독 중 클라이언트 끊김은 정상 케이스. 에러 응답 만들지 않음.
         String uri = request.getRequestURI();
 
         boolean isSse = uri != null && uri.startsWith("/api/sse");
@@ -109,12 +131,9 @@ public class GlobalExceptionHandler {
                 && response.getContentType().contains(MediaType.TEXT_EVENT_STREAM_VALUE);
 
         if (isSse || isEventStream) {
-            // 아무것도 반환하지 않고 조용히 종료 (로그도 INFO/ERROR 대신 DEBUG 권장)
             return;
         }
 
-        // SSE가 아닌 경우에는 기존 unknown handler로 보내거나,
-        // 여기서는 그냥 던져서 기존 흐름 유지해도 됨(프로젝트 스타일에 맞춰 선택)
         throw new RuntimeException(e);
     }
 
