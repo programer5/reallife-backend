@@ -33,14 +33,22 @@ public class SlackWebhookClient {
     @Value("${ops.alert.slack.icon-emoji::rotating_light:}")
     private String iconEmoji;
 
-    public boolean isAvailable() {
-        return enabled && webhookUrl != null && !webhookUrl.isBlank();
+    public boolean isEnabled() {
+        return enabled;
     }
 
-    public void send(String title, String body) {
+    public boolean hasWebhookConfigured() {
+        return webhookUrl != null && !webhookUrl.isBlank();
+    }
+
+    public boolean isAvailable() {
+        return enabled && hasWebhookConfigured();
+    }
+
+    public boolean send(String title, String body) {
         if (!isAvailable()) {
             log.debug("Slack webhook disabled or missing. title={}", title);
-            return;
+            return false;
         }
 
         try {
@@ -68,8 +76,11 @@ public class SlackWebhookClient {
             if (code < 200 || code >= 300) {
                 throw new IOException("Slack webhook responded with status=" + code);
             }
+
+            return true;
         } catch (Exception e) {
             log.error("Failed to send Slack webhook. title={}", title, e);
+            return false;
         }
     }
 

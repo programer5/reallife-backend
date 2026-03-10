@@ -4,6 +4,7 @@ import com.example.backend.monitoring.dto.AdminHealthResponse;
 import com.example.backend.monitoring.dto.HealthStatus;
 import com.example.backend.monitoring.dto.RealtimeHealthResponse;
 import com.example.backend.monitoring.dto.ReminderHealthResponse;
+import com.example.backend.ops.dto.AdminAlertTestResponse;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -177,6 +178,53 @@ public class OpsAlertService {
         );
 
         slackWebhookClient.send(title, body);
+    }
+
+    public AdminAlertTestResponse sendSlackTestAlert(String requestedBy) {
+        boolean enabled = slackWebhookClient.isEnabled();
+        boolean webhookConfigured = slackWebhookClient.hasWebhookConfigured();
+
+        String title = "🧪 RealLife Slack 테스트";
+        String body = """
+                서비스: %s (%s)
+                요청자: %s
+                발생시각: %s
+
+                이 메시지가 보이면 RealLife 운영 Slack webhook 연결은 정상입니다.
+                다음 확인 위치:
+                - /admin/dashboard
+                - /admin/health
+                - /admin/errors
+                """.formatted(
+                appName,
+                appVersion,
+                requestedBy,
+                LocalDateTime.now()
+        );
+
+        boolean sent = slackWebhookClient.send(title, body);
+
+        String message;
+        if (sent) {
+            message = "Slack 테스트 알림을 전송했습니다.";
+        } else if (!enabled) {
+            message = "Slack 알림이 비활성화되어 있습니다. OPS_ALERT_ENABLED=true 를 확인하세요.";
+        } else if (!webhookConfigured) {
+            message = "Slack webhook URL이 비어 있습니다. OPS_ALERT_SLACK_WEBHOOK_URL 을 확인하세요.";
+        } else {
+            message = "Slack 테스트 알림 전송에 실패했습니다. 서버 로그를 확인하세요.";
+        }
+
+        return AdminAlertTestResponse.builder()
+                .enabled(enabled)
+                .webhookConfigured(webhookConfigured)
+                .sent(sent)
+                .channel("SLACK")
+                .requestedBy(requestedBy)
+                .application(appName + " (" + appVersion + ")")
+                .message(message)
+                .checkedAt(LocalDateTime.now())
+                .build();
     }
 
     private boolean shouldSend(String key) {

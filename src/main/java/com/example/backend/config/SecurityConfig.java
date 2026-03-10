@@ -56,6 +56,7 @@ public class SecurityConfig {
                         .requestMatchers("/admin/health/**").authenticated()
                         .requestMatchers("/admin/dashboard/**").authenticated()
                         .requestMatchers("/admin/errors/**").authenticated()
+                        .requestMatchers("/admin/alerts/**").authenticated()
 
                         .anyRequest().authenticated()
                 )
