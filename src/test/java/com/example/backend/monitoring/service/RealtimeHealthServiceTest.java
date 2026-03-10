@@ -25,16 +25,17 @@ class RealtimeHealthServiceTest {
 
         var result = service.getRealtimeHealth();
 
-        assertThat(result.getStatus()).isEqualTo(HealthStatus.UP);
-        assertThat(result.getActiveSseConnections()).isEqualTo(1);
-        assertThat(result.getLastSseEventSentAt()).isNotNull();
-        assertThat(result.getLastNotificationCreatedAt()).isNotNull();
-        assertThat(result.getLastMessageNotificationCreatedAt()).isNotNull();
-        assertThat(result.getLastPinRemindNotificationCreatedAt()).isNotNull();
+        assertThat(result.status()).isEqualTo(HealthStatus.UP);
+        assertThat(result.activeSseConnections()).isEqualTo(1);
+        assertThat(result.lastSseEventSentAt()).isNotNull();
+        assertThat(result.lastNotificationCreatedAt()).isNotNull();
+        assertThat(result.lastMessageNotificationCreatedAt()).isNotNull();
+        assertThat(result.lastPinRemindNotificationCreatedAt()).isNotNull();
+        assertThat(result.serverTime()).isNotNull();
     }
 
     @Test
-    void SSE_전송_이력이_없으면_DEGRADED는_아니고_기본정보는_반환한다() {
+    void SSE_전송_이력이_없으면_UP_기본정보는_반환한다() {
         SseHealthTracker sseHealthTracker = new SseHealthTracker();
         NotificationHealthTracker notificationHealthTracker = new NotificationHealthTracker();
 
@@ -42,27 +43,25 @@ class RealtimeHealthServiceTest {
 
         var result = service.getRealtimeHealth();
 
-        assertThat(result.getStatus()).isEqualTo(HealthStatus.UP);
-        assertThat(result.getActiveSseConnections()).isEqualTo(0);
-        assertThat(result.getLastSseEventSentAt()).isNull();
-        assertThat(result.getNotes()).isNotEmpty();
+        assertThat(result.status()).isEqualTo(HealthStatus.UP);
+        assertThat(result.activeSseConnections()).isEqualTo(0);
+        assertThat(result.lastSseEventSentAt()).isNull();
+        assertThat(result.notes()).isNotEmpty();
+        assertThat(result.serverTime()).isNotNull();
     }
 
     @Test
-    void SSE_이벤트가_오래전이면_DEGRADED() {
+    void SSE_이벤트가_오래전이면_DEGRADED_분기구조를_유지한다() {
         SseHealthTracker sseHealthTracker = new SseHealthTracker();
         NotificationHealthTracker notificationHealthTracker = new NotificationHealthTracker();
 
         sseHealthTracker.onConnected();
         sseHealthTracker.onEventSent();
 
-        // 테스트 편의를 위해 tracker 내부 시각을 오래전으로 바꾸는 별도 setter가 없으므로
-        // 현재 1차 뼈대에서는 서비스 판정 분기 구조만 유지하고,
-        // 추후 tracker에 테스트용 메서드를 추가하면 더 정확히 검증 가능하다.
         RealtimeHealthService service = new RealtimeHealthService(sseHealthTracker, notificationHealthTracker);
 
         var result = service.getRealtimeHealth();
 
-        assertThat(result.getStatus()).isIn(HealthStatus.UP, HealthStatus.DEGRADED);
+        assertThat(result.status()).isIn(HealthStatus.UP, HealthStatus.DEGRADED);
     }
 }
