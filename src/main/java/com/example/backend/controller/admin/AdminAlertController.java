@@ -2,8 +2,10 @@ package com.example.backend.controller.admin;
 
 import com.example.backend.ops.OpsAlertService;
 import com.example.backend.ops.dto.AdminAlertTestResponse;
+import com.example.backend.ops.dto.OpsAlertHistoryResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.Authentication;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -19,5 +21,10 @@ public class AdminAlertController {
     public AdminAlertTestResponse sendSlackTestAlert(Authentication authentication) {
         String requestedBy = authentication != null ? authentication.getName() : "anonymous";
         return opsAlertService.sendSlackTestAlert(requestedBy);
+    }
+
+    @GetMapping("/history")
+    public OpsAlertHistoryResponse getAlertHistory() {
+        return opsAlertService.getRecentAlertHistory();
     }
 }

@@ -1,0 +1,17 @@
+create table ops_alert_log
+(
+    id bigint not null auto_increment,
+    channel varchar(30) not null,
+    alert_key varchar(190) null,
+    title varchar(255) not null,
+    body text null,
+    level varchar(30) not null,
+    status varchar(30) not null,
+    requested_by varchar(120) null,
+    created_at datetime(6) not null default current_timestamp(6),
+    primary key (id)
+);
+
+create index idx_ops_alert_log_created_at on ops_alert_log (created_at desc);
+create index idx_ops_alert_log_channel_created_at on ops_alert_log (channel, created_at desc);
+create index idx_ops_alert_log_status_created_at on ops_alert_log (status, created_at desc);

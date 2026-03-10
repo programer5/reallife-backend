@@ -1,10 +1,14 @@
 package com.example.backend.ops;
 
+import com.example.backend.domain.ops.OpsAlertLog;
+import com.example.backend.domain.ops.OpsAlertLogRepository;
 import com.example.backend.monitoring.dto.AdminHealthResponse;
 import com.example.backend.monitoring.dto.HealthStatus;
 import com.example.backend.monitoring.dto.RealtimeHealthResponse;
 import com.example.backend.monitoring.dto.ReminderHealthResponse;
 import com.example.backend.ops.dto.AdminAlertTestResponse;
+import com.example.backend.ops.dto.OpsAlertHistoryItem;
+import com.example.backend.ops.dto.OpsAlertHistoryResponse;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -13,6 +17,7 @@ import org.springframework.stereotype.Service;
 
 import java.time.Duration;
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -21,7 +26,10 @@ import java.util.concurrent.ConcurrentHashMap;
 @RequiredArgsConstructor
 public class OpsAlertService {
 
+    private static final String CHANNEL = "SLACK";
+
     private final SlackWebhookClient slackWebhookClient;
+    private final OpsAlertLogRepository opsAlertLogRepository;
 
     private final Map<String, LocalDateTime> lastSentAtMap = new ConcurrentHashMap<>();
 
@@ -61,7 +69,7 @@ public class OpsAlertService {
                 LocalDateTime.now()
         );
 
-        slackWebhookClient.send(title, body);
+        sendAndLog(key, title, body, "DANGER", null);
     }
 
     public void sendAdminHealthAlert(AdminHealthResponse adminHealth) {
@@ -97,7 +105,7 @@ public class OpsAlertService {
                 adminHealth.getServerTime()
         );
 
-        slackWebhookClient.send(title, body);
+        sendAndLog(key, title, body, status == HealthStatus.DOWN ? "DANGER" : "WARNING", null);
     }
 
     public void sendRealtimeHealthAlert(RealtimeHealthResponse realtime) {
@@ -135,7 +143,7 @@ public class OpsAlertService {
                 realtime.getNotes()
         );
 
-        slackWebhookClient.send(title, body);
+        sendAndLog(key, title, body, status == HealthStatus.DOWN ? "DANGER" : "WARNING", null);
     }
 
     public void sendReminderHealthAlert(ReminderHealthResponse reminder) {
@@ -177,7 +185,7 @@ public class OpsAlertService {
                 reminder.getNotes()
         );
 
-        slackWebhookClient.send(title, body);
+        sendAndLog(key, title, body, status == HealthStatus.DOWN ? "DANGER" : "WARNING", null);
     }
 
     public AdminAlertTestResponse sendSlackTestAlert(String requestedBy) {
@@ -202,7 +210,7 @@ public class OpsAlertService {
                 LocalDateTime.now()
         );
 
-        boolean sent = slackWebhookClient.send(title, body);
+        boolean sent = sendAndLog("manual:test", title, body, "INFO", requestedBy);
 
         String message;
         if (sent) {
@@ -219,12 +227,54 @@ public class OpsAlertService {
                 .enabled(enabled)
                 .webhookConfigured(webhookConfigured)
                 .sent(sent)
-                .channel("SLACK")
+                .channel(CHANNEL)
                 .requestedBy(requestedBy)
                 .application(appName + " (" + appVersion + ")")
                 .message(message)
                 .checkedAt(LocalDateTime.now())
                 .build();
+    }
+
+    public OpsAlertHistoryResponse getRecentAlertHistory() {
+        List<OpsAlertHistoryItem> items = opsAlertLogRepository.findTop20ByOrderByCreatedAtDesc().stream()
+                .map(log -> OpsAlertHistoryItem.builder()
+                        .id(log.getId())
+                        .channel(log.getChannel())
+                        .alertKey(log.getAlertKey())
+                        .title(log.getTitle())
+                        .body(log.getBody())
+                        .level(log.getLevel())
+                        .status(log.getStatus())
+                        .requestedBy(log.getRequestedBy())
+                        .createdAt(log.getCreatedAt())
+                        .build())
+                .toList();
+
+        return OpsAlertHistoryResponse.builder()
+                .items(items)
+                .build();
+    }
+
+    private boolean sendAndLog(String alertKey, String title, String body, String level, String requestedBy) {
+        boolean sent = slackWebhookClient.send(title, body);
+
+        try {
+            opsAlertLogRepository.save(
+                    OpsAlertLog.of(
+                            CHANNEL,
+                            alertKey,
+                            title,
+                            body,
+                            level,
+                            sent ? "SENT" : "FAILED",
+                            requestedBy
+                    )
+            );
+        } catch (Exception e) {
+            log.error("Failed to persist ops alert log. alertKey={}", alertKey, e);
+        }
+
+        return sent;
     }
 
     private boolean shouldSend(String key) {
