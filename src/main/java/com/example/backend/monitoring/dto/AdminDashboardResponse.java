@@ -1,108 +1,86 @@
 package com.example.backend.monitoring.dto;
 
 import com.example.backend.domain.notification.NotificationType;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Getter;
 
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
 
-@Getter
-@Builder
-@AllArgsConstructor
-public class AdminDashboardResponse {
-
-    private HealthStatus status;
-    private String service;
-    private String version;
-    private List<String> activeProfiles;
-    private LocalDateTime generatedAt;
-
-    private Overview overview;
-    private Health health;
-    private Totals totals;
-    private Recent recent;
-    private Insights insights;
-    private List<String> notes;
-
-    @Getter
-    @Builder
-    @AllArgsConstructor
-    public static class Overview {
-        private int activeSseConnections;
-        private long unreadNotifications;
-        private long activePins;
-        private long todayCreatedNotifications;
-        private long todayCreatedMessages;
-        private long todayCreatedPosts;
+public record AdminDashboardResponse(
+        HealthStatus status,
+        String service,
+        String version,
+        List<String> activeProfiles,
+        LocalDateTime generatedAt,
+        Overview overview,
+        Health health,
+        Totals totals,
+        Recent recent,
+        Insights insights,
+        List<String> notes
+) {
+    public record Overview(
+            int activeSseConnections,
+            long unreadNotifications,
+            long activePins,
+            long todayCreatedNotifications,
+            long todayCreatedMessages,
+            long todayCreatedPosts
+    ) {
     }
 
-    @Getter
-    @Builder
-    @AllArgsConstructor
-    public static class Health {
-        private Map<String, HealthStatus> checks;
-        private LocalDateTime lastSseEventSentAt;
-        private LocalDateTime lastReminderRunAt;
-        private LocalDateTime lastReminderSuccessAt;
-        private long recentReminderCreatedCount;
-        private long minutesSinceLastReminderRun;
-        private List<String> summaryNotes;
+    public record Health(
+            Map<String, HealthStatus> checks,
+            LocalDateTime lastSseEventSentAt,
+            LocalDateTime lastReminderRunAt,
+            LocalDateTime lastReminderSuccessAt,
+            long recentReminderCreatedCount,
+            long minutesSinceLastReminderRun,
+            List<String> summaryNotes
+    ) {
     }
 
-    @Getter
-    @Builder
-    @AllArgsConstructor
-    public static class Totals {
-        private long users;
-        private long posts;
-        private long comments;
-        private long conversations;
-        private long messages;
-        private long activePins;
-        private long notifications;
+    public record Totals(
+            long users,
+            long posts,
+            long comments,
+            long conversations,
+            long messages,
+            long activePins,
+            long notifications
+    ) {
     }
 
-    @Getter
-    @Builder
-    @AllArgsConstructor
-    public static class Recent {
-        private List<RecentNotificationItem> notifications;
+    public record Recent(
+            List<RecentNotificationItem> notifications
+    ) {
     }
 
-    @Getter
-    @Builder
-    @AllArgsConstructor
-    public static class RecentNotificationItem {
-        private String id;
-        private String userId;
-        private NotificationType type;
-        private String body;
-        private boolean read;
-        private LocalDateTime createdAt;
+    public record RecentNotificationItem(
+            String id,
+            String userId,
+            NotificationType type,
+            String body,
+            boolean read,
+            LocalDateTime createdAt
+    ) {
     }
 
-    @Getter
-    @Builder
-    @AllArgsConstructor
-    public static class Insights {
-        private List<NotificationTypeCount> notificationTypeCounts;
-        private String topNotificationType;
-        private String unreadPressure;
-        private String realtimeHealth;
-        private String reminderHealth;
-        private String opsFocusTitle;
-        private String opsFocusReason;
+    public record Insights(
+            List<NotificationTypeCount> notificationTypeCounts,
+            String topNotificationType,
+            String unreadPressure,
+            String realtimeHealth,
+            String reminderHealth,
+            String opsFocusTitle,
+            String opsFocusReason
+    ) {
     }
 
-    @Getter
-    @Builder
-    @AllArgsConstructor
-    public static class NotificationTypeCount {
-        private NotificationType type;
-        private long count;
-        private int ratio;
+    public record NotificationTypeCount(
+            NotificationType type,
+            long count,
+            int ratio
+    ) {
     }
 }

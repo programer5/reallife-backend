@@ -57,7 +57,7 @@ public class AdminDashboardService {
         RealtimeHealthResponse realtime = realtimeHealthService.getRealtimeHealth();
         ReminderHealthResponse reminder = reminderHealthService.getReminderHealth();
 
-        long users = userRepository.countByDeletedFalse();
+        long users = userRepository.count();
         long posts = postRepository.countByDeletedFalse();
         long comments = commentRepository.countByDeletedFalse();
         long conversations = conversationRepository.countByDeletedFalse();
@@ -79,8 +79,8 @@ public class AdminDashboardService {
                         .toList();
 
         Map<String, HealthStatus> checks = new LinkedHashMap<>();
-        if (adminHealth.getChecks() != null) {
-            checks.putAll(adminHealth.getChecks());
+        if (adminHealth.checks() != null) {
+            checks.putAll(adminHealth.checks());
         }
 
         List<AdminDashboardResponse.NotificationTypeCount> notificationTypeCounts =
@@ -88,32 +88,32 @@ public class AdminDashboardService {
 
         String topNotificationType = notificationTypeCounts.isEmpty()
                 ? "NO_DATA"
-                : String.valueOf(notificationTypeCounts.get(0).getType());
+                : String.valueOf(notificationTypeCounts.get(0).type());
 
         String unreadPressure = unreadPressure(unreadNotifications);
-        String realtimeHealth = realtimeHealth(realtime.getActiveSseConnections());
-        String reminderHealth = reminderHealth(reminder.getMinutesSinceLastRun());
+        String realtimeHealth = realtimeHealth(realtime.activeSseConnections());
+        String reminderHealth = reminderHealth(reminder.minutesSinceLastRun());
 
         String opsFocusTitle = opsFocusTitle(
-                adminHealth.getStatus(),
-                realtime.getActiveSseConnections(),
-                reminder.getMinutesSinceLastRun(),
+                adminHealth.status(),
+                realtime.activeSseConnections(),
+                reminder.minutesSinceLastRun(),
                 unreadNotifications
         );
         String opsFocusReason = opsFocusReason(
-                adminHealth.getStatus(),
-                realtime.getActiveSseConnections(),
-                reminder.getMinutesSinceLastRun(),
+                adminHealth.status(),
+                realtime.activeSseConnections(),
+                reminder.minutesSinceLastRun(),
                 unreadNotifications
         );
 
         List<String> healthSummaryNotes = buildHealthSummaryNotes(
-                adminHealth.getStatus(),
+                adminHealth.status(),
                 checks,
-                realtime.getActiveSseConnections(),
-                reminder.getMinutesSinceLastRun(),
+                realtime.activeSseConnections(),
+                reminder.minutesSinceLastRun(),
                 unreadNotifications,
-                recentReminderCreatedCount(reminder)
+                reminder.recentCreatedCount()
         );
 
         List<String> notes = buildDashboardNotes(
@@ -125,73 +125,61 @@ public class AdminDashboardService {
                 activePins
         );
 
-        return AdminDashboardResponse.builder()
-                .status(adminHealth.getStatus() == null ? HealthStatus.DEGRADED : adminHealth.getStatus())
-                .service(appName)
-                .version(appVersion)
-                .activeProfiles(List.of(environment.getActiveProfiles()))
-                .generatedAt(now)
-
-                .overview(AdminDashboardResponse.Overview.builder()
-                        .activeSseConnections(realtime.getActiveSseConnections())
-                        .unreadNotifications(unreadNotifications)
-                        .activePins(activePins)
-                        .todayCreatedNotifications(todayCreatedNotifications)
-                        .todayCreatedMessages(todayCreatedMessages)
-                        .todayCreatedPosts(todayCreatedPosts)
-                        .build())
-
-                .health(AdminDashboardResponse.Health.builder()
-                        .checks(checks)
-                        .lastSseEventSentAt(realtime.getLastSseEventSentAt())
-                        .lastReminderRunAt(reminder.getLastRunAt())
-                        .lastReminderSuccessAt(reminder.getLastSuccessAt())
-                        .recentReminderCreatedCount(recentReminderCreatedCount(reminder))
-                        .minutesSinceLastReminderRun(reminder.getMinutesSinceLastRun())
-                        .summaryNotes(healthSummaryNotes)
-                        .build())
-
-                .totals(AdminDashboardResponse.Totals.builder()
-                        .users(users)
-                        .posts(posts)
-                        .comments(comments)
-                        .conversations(conversations)
-                        .messages(messages)
-                        .activePins(activePins)
-                        .notifications(notifications)
-                        .build())
-
-                .recent(AdminDashboardResponse.Recent.builder()
-                        .notifications(recentNotifications)
-                        .build())
-
-                .insights(AdminDashboardResponse.Insights.builder()
-                        .notificationTypeCounts(notificationTypeCounts)
-                        .topNotificationType(topNotificationType)
-                        .unreadPressure(unreadPressure)
-                        .realtimeHealth(realtimeHealth)
-                        .reminderHealth(reminderHealth)
-                        .opsFocusTitle(opsFocusTitle)
-                        .opsFocusReason(opsFocusReason)
-                        .build())
-
-                .notes(notes)
-                .build();
-    }
-
-    private long recentReminderCreatedCount(ReminderHealthResponse reminder) {
-        return reminder.getRecentCreatedCount();
+        return new AdminDashboardResponse(
+                adminHealth.status() == null ? HealthStatus.DEGRADED : adminHealth.status(),
+                appName,
+                appVersion,
+                List.of(environment.getActiveProfiles()),
+                now,
+                new AdminDashboardResponse.Overview(
+                        realtime.activeSseConnections(),
+                        unreadNotifications,
+                        activePins,
+                        todayCreatedNotifications,
+                        todayCreatedMessages,
+                        todayCreatedPosts
+                ),
+                new AdminDashboardResponse.Health(
+                        checks,
+                        realtime.lastSseEventSentAt(),
+                        reminder.lastRunAt(),
+                        reminder.lastSuccessAt(),
+                        reminder.recentCreatedCount(),
+                        reminder.minutesSinceLastRun(),
+                        healthSummaryNotes
+                ),
+                new AdminDashboardResponse.Totals(
+                        users,
+                        posts,
+                        comments,
+                        conversations,
+                        messages,
+                        activePins,
+                        notifications
+                ),
+                new AdminDashboardResponse.Recent(recentNotifications),
+                new AdminDashboardResponse.Insights(
+                        notificationTypeCounts,
+                        topNotificationType,
+                        unreadPressure,
+                        realtimeHealth,
+                        reminderHealth,
+                        opsFocusTitle,
+                        opsFocusReason
+                ),
+                notes
+        );
     }
 
     private AdminDashboardResponse.RecentNotificationItem toRecentNotificationItem(Notification notification) {
-        return AdminDashboardResponse.RecentNotificationItem.builder()
-                .id(notification.getId().toString())
-                .userId(notification.getUserId().toString())
-                .type(notification.getType())
-                .body(notification.getBody())
-                .read(notification.isRead())
-                .createdAt(notification.getCreatedAt())
-                .build();
+        return new AdminDashboardResponse.RecentNotificationItem(
+                notification.getId().toString(),
+                notification.getUserId().toString(),
+                notification.getType(),
+                notification.getBody(),
+                notification.isRead(),
+                notification.getCreatedAt()
+        );
     }
 
     private List<AdminDashboardResponse.NotificationTypeCount> buildNotificationTypeCounts(List<Notification> recentNotifications) {
@@ -209,11 +197,11 @@ public class AdminDashboardService {
 
         return counter.entrySet().stream()
                 .sorted((a, b) -> Long.compare(b.getValue(), a.getValue()))
-                .map(entry -> AdminDashboardResponse.NotificationTypeCount.builder()
-                        .type(entry.getKey())
-                        .count(entry.getValue())
-                        .ratio((int) Math.round((entry.getValue() * 100.0) / total))
-                        .build())
+                .map(entry -> new AdminDashboardResponse.NotificationTypeCount(
+                        entry.getKey(),
+                        entry.getValue(),
+                        (int) Math.round((entry.getValue() * 100.0) / total)
+                ))
                 .toList();
     }
 

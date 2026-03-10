@@ -1,8 +1,8 @@
 package com.example.backend.controller.admin;
 
+import com.example.backend.controller.admin.dto.AdminAlertTestResponse;
+import com.example.backend.controller.admin.dto.OpsAlertHistoryResponse;
 import com.example.backend.ops.OpsAlertService;
-import com.example.backend.ops.dto.AdminAlertTestResponse;
-import com.example.backend.ops.dto.OpsAlertHistoryResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.GetMapping;

@@ -44,31 +44,31 @@ public class AdminHealthService {
         Map<String, HealthStatus> checks = new LinkedHashMap<>();
         checks.put("db", dbStatus);
         checks.put("redis", redisStatus);
-        checks.put("sse", realtime.getStatus());
-        checks.put("reminderScheduler", reminder.getStatus());
+        checks.put("sse", realtime.status());
+        checks.put("reminderScheduler", reminder.status());
 
         Map<String, Object> metrics = new LinkedHashMap<>();
-        metrics.put("activeSseConnections", realtime.getActiveSseConnections());
-        metrics.put("lastSseEventSentAt", realtime.getLastSseEventSentAt());
-        metrics.put("lastReminderRunAt", reminder.getLastRunAt());
-        metrics.put("lastReminderSuccessAt", reminder.getLastSuccessAt());
-        metrics.put("recentReminderCreatedCount", reminder.getRecentCreatedCount());
+        metrics.put("activeSseConnections", realtime.activeSseConnections());
+        metrics.put("lastSseEventSentAt", realtime.lastSseEventSentAt());
+        metrics.put("lastReminderRunAt", reminder.lastRunAt());
+        metrics.put("lastReminderSuccessAt", reminder.lastSuccessAt());
+        metrics.put("recentReminderCreatedCount", reminder.recentCreatedCount());
 
-        HealthStatus overall = aggregate(dbStatus, redisStatus, realtime.getStatus(), reminder.getStatus());
+        HealthStatus overall = aggregate(dbStatus, redisStatus, realtime.status(), reminder.status());
 
-        return AdminHealthResponse.builder()
-                .status(overall)
-                .service(appName)
-                .version(appVersion)
-                .activeProfiles(List.of(environment.getActiveProfiles()))
-                .checks(checks)
-                .metrics(metrics)
-                .notes(List.of(
+        return new AdminHealthResponse(
+                overall,
+                appName,
+                appVersion,
+                List.of(environment.getActiveProfiles()),
+                checks,
+                metrics,
+                List.of(
                         "운영 핵심 항목: DB / Redis / SSE / Reminder Scheduler",
                         "상세 정보는 /admin/health/realtime, /admin/health/reminder 에서 확인"
-                ))
-                .serverTime(LocalDateTime.now())
-                .build();
+                ),
+                LocalDateTime.now()
+        );
     }
 
     private HealthStatus checkDb() {

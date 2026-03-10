@@ -47,15 +47,15 @@ public class ReminderHealthService {
             notes.add("최근 scheduler 성공 이력이 있습니다.");
         }
 
-        return ReminderHealthResponse.builder()
-                .status(status)
-                .schedulerEnabled(true)
-                .lastRunAt(lastRunAt)
-                .lastSuccessAt(lastSuccessAt)
-                .recentCreatedCount(recentCreatedCount)
-                .minutesSinceLastRun(minutesSinceLastRun)
-                .notes(notes)
-                .serverTime(LocalDateTime.now())
-                .build();
+        return new ReminderHealthResponse(
+                status,
+                true,
+                lastRunAt,
+                lastSuccessAt,
+                recentCreatedCount,
+                minutesSinceLastRun,
+                notes,
+                LocalDateTime.now()
+        );
     }
 }

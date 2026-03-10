@@ -1,13 +1,14 @@
 package com.example.backend.ops;
 
-import com.example.backend.domain.ops.OpsAlertLog;
-import com.example.backend.domain.ops.OpsAlertLogRepository;
+import com.example.backend.controller.admin.dto.AdminAlertTestResponse;
+import com.example.backend.controller.admin.dto.OpsAlertHistoryItemResponse;
+import com.example.backend.controller.admin.dto.OpsAlertHistoryResponse;
+import com.example.backend.domain.error.OpsAlertLog;
 import com.example.backend.monitoring.dto.AdminHealthResponse;
 import com.example.backend.monitoring.dto.HealthStatus;
 import com.example.backend.monitoring.dto.RealtimeHealthResponse;
 import com.example.backend.monitoring.dto.ReminderHealthResponse;
-import com.example.backend.ops.dto.OpsAlertHistoryItem;
-import com.example.backend.ops.dto.OpsAlertHistoryResponse;
+import com.example.backend.repository.error.OpsAlertLogRepository;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -74,7 +75,7 @@ public class OpsAlertService {
     public void sendAdminHealthAlert(AdminHealthResponse adminHealth) {
         if (adminHealth == null) return;
 
-        HealthStatus status = adminHealth.getStatus();
+        HealthStatus status = adminHealth.status();
         if (status == null || status == HealthStatus.UP) {
             return;
         }
@@ -99,9 +100,9 @@ public class OpsAlertService {
                 appName,
                 appVersion,
                 status,
-                adminHealth.getChecks(),
-                adminHealth.getNotes(),
-                adminHealth.getServerTime()
+                adminHealth.checks(),
+                adminHealth.notes(),
+                adminHealth.serverTime()
         );
 
         sendAndLog(key, title, body, status == HealthStatus.DOWN ? "DANGER" : "WARNING", null);
@@ -110,7 +111,7 @@ public class OpsAlertService {
     public void sendRealtimeHealthAlert(RealtimeHealthResponse realtime) {
         if (realtime == null) return;
 
-        HealthStatus status = realtime.getStatus();
+        HealthStatus status = realtime.status();
         if (status == null || status == HealthStatus.UP) {
             return;
         }
@@ -136,10 +137,10 @@ public class OpsAlertService {
                 appName,
                 appVersion,
                 status,
-                realtime.getActiveSseConnections(),
-                realtime.getLastSseEventSentAt(),
-                realtime.getLastNotificationCreatedAt(),
-                realtime.getNotes()
+                realtime.activeSseConnections(),
+                realtime.lastSseEventSentAt(),
+                realtime.lastNotificationCreatedAt(),
+                realtime.notes()
         );
 
         sendAndLog(key, title, body, status == HealthStatus.DOWN ? "DANGER" : "WARNING", null);
@@ -148,7 +149,7 @@ public class OpsAlertService {
     public void sendReminderHealthAlert(ReminderHealthResponse reminder) {
         if (reminder == null) return;
 
-        HealthStatus status = reminder.getStatus();
+        HealthStatus status = reminder.status();
         if (status == null || status == HealthStatus.UP) {
             return;
         }
@@ -176,12 +177,12 @@ public class OpsAlertService {
                 appName,
                 appVersion,
                 status,
-                reminder.isSchedulerEnabled(),
-                reminder.getLastRunAt(),
-                reminder.getLastSuccessAt(),
-                reminder.getMinutesSinceLastRun(),
-                reminder.getRecentCreatedCount(),
-                reminder.getNotes()
+                reminder.schedulerEnabled(),
+                reminder.lastRunAt(),
+                reminder.lastSuccessAt(),
+                reminder.minutesSinceLastRun(),
+                reminder.recentCreatedCount(),
+                reminder.notes()
         );
 
         sendAndLog(key, title, body, status == HealthStatus.DOWN ? "DANGER" : "WARNING", null);
@@ -222,36 +223,34 @@ public class OpsAlertService {
             message = "Slack 테스트 알림 전송에 실패했습니다. 서버 로그를 확인하세요.";
         }
 
-        return AdminAlertTestResponse.builder()
-                .enabled(enabled)
-                .webhookConfigured(webhookConfigured)
-                .sent(sent)
-                .channel(CHANNEL)
-                .requestedBy(requestedBy)
-                .application(appName + " (" + appVersion + ")")
-                .message(message)
-                .checkedAt(LocalDateTime.now())
-                .build();
+        return new AdminAlertTestResponse(
+                enabled,
+                webhookConfigured,
+                sent,
+                CHANNEL,
+                requestedBy,
+                appName + " (" + appVersion + ")",
+                message,
+                LocalDateTime.now()
+        );
     }
 
     public OpsAlertHistoryResponse getRecentAlertHistory() {
-        List<OpsAlertHistoryItem> items = opsAlertLogRepository.findTop20ByOrderByCreatedAtDesc().stream()
-                .map(log -> OpsAlertHistoryItem.builder()
-                        .id(log.getId())
-                        .channel(log.getChannel())
-                        .alertKey(log.getAlertKey())
-                        .title(log.getTitle())
-                        .body(log.getBody())
-                        .level(log.getLevel())
-                        .status(log.getStatus())
-                        .requestedBy(log.getRequestedBy())
-                        .createdAt(log.getCreatedAt())
-                        .build())
+        List<OpsAlertHistoryItemResponse> items = opsAlertLogRepository.findTop20ByOrderByCreatedAtDesc().stream()
+                .map(log -> new OpsAlertHistoryItemResponse(
+                        log.getId(),
+                        log.getChannel(),
+                        log.getAlertKey(),
+                        log.getTitle(),
+                        log.getBody(),
+                        log.getLevel(),
+                        log.getStatus(),
+                        log.getRequestedBy(),
+                        log.getCreatedAt()
+                ))
                 .toList();
 
-        return OpsAlertHistoryResponse.builder()
-                .items(items)
-                .build();
+        return new OpsAlertHistoryResponse(items);
     }
 
     private boolean sendAndLog(String alertKey, String title, String body, String level, String requestedBy) {

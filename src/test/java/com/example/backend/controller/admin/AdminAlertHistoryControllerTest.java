@@ -1,8 +1,8 @@
 package com.example.backend.controller.admin;
 
 import com.example.backend.controller.DocsTestSupport;
-import com.example.backend.domain.ops.OpsAlertLog;
-import com.example.backend.domain.ops.OpsAlertLogRepository;
+import com.example.backend.domain.error.OpsAlertLog;
+import com.example.backend.repository.error.OpsAlertLogRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;

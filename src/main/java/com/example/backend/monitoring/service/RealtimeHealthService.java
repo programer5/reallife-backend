@@ -48,15 +48,15 @@ public class RealtimeHealthService {
             }
         }
 
-        return RealtimeHealthResponse.builder()
-                .status(status)
-                .activeSseConnections(active)
-                .lastSseEventSentAt(lastEventAt)
-                .lastNotificationCreatedAt(lastNotificationAt)
-                .lastMessageNotificationCreatedAt(lastMessageNotificationAt)
-                .lastPinRemindNotificationCreatedAt(lastPinRemindNotificationAt)
-                .notes(notes)
-                .serverTime(LocalDateTime.now())
-                .build();
+        return new RealtimeHealthResponse(
+                status,
+                active,
+                lastEventAt,
+                lastNotificationAt,
+                lastMessageNotificationAt,
+                lastPinRemindNotificationAt,
+                notes,
+                LocalDateTime.now()
+        );
     }
 }

@@ -1,8 +1,8 @@
 package com.example.backend.controller.admin;
 
 import com.example.backend.controller.DocsTestSupport;
-import com.example.backend.domain.ops.OpsAlertLog;
-import com.example.backend.domain.ops.OpsAlertLogRepository;
+import com.example.backend.domain.error.OpsAlertLog;
+import com.example.backend.repository.error.OpsAlertLogRepository;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -25,7 +25,6 @@ import static org.springframework.restdocs.operation.preprocess.Preprocessors.pr
 import static org.springframework.restdocs.operation.preprocess.Preprocessors.preprocessResponse;
 import static org.springframework.restdocs.operation.preprocess.Preprocessors.prettyPrint;
 import static org.springframework.restdocs.payload.JsonFieldType.ARRAY;
-import static org.springframework.restdocs.payload.JsonFieldType.NUMBER;
 import static org.springframework.restdocs.payload.JsonFieldType.STRING;
 import static org.springframework.restdocs.payload.PayloadDocumentation.fieldWithPath;
 import static org.springframework.restdocs.payload.PayloadDocumentation.relaxedResponseFields;
@@ -84,7 +83,7 @@ class AdminAlertHistoryControllerDocsTest {
                         ),
                         relaxedResponseFields(
                                 fieldWithPath("items").type(ARRAY).description("최근 운영 알림 이력 목록"),
-                                fieldWithPath("items[].id").type(NUMBER).description("운영 알림 로그 ID"),
+                                fieldWithPath("items[].id").type(STRING).description("운영 알림 로그 ID(UUID)"),
                                 fieldWithPath("items[].channel").type(STRING).description("알림 채널 종류"),
                                 fieldWithPath("items[].alertKey").type(STRING).description("알림 분류 키"),
                                 fieldWithPath("items[].title").type(STRING).description("알림 제목"),
