@@ -42,10 +42,20 @@ app:
   cookie:
     secure-mode: auto
     same-site: Lax
-    # domain: ""          # 필요하면 ".example.com"
     access-max-age-seconds: 900
     refresh-max-age-seconds: 1209600
     refresh-path: /api/auth
   public-base-url: http://localhost
   cors:
     allowed-origins: http://localhost:5173,http://localhost:3000
+
+ops:
+  alert:
+    enabled: false
+    cooldown-minutes: 10
+    health-check-initial-delay-ms: 15000
+    health-check-fixed-delay-ms: 30000
+    slack:
+      webhook-url: ""
+      username: "RealLife Ops"
+      icon-emoji: ":rotating_light:"

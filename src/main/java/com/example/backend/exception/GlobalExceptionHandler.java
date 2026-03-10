@@ -1,5 +1,6 @@
 package com.example.backend.exception;
 
+import com.example.backend.ops.OpsAlertService;
 import com.example.backend.service.error.ErrorLogService;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -24,6 +25,7 @@ import java.util.List;
 public class GlobalExceptionHandler {
 
     private final ErrorLogService errorLogService;
+    private final OpsAlertService opsAlertService;
 
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ErrorResponse> handleUnknown(Exception e, HttpServletRequest req) {
@@ -39,6 +41,12 @@ public class GlobalExceptionHandler {
             );
         } catch (Exception logEx) {
             log.error("Failed to persist error log. path={}", req.getRequestURI(), logEx);
+        }
+
+        try {
+            opsAlertService.sendUnhandledExceptionAlert(e, req);
+        } catch (Exception alertEx) {
+            log.error("Failed to send ops alert. path={}", req.getRequestURI(), alertEx);
         }
 
         return ResponseEntity.status(ec.status()).body(
