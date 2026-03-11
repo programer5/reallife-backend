@@ -815,74 +815,68 @@ include::{snippets}/comment-likes-delete-204/http-response.adoc[]
 운영 상태 점검용 엔드포인트입니다.
 - 일반 사용자 API가 아니라 운영/관리 용도입니다.
 - 인증 후 접근해야 합니다.
-- 프론트 운영 화면은 `/ops/dashboard` 이고, 여기서 아래 엔드포인트들을 조합해서 사용합니다.
-====
-
-[IMPORTANT]
-====
-현재 프론트 운영자 노출은 백엔드 role 기반이 아니라 프론트 Vite env allowlist 기반입니다.
-- `VITE_OPS_ALLOWED_EMAILS`
-- `VITE_OPS_ALLOWED_HANDLES`
-설정 변경 후에는 프론트를 재시작하거나 재빌드해야 합니다.
 ====
 
 === 운영 상태 요약 조회
-운영 health, realtime, reminder를 한 번에 요약해서 보여줄 때 사용하는 기준 응답입니다.
 include::{snippets}/admin-health-get/http-request.adoc[]
 include::{snippets}/admin-health-get/http-response.adoc[]
 include::{snippets}/admin-health-get/request-headers.adoc[]
 include::{snippets}/admin-health-get/response-fields.adoc[]
 
 === 실시간 상태 조회
-SSE 연결 수, 마지막 이벤트 전송 시각 등 실시간 상태를 점검할 때 사용합니다.
 include::{snippets}/admin-health-realtime-get/http-request.adoc[]
 include::{snippets}/admin-health-realtime-get/http-response.adoc[]
 include::{snippets}/admin-health-realtime-get/request-headers.adoc[]
 include::{snippets}/admin-health-realtime-get/response-fields.adoc[]
 
 === Reminder 상태 조회
-Reminder scheduler의 최근 실행 / 성공 시각과 지연 여부를 점검할 때 사용합니다.
 include::{snippets}/admin-health-reminder-get/http-request.adoc[]
 include::{snippets}/admin-health-reminder-get/http-response.adoc[]
 include::{snippets}/admin-health-reminder-get/request-headers.adoc[]
 include::{snippets}/admin-health-reminder-get/response-fields.adoc[]
 
 === Admin Dashboard 조회
-운영 대시보드 상단 요약, 최근 notification, 핵심 운영 지표를 구성할 때 사용합니다.
 include::{snippets}/admin-dashboard-get/http-request.adoc[]
 include::{snippets}/admin-dashboard-get/http-response.adoc[]
 include::{snippets}/admin-dashboard-get/request-headers.adoc[]
 include::{snippets}/admin-dashboard-get/response-fields.adoc[]
 
 === 최근 서버 에러 조회
-최근 서버 에러 카드와 조사 컨텍스트에서 사용하는 에러 목록입니다.
 include::{snippets}/admin-errors-get/http-request.adoc[]
 include::{snippets}/admin-errors-get/http-response.adoc[]
 include::{snippets}/admin-errors-get/request-headers.adoc[]
 include::{snippets}/admin-errors-get/response-fields.adoc[]
 
 === Slack 테스트 알림 전송
-Slack webhook 연동 상태를 운영자가 즉시 재검증할 때 사용합니다.
-성공 여부는 응답 본문뿐 아니라 최근 운영 알림 이력에서도 함께 확인하는 것을 권장합니다.
 include::{snippets}/admin-alert-test-post/http-request.adoc[]
 include::{snippets}/admin-alert-test-post/http-response.adoc[]
 include::{snippets}/admin-alert-test-post/request-headers.adoc[]
 include::{snippets}/admin-alert-test-post/response-fields.adoc[]
 
 === 최근 운영 알림 이력 조회
-운영 알림 저장 이력을 조회합니다.
-FAILED 이력, 테스트 알림 결과, 최근 health alert 흐름을 비교할 때 사용합니다.
 include::{snippets}/admin-alert-history-get/http-request.adoc[]
 include::{snippets}/admin-alert-history-get/http-response.adoc[]
 include::{snippets}/admin-alert-history-get/request-headers.adoc[]
 include::{snippets}/admin-alert-history-get/response-fields.adoc[]
 
-=== 운영 점검 권장 순서
+=== Admin Dashboard
 
-. `/ops/dashboard` 진입
-. 상단 상태 strip에서 DOWN / DEGRADED / FAILED 여부 확인
-. FAILED alert pinned 영역 확인
-. 최근 서버 에러 조회와 최근 운영 알림 이력 조회를 같이 비교
-. realtime / reminder 상태를 추가 확인
-. 필요 시 Slack 테스트 알림 전송
-. 테스트 결과가 최근 운영 알림 이력에 기록되는지 재확인
+운영 상태 확인 API
+
+include::{snippets}/admin-dashboard-get/http-request.adoc[]
+include::{snippets}/admin-dashboard-get/http-response.adoc[]
+
+=== Admin Errors
+
+include::{snippets}/admin-errors-get/http-request.adoc[]
+include::{snippets}/admin-errors-get/http-response.adoc[]
+
+=== Alert Test
+
+include::{snippets}/admin-alert-test-post/http-request.adoc[]
+include::{snippets}/admin-alert-test-post/http-response.adoc[]
+
+=== Alert History
+
+include::{snippets}/admin-alert-history-get/http-request.adoc[]
+include::{snippets}/admin-alert-history-get/http-response.adoc[]
