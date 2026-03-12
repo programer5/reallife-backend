@@ -6,6 +6,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import org.hibernate.annotations.UuidGenerator;
 
+import java.util.Locale;
 import java.util.UUID;
 
 import static lombok.AccessLevel.PROTECTED;
@@ -52,12 +53,17 @@ public class UploadedFile extends BaseEntity {
     @Column(name = "thumbnail_size")
     private Long thumbnailSize;
 
+    @Enumerated(EnumType.STRING)
+    @Column(name = "file_type", nullable = false, length = 20)
+    private UploadedFileType fileType;
+
     private UploadedFile(UUID uploaderId, String originalFilename, String fileKey, String contentType, long size) {
         this.uploaderId = uploaderId;
         this.originalFilename = originalFilename;
         this.fileKey = fileKey;
         this.contentType = contentType;
         this.size = size;
+        this.fileType = resolveFileType(contentType);
     }
 
     public static UploadedFile create(UUID uploaderId, String originalFilename, String fileKey, String contentType, long size) {
@@ -76,5 +82,12 @@ public class UploadedFile extends BaseEntity {
 
     public void delete() {
         markDeleted(); // ✅ BaseEntity.deleted 사용
+    }
+
+    private UploadedFileType resolveFileType(String contentType) {
+        String ct = contentType == null ? "" : contentType.toLowerCase(Locale.ROOT);
+        if (ct.startsWith("image/")) return UploadedFileType.IMAGE;
+        if (ct.startsWith("video/")) return UploadedFileType.VIDEO;
+        return UploadedFileType.FILE;
     }
 }

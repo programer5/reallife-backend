@@ -92,11 +92,13 @@ class ConversationControllerDocsTest {
                         responseFields(
                                 fieldWithPath("items").type(ARRAY).description("대화방 목록"),
                                 fieldWithPath("items[].conversationId").type(STRING).description("대화방 ID(UUID)"),
+                                fieldWithPath("items[].conversationType").type(STRING).description("대화방 타입(DIRECT, GROUP)"),
+                                fieldWithPath("items[].conversationTitle").optional().type(STRING).description("그룹 대화방 제목(1:1 대화는 null 가능)"),
+                                fieldWithPath("items[].peerUser").optional().type(OBJECT).description("DIRECT 대화에서 상대 유저 정보(GROUP이면 null 가능)"),
                                 fieldWithPath("items[].peerUser").type(OBJECT).description("상대 유저"),
-                                fieldWithPath("items[].peerUser.userId").type(STRING).description("상대 유저 ID(UUID)"),
-                                fieldWithPath("items[].peerUser.nickname").type(STRING).description("상대 유저 표시명(User.name)"),
-                                fieldWithPath("items[].peerUser.profileImageUrl").optional().type(NULL)
-                                        .description("상대 유저 프로필 이미지 URL(현재 null)"),
+                                fieldWithPath("items[].peerUser.userId").optional().type(STRING).description("상대 유저 ID(UUID)"),
+                                fieldWithPath("items[].peerUser.nickname").optional().type(STRING).description("상대 유저 표시명(User.name)"),
+                                fieldWithPath("items[].peerUser.profileImageUrl").optional().type(NULL).description("상대 유저 프로필 이미지 URL(현재 null)"),
                                 fieldWithPath("items[].lastMessagePreview").optional().type(STRING)
                                         .description("마지막 메시지 미리보기"),
                                 fieldWithPath("items[].lastMessageAt").optional().type(STRING)
@@ -160,9 +162,12 @@ class ConversationControllerDocsTest {
                         responseFields(
                                 fieldWithPath("items").type(ARRAY).description("대화방 목록"),
                                 fieldWithPath("items[].conversationId").type(STRING).description("대화방 ID(UUID)"),
+                                fieldWithPath("items[].conversationType").type(STRING).description("대화방 타입(DIRECT, GROUP)"),
+                                fieldWithPath("items[].conversationTitle").optional().type(STRING).description("그룹 대화방 제목(1:1 대화는 null 가능)"),
+                                fieldWithPath("items[].peerUser").optional().type(OBJECT).description("DIRECT 대화에서 상대 유저 정보(GROUP이면 null 가능)"),
                                 fieldWithPath("items[].peerUser").type(OBJECT).description("상대 유저"),
-                                fieldWithPath("items[].peerUser.userId").type(STRING).description("상대 유저 ID(UUID)"),
-                                fieldWithPath("items[].peerUser.nickname").type(STRING).description("상대 유저 표시명(User.name)"),
+                                fieldWithPath("items[].peerUser.userId").optional().type(STRING).description("상대 유저 ID(UUID)"),
+                                fieldWithPath("items[].peerUser.nickname").optional().type(STRING).description("상대 유저 표시명(User.name)"),
                                 fieldWithPath("items[].peerUser.profileImageUrl").optional().type(NULL).description("상대 유저 프로필 이미지 URL(현재 null)"),
                                 fieldWithPath("items[].lastMessagePreview").optional().type(STRING).description("마지막 메시지 미리보기"),
                                 fieldWithPath("items[].lastMessageAt").optional().type(STRING).description("마지막 메시지 시각(ISO-8601)"),
@@ -196,9 +201,12 @@ class ConversationControllerDocsTest {
                         responseFields(
                                 fieldWithPath("items").type(ARRAY).description("대화방 목록"),
                                 fieldWithPath("items[].conversationId").type(STRING).description("대화방 ID(UUID)"),
+                                fieldWithPath("items[].conversationType").type(STRING).description("대화방 타입(DIRECT, GROUP)"),
+                                fieldWithPath("items[].conversationTitle").optional().type(STRING).description("그룹 대화방 제목(1:1 대화는 null 가능)"),
+                                fieldWithPath("items[].peerUser").optional().type(OBJECT).description("DIRECT 대화에서 상대 유저 정보(GROUP이면 null 가능)"),
                                 fieldWithPath("items[].peerUser").type(OBJECT).description("상대 유저"),
-                                fieldWithPath("items[].peerUser.userId").type(STRING).description("상대 유저 ID(UUID)"),
-                                fieldWithPath("items[].peerUser.nickname").type(STRING).description("상대 유저 표시명(User.name)"),
+                                fieldWithPath("items[].peerUser.userId").optional().type(STRING).description("상대 유저 ID(UUID)"),
+                                fieldWithPath("items[].peerUser.nickname").optional().type(STRING).description("상대 유저 표시명(User.name)"),
                                 fieldWithPath("items[].peerUser.profileImageUrl").optional().type(NULL).description("상대 유저 프로필 이미지 URL(현재 null)"),
                                 fieldWithPath("items[].lastMessagePreview").optional().type(STRING).description("마지막 메시지 미리보기"),
                                 fieldWithPath("items[].lastMessageAt").optional().type(STRING).description("마지막 메시지 시각(ISO-8601)"),

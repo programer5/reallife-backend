@@ -1,5 +1,9 @@
 package com.example.backend.domain.message;
 
 public enum MessageType {
-    TEXT
+    TEXT,
+    FILE,
+    CAPSULE,
+    SESSION,
+    SYSTEM
 }

@@ -14,6 +14,9 @@ import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 
 @Service
@@ -37,13 +40,11 @@ public class ConversationService {
         UUID u1 = (meId.compareTo(targetUserId) <= 0) ? meId : targetUserId;
         UUID u2 = (meId.compareTo(targetUserId) <= 0) ? targetUserId : meId;
 
-        // 1) 먼저 key 테이블에서 조회
         var existing = directKeyRepository.findByUser1IdAndUser2IdAndDeletedFalse(u1, u2);
         if (existing.isPresent()) {
             return existing.get().getConversationId();
         }
 
-        // 2) 없으면 생성 (동시성은 UNIQUE로 해결)
         Conversation c = conversationRepository.save(Conversation.direct());
 
         memberRepository.save(ConversationMember.join(c.getId(), meId));
@@ -53,10 +54,41 @@ public class ConversationService {
             directKeyRepository.save(DirectConversationKey.of(c.getId(), meId, targetUserId));
             return c.getId();
         } catch (DataIntegrityViolationException e) {
-            // 누가 먼저 만들었다 -> 재조회
             return directKeyRepository.findByUser1IdAndUser2IdAndDeletedFalse(u1, u2)
                     .map(DirectConversationKey::getConversationId)
                     .orElseThrow(() -> e);
         }
+    }
+
+    @Transactional
+    public UUID createGroup(UUID meId, String title, List<UUID> participantIds, UUID coverImageFileId) {
+        userRepository.findById(meId)
+                .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
+
+        Set<UUID> memberIds = new LinkedHashSet<>();
+        memberIds.add(meId);
+
+        if (participantIds != null) {
+            memberIds.addAll(participantIds);
+        }
+
+        if (memberIds.size() < 2) {
+            throw new BusinessException(ErrorCode.INVALID_REQUEST);
+        }
+
+        for (UUID userId : memberIds) {
+            userRepository.findById(userId)
+                    .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
+        }
+
+        Conversation conversation = conversationRepository.save(
+                Conversation.group(title, meId, coverImageFileId)
+        );
+
+        for (UUID userId : memberIds) {
+            memberRepository.save(ConversationMember.join(conversation.getId(), userId));
+        }
+
+        return conversation.getId();
     }
 }

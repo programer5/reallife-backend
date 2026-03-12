@@ -1,5 +1,7 @@
 package com.example.backend.controller.message.dto;
 
+import com.example.backend.domain.message.ConversationType;
+
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
@@ -11,6 +13,8 @@ public record ConversationListResponse(
 ) {
     public record Item(
             UUID conversationId,
+            ConversationType conversationType,
+            String conversationTitle,
             PeerUser peerUser,
             String lastMessagePreview,
             LocalDateTime lastMessageAt,

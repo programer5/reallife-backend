@@ -38,6 +38,8 @@ public class ConversationListService {
         List<ConversationListResponse.Item> items = page.stream()
                 .map(r -> new ConversationListResponse.Item(
                         r.conversationId(),
+                        r.conversationType(),
+                        r.conversationTitle(),
                         new ConversationListResponse.PeerUser(
                                 r.peerUserId(),
                                 r.peerNickname(),

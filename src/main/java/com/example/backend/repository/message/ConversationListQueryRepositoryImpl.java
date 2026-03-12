@@ -2,7 +2,6 @@ package com.example.backend.repository.message;
 
 import com.example.backend.domain.message.QConversation;
 import com.example.backend.domain.message.QConversationMember;
-import com.example.backend.domain.message.QMessage;
 import com.example.backend.domain.user.QUser;
 import com.example.backend.repository.message.dto.ConversationListRow;
 import com.querydsl.core.Tuple;
@@ -38,7 +37,8 @@ public class ConversationListQueryRepositoryImpl implements ConversationListQuer
         DateTimeExpression<LocalDateTime> sortAt = Expressions.dateTimeTemplate(
                 LocalDateTime.class,
                 "coalesce({0}, {1})",
-                c.lastMessageAt, c.createdAt
+                c.lastMessageAt,
+                c.createdAt
         );
 
         BooleanExpression base = m.userId.eq(meId)
@@ -57,8 +57,10 @@ public class ConversationListQueryRepositoryImpl implements ConversationListQuer
                 .select(Projections.constructor(
                         ConversationListRow.class,
                         c.id,
+                        c.type,
+                        c.title,
                         peer.userId,
-                        u.name,                              // ✅ nickname 대신 name
+                        u.name,
                         Expressions.nullExpression(String.class),
                         c.lastMessagePreview,
                         c.lastMessageAt,
@@ -66,10 +68,13 @@ public class ConversationListQueryRepositoryImpl implements ConversationListQuer
                 ))
                 .from(m)
                 .join(c).on(c.id.eq(m.conversationId))
-                .join(peer).on(peer.conversationId.eq(m.conversationId)
-                        .and(peer.userId.ne(meId))
-                        .and(peer.deleted.isFalse()))
-                .join(u).on(u.id.eq(peer.userId))
+                .leftJoin(peer).on(
+                        peer.conversationId.eq(m.conversationId)
+                                .and(peer.userId.ne(meId))
+                                .and(peer.deleted.isFalse())
+                                .and(c.type.eq(com.example.backend.domain.message.ConversationType.DIRECT))
+                )
+                .leftJoin(u).on(u.id.eq(peer.userId))
                 .where(where)
                 .orderBy(sortAt.desc(), c.id.desc())
                 .limit(sizePlusOne)
@@ -80,8 +85,8 @@ public class ConversationListQueryRepositoryImpl implements ConversationListQuer
     public Map<UUID, Long> fetchUnreadCounts(UUID meId, List<UUID> conversationIds) {
         if (conversationIds == null || conversationIds.isEmpty()) return Map.of();
 
-        QConversationMember m = QConversationMember.conversationMember;
-        QMessage msg = QMessage.message;
+        com.example.backend.domain.message.QConversationMember m = com.example.backend.domain.message.QConversationMember.conversationMember;
+        com.example.backend.domain.message.QMessage msg = com.example.backend.domain.message.QMessage.message;
 
         LocalDateTime epoch = LocalDateTime.of(1970, 1, 1, 0, 0);
 

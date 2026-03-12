@@ -645,9 +645,20 @@ include::{snippets}/feed-get-public-visible/http-response.adoc[]
 include::{snippets}/conversations-direct-200/http-request.adoc[]
 include::{snippets}/conversations-direct-200/http-response.adoc[]
 
+=== 그룹 대화방 생성(GROUP)
+include::{snippets}/conversations-group-200/http-request.adoc[]
+include::{snippets}/conversations-group-200/http-response.adoc[]
+
 === 대화방 목록
 include::{snippets}/conversations-list/http-request.adoc[]
 include::{snippets}/conversations-list/http-response.adoc[]
+
+[NOTE]
+====
+- `conversationType`이 `DIRECT`이면 `peerUser`를 사용합니다.
+- `conversationType`이 `GROUP`이면 `conversationTitle`을 우선 사용합니다.
+- 현재 그룹 대표 이미지/멤버 수 응답은 아직 포함되지 않았고, 이후 목록 query 확장 시 추가할 수 있습니다.
+====
 
 ==== 다음 페이지 예시
 include::{snippets}/conversations-list-200-next-page/http-request.adoc[]

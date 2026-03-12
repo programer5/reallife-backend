@@ -8,6 +8,7 @@ import com.example.backend.repository.message.ConversationMemberRepository;
 import com.example.backend.service.message.ConversationListService;
 import com.example.backend.service.message.ConversationService;
 import com.example.backend.service.message.MessageReadService;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
@@ -83,5 +84,20 @@ public class ConversationController {
                 .toList();
 
         return new ConversationReadReceiptsResponse(items);
+    }
+
+    @PostMapping("/group")
+    public GroupConversationCreateResponse createGroup(
+            @AuthenticationPrincipal String userId,
+            @Valid @RequestBody GroupConversationCreateRequest req
+    ) {
+        UUID meId = UUID.fromString(userId);
+        UUID conversationId = conversationService.createGroup(
+                meId,
+                req.title(),
+                req.participantIds(),
+                req.coverImageFileId()
+        );
+        return new GroupConversationCreateResponse(conversationId);
     }
 }

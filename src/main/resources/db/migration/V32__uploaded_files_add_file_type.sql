@@ -1,0 +1,2 @@
+ALTER TABLE uploaded_files
+    ADD COLUMN file_type VARCHAR(20) NOT NULL DEFAULT 'IMAGE';

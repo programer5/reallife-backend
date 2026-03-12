@@ -33,7 +33,15 @@ public class Conversation extends BaseEntity {
     @Column(nullable = false)
     private ConversationType type;
 
-    // ✅ denorm columns
+    @Column(name = "title", length = 255)
+    private String title;
+
+    @Column(name = "owner_id")
+    private UUID ownerId;
+
+    @Column(name = "cover_image_file_id")
+    private UUID coverImageFileId;
+
     @Column(name = "last_message_id")
     private UUID lastMessageId;
 
@@ -43,17 +51,29 @@ public class Conversation extends BaseEntity {
     @Column(name = "last_message_preview", length = 200)
     private String lastMessagePreview;
 
-    private Conversation(ConversationType type) {
+    private Conversation(ConversationType type, String title, UUID ownerId, UUID coverImageFileId) {
         this.type = type;
+        this.title = title;
+        this.ownerId = ownerId;
+        this.coverImageFileId = coverImageFileId;
     }
 
     public static Conversation direct() {
-        return new Conversation(ConversationType.DIRECT);
+        return new Conversation(ConversationType.DIRECT, null, null, null);
+    }
+
+    public static Conversation group(String title, UUID ownerId, UUID coverImageFileId) {
+        return new Conversation(ConversationType.GROUP, title, ownerId, coverImageFileId);
     }
 
     public void updateLastMessage(UUID messageId, LocalDateTime at, String preview) {
         this.lastMessageId = messageId;
         this.lastMessageAt = at;
         this.lastMessagePreview = preview;
+    }
+
+    public void updateGroupInfo(String title, UUID coverImageFileId) {
+        this.title = title;
+        this.coverImageFileId = coverImageFileId;
     }
 }
