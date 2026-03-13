@@ -41,11 +41,11 @@ public class AuthController {
     ) {
         String ip = clientIp(httpRequest);
 
-        if (!loginRateLimiter.allow(request.email(), ip)) {
+        if (!loginRateLimiter.allow(request.identifier(), ip)) {
             throw new ResponseStatusException(HttpStatus.TOO_MANY_REQUESTS, "로그인 시도가 너무 많습니다. 잠시 후 다시 시도해주세요.");
         }
 
-        var tokens = authService.loginWithRefresh(request.email(), request.password());
+        var tokens = authService.loginWithRefresh(request.identifier(), request.password());
         return new LoginResponse(tokens.accessToken(), tokens.refreshToken(), "Bearer");
     }
 
@@ -58,7 +58,7 @@ public class AuthController {
             HttpServletRequest httpRequest,
             HttpServletResponse response
     ) {
-        var tokens = authService.loginWithRefresh(request.email(), request.password());
+        var tokens = authService.loginWithRefresh(request.identifier(), request.password());
 
         response.addHeader(HttpHeaders.SET_COOKIE, cookieFactory.accessCookie(tokens.accessToken(), httpRequest).toString());
         response.addHeader(HttpHeaders.SET_COOKIE, cookieFactory.refreshCookie(tokens.refreshToken(), httpRequest).toString());

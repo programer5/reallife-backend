@@ -93,7 +93,7 @@ class AuthControllerTest {
 
     private Map<String, Object> login(MockMvc mockMvc, String email) throws Exception {
         var req = new HashMap<String, Object>();
-        req.put("email", email);
+        req.put("identifier", email);
         req.put("password", "password1234");
 
         var res = mockMvc.perform(post("/api/auth/login")
@@ -119,7 +119,7 @@ class AuthControllerTest {
      */
     private AuthCookies loginCookieAndExtract(MockMvc mockMvc, String email, String snippetId) throws Exception {
         var req = new HashMap<String, Object>();
-        req.put("email", email);
+        req.put("identifier", email);
         req.put("password", "password1234");
 
         var result = mockMvc.perform(post("/api/auth/login-cookie")
@@ -133,7 +133,7 @@ class AuthControllerTest {
                 })
                 .andDo(document(snippetId,
                         requestFields(
-                                fieldWithPath("email").type(STRING).description("이메일"),
+                                fieldWithPath("identifier").type(STRING).description("로그인 식별자 (이메일 또는 핸들)"),
                                 fieldWithPath("password").type(STRING).description("비밀번호")
                         ),
                         responseHeaders(
@@ -164,7 +164,7 @@ class AuthControllerTest {
         var user = signup(mockMvc);
 
         var req = new HashMap<String, Object>();
-        req.put("email", user.email());
+        req.put("identifier", user.email());
         req.put("password", "password1234");
 
         mockMvc.perform(post("/api/auth/login")
@@ -176,7 +176,7 @@ class AuthControllerTest {
                 .andExpect(jsonPath("$.tokenType").value("Bearer"))
                 .andDo(document("auth-login",
                         requestFields(
-                                fieldWithPath("email").type(STRING).description("이메일"),
+                                fieldWithPath("identifier").type(STRING).description("로그인 식별자 (이메일 또는 핸들)"),
                                 fieldWithPath("password").type(STRING).description("비밀번호")
                         ),
                         responseFields(

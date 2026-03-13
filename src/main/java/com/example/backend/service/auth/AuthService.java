@@ -29,8 +29,11 @@ public class AuthService {
     private final JwtTokenProvider jwtTokenProvider;
     private final JwtProperties jwtProperties;
 
-    public AuthTokens loginWithRefresh(String email, String rawPassword) {
-        User user = userRepository.findByEmail(email)
+    public AuthTokens loginWithRefresh(String identifier, String rawPassword) {
+        String normalized = identifier == null ? "" : identifier.trim();
+        User user = userRepository.findByEmail(normalized)
+                .or(() -> userRepository.findByHandle(normalized))
+                .or(() -> userRepository.findByHandleLower(normalized.toLowerCase()))
                 .orElseThrow(() -> new BusinessException(ErrorCode.UNAUTHORIZED));
 
         if (!passwordEncoder.matches(rawPassword, user.getPassword())) {

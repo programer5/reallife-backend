@@ -13,6 +13,7 @@ public interface UserRepository extends JpaRepository<User, UUID> {
     boolean existsByEmail(String email);
     boolean existsByHandle(String handle);
     Optional<User> findByHandle(String handle);
+    Optional<User> findByHandleLower(String handleLower);
 
     long countByDeletedFalse();
     long countByDeletedFalseAndCreatedAtAfter(LocalDateTime createdAt);
