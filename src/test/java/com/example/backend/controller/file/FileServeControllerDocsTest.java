@@ -168,4 +168,42 @@ class FileServeControllerDocsTest {
                         )
                 ));
     }
+    @Test
+    void 비디오_스트리밍_range_206(RestDocumentationContextProvider restDocumentation) throws Exception {
+        MockMvc mockMvc = mockMvc(restDocumentation);
+
+        var me = docs.saveUser("stream", "스트림유저");
+        String token = docs.issueTokenFor(me);
+
+        String fileKey = "sample-video.mp4";
+        UploadedFile saved = uploadedFileRepository.saveAndFlush(
+                UploadedFile.create(me.getId(), "sample.mp4", fileKey, "video/mp4", 20)
+        );
+
+        Path p = storageService.resolvePath(fileKey);
+        Files.createDirectories(p.getParent());
+        Files.write(p, "12345678901234567890".getBytes());
+
+        mockMvc.perform(get("/api/files/{fileId}/download", saved.getId())
+                        .header(HttpHeaders.RANGE, "bytes=0-9")
+                        .header(DocsTestSupport.headerName(), DocsTestSupport.auth(token)))
+                .andExpect(status().isPartialContent())
+                .andExpect(header().string(HttpHeaders.ACCEPT_RANGES, containsString("bytes")))
+                .andDo(document("files-download-video-range-206",
+                        preprocessRequest(prettyPrint()),
+                        preprocessResponse(prettyPrint()),
+                        pathParameters(
+                                parameterWithName("fileId").description("비디오 파일 ID(UUID)")
+                        ),
+                        requestHeaders(
+                                headerWithName(HttpHeaders.RANGE).description("바이트 범위 요청 헤더 예: bytes=0-1048575")
+                        ),
+                        responseHeaders(
+                                headerWithName(HttpHeaders.CONTENT_TYPE).description("video/* MIME 타입"),
+                                headerWithName(HttpHeaders.ACCEPT_RANGES).description("bytes"),
+                                headerWithName(HttpHeaders.CONTENT_RANGE).description("응답된 바이트 범위"),
+                                headerWithName(HttpHeaders.ETAG).description("ETag")
+                        )
+                ));
+    }
 }

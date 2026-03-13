@@ -56,7 +56,7 @@ public class FileService {
         String downloadUrl = urlBuilder.absolute("/api/files/" + saved.getId() + "/download");
 
         String thumbnailUrl = null;
-        if (ct.startsWith("image/")) {
+        if (ct.startsWith("image/") || ct.startsWith("video/")) {
             eventPublisher.publishEvent(new FileUploadedEvent(saved.getId()));
             thumbnailUrl = urlBuilder.absolute("/api/files/" + saved.getId() + "/thumbnail");
         }
@@ -67,7 +67,8 @@ public class FileService {
                 thumbnailUrl,
                 saved.getOriginalFilename(),
                 saved.getContentType(),
-                saved.getSize()
+                saved.getSize(),
+                saved.getFileType().name()
         );
     }
 }

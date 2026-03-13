@@ -53,6 +53,15 @@ public class ConversationController {
         return new DirectConversationCreateResponse(conversationId);
     }
 
+    @GetMapping("/{conversationId}/members")
+    public GroupConversationMembersResponse members(
+            @AuthenticationPrincipal String userId,
+            @PathVariable UUID conversationId
+    ) {
+        UUID meId = UUID.fromString(userId);
+        return conversationService.getGroupMembers(meId, conversationId);
+    }
+
     @GetMapping("/{conversationId}/read-state")
     public ConversationReadStateResponse readState(
             @AuthenticationPrincipal String userId,

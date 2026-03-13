@@ -1,50 +1,58 @@
+
 package com.example.backend.domain.message;
 
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import org.hibernate.annotations.UuidGenerator;
+
 import java.time.LocalDateTime;
 import java.util.UUID;
 
+import static lombok.AccessLevel.PROTECTED;
+
 @Entity
 @Getter
-@NoArgsConstructor
-@Table(name="message_capsules")
+@NoArgsConstructor(access = PROTECTED)
+@Table(name = "message_capsules")
 public class MessageCapsule {
 
     @Id
     @GeneratedValue
+    @UuidGenerator
     private UUID id;
 
-    @Column(name="message_id")
+    @Column(name = "message_id", nullable = false)
     private UUID messageId;
 
-    @Column(name="conversation_id")
+    @Column(name = "conversation_id", nullable = false)
     private UUID conversationId;
 
-    @Column(name="creator_id")
+    @Column(name = "creator_id", nullable = false)
     private UUID creatorId;
 
-    @Column(name="title")
+    @Column(nullable = false, length = 255)
     private String title;
 
-    @Column(name="unlock_at")
+    @Column(name = "unlock_at", nullable = false)
     private LocalDateTime unlockAt;
 
-    @Column(name="opened_at")
+    @Column(name = "opened_at")
     private LocalDateTime openedAt;
 
-    public static MessageCapsule create(UUID messageId, UUID conversationId, UUID creatorId, String title, LocalDateTime unlockAt){
-        MessageCapsule c=new MessageCapsule();
-        c.messageId=messageId;
-        c.conversationId=conversationId;
-        c.creatorId=creatorId;
-        c.title=title;
-        c.unlockAt=unlockAt;
-        return c;
+    private MessageCapsule(UUID messageId, UUID conversationId, UUID creatorId, String title, LocalDateTime unlockAt) {
+        this.messageId = messageId;
+        this.conversationId = conversationId;
+        this.creatorId = creatorId;
+        this.title = title;
+        this.unlockAt = unlockAt;
     }
 
-    public void open(){
-        this.openedAt=LocalDateTime.now();
+    public static MessageCapsule create(UUID messageId, UUID conversationId, UUID creatorId, String title, LocalDateTime unlockAt) {
+        return new MessageCapsule(messageId, conversationId, creatorId, title, unlockAt);
+    }
+
+    public void open() {
+        this.openedAt = LocalDateTime.now();
     }
 }

@@ -24,8 +24,7 @@ import static org.springframework.restdocs.mockmvc.MockMvcRestDocumentation.docu
 import static org.springframework.restdocs.mockmvc.MockMvcRestDocumentation.documentationConfiguration;
 import static org.springframework.restdocs.operation.preprocess.Preprocessors.*;
 import static org.springframework.restdocs.payload.JsonFieldType.*;
-import static org.springframework.restdocs.payload.PayloadDocumentation.fieldWithPath;
-import static org.springframework.restdocs.payload.PayloadDocumentation.responseFields;
+import static org.springframework.restdocs.payload.PayloadDocumentation.*;
 import static org.springframework.restdocs.request.RequestDocumentation.parameterWithName;
 import static org.springframework.restdocs.request.RequestDocumentation.queryParameters;
 import static org.springframework.security.test.web.servlet.setup.SecurityMockMvcConfigurers.springSecurity;
@@ -92,6 +91,7 @@ class FeedControllerDocsTest {
                                 fieldWithPath("items[].authorName").type(STRING).description("작성자 이름"),
                                 fieldWithPath("items[].content").type(STRING).description("내용"),
                                 fieldWithPath("items[].imageUrls").type(ARRAY).description("이미지 URL 목록"),
+                                subsectionWithPath("items[].mediaItems").type(ARRAY).description("미디어 목록(이미지/동영상). 각 항목은 mediaType, url, thumbnailUrl, contentType을 포함"),
                                 fieldWithPath("items[].visibility").type(STRING).description("공개범위"),
                                 fieldWithPath("items[].createdAt").type(STRING).description("생성시각"),
                                 fieldWithPath("items[].likeCount").type(NUMBER).description("좋아요 수"),
@@ -152,6 +152,7 @@ class FeedControllerDocsTest {
                                 fieldWithPath("items[].authorName").type(STRING).description("작성자 이름"),
                                 fieldWithPath("items[].content").type(STRING).description("내용"),
                                 fieldWithPath("items[].imageUrls").type(ARRAY).description("이미지 URL 목록"),
+                                subsectionWithPath("items[].mediaItems").type(ARRAY).description("미디어 목록(이미지/동영상). 각 항목은 mediaType, url, thumbnailUrl, contentType을 포함"),
                                 fieldWithPath("items[].visibility").type(STRING).description("공개범위"),
                                 fieldWithPath("items[].createdAt").type(STRING).description("생성시각"),
                                 fieldWithPath("items[].likeCount").type(NUMBER).description("좋아요 수"),
@@ -201,6 +202,7 @@ class FeedControllerDocsTest {
                                 fieldWithPath("items[].authorName").type(STRING).description("작성자 이름"),
                                 fieldWithPath("items[].content").type(STRING).description("내용"),
                                 fieldWithPath("items[].imageUrls").type(ARRAY).description("이미지 URL 목록"),
+                                subsectionWithPath("items[].mediaItems").type(ARRAY).description("미디어 목록(이미지/동영상). 각 항목은 mediaType, url, thumbnailUrl, contentType을 포함"),
                                 fieldWithPath("items[].visibility").type(STRING).description("공개범위"),
                                 fieldWithPath("items[].createdAt").type(STRING).description("생성시각"),
                                 fieldWithPath("items[].likeCount").type(NUMBER).description("좋아요 수"),

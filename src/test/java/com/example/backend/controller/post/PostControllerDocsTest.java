@@ -99,7 +99,8 @@ class PostControllerDocsTest {
                         requestFields(
                                 fieldWithPath("content").type(STRING).description("게시글 본문"),
                                 fieldWithPath("imageUrls").optional().type(ARRAY).description("(구버전 호환) 이미지 URL 목록"),
-                                fieldWithPath("imageFileIds").optional().type(ARRAY).description("(권장) 업로드된 파일 ID(UUID) 목록"),
+                                fieldWithPath("imageFileIds").optional().type(ARRAY).description("(권장) 업로드된 이미지 파일 ID(UUID) 목록"),
+                                fieldWithPath("mediaFileIds").optional().type(ARRAY).description("(권장) 업로드된 미디어 파일 ID(UUID) 목록. 이미지/동영상 모두 가능"),
                                 fieldWithPath("visibility").optional().type(STRING)
                                         .attributes(key("constraints").value("ALL | FOLLOWERS | PRIVATE"))
                                         .description("공개 범위")
@@ -111,6 +112,7 @@ class PostControllerDocsTest {
                                 fieldWithPath("authorName").type(STRING).description("작성자 이름"),
                                 fieldWithPath("content").type(STRING).description("게시글 본문"),
                                 fieldWithPath("imageUrls").type(ARRAY).description("이미지 URL 목록(다운로드 URL로 반환될 수 있음)"),
+                                subsectionWithPath("mediaItems").type(ARRAY).description("미디어 목록(이미지/동영상). 각 항목은 mediaType, url, thumbnailUrl, contentType을 포함"),
                                 fieldWithPath("visibility").type(STRING).description("공개 범위"),
                                 fieldWithPath("createdAt").type(STRING).description("생성 시각(ISO-8601)"),
                                 fieldWithPath("likeCount").description("좋아요 수"),
@@ -176,6 +178,7 @@ class PostControllerDocsTest {
                                 fieldWithPath("authorName").type(STRING).description("작성자 이름"),
                                 fieldWithPath("content").type(STRING).description("게시글 본문"),
                                 fieldWithPath("imageUrls").type(ARRAY).description("이미지 URL 목록"),
+                                subsectionWithPath("mediaItems").type(ARRAY).description("미디어 목록(이미지/동영상). 각 항목은 mediaType, url, thumbnailUrl, contentType을 포함"),
                                 fieldWithPath("visibility").type(STRING).description("공개 범위"),
                                 fieldWithPath("createdAt").type(STRING).description("생성 시각(ISO-8601)"),
                                 fieldWithPath("likeCount").description("좋아요 수"),

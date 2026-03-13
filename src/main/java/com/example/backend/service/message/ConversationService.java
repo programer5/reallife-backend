@@ -1,5 +1,6 @@
 package com.example.backend.service.message;
 
+import com.example.backend.controller.message.dto.GroupConversationMembersResponse;
 import com.example.backend.domain.message.Conversation;
 import com.example.backend.domain.message.ConversationMember;
 import com.example.backend.domain.message.DirectConversationKey;
@@ -18,6 +19,7 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -91,4 +93,38 @@ public class ConversationService {
 
         return conversation.getId();
     }
+    @Transactional(readOnly = true)
+    public GroupConversationMembersResponse getGroupMembers(UUID meId, UUID conversationId) {
+        var membership = memberRepository.findByConversationIdAndUserId(conversationId, meId)
+                .orElseThrow(() -> new BusinessException(ErrorCode.MESSAGE_FORBIDDEN));
+
+        var conversation = conversationRepository.findById(conversationId)
+                .orElseThrow(() -> new BusinessException(ErrorCode.INVALID_REQUEST));
+
+        if (conversation.getType() == com.example.backend.domain.message.ConversationType.DIRECT) {
+            throw new BusinessException(ErrorCode.INVALID_REQUEST);
+        }
+
+        var members = memberRepository.findActiveMembers(conversationId);
+        var userIds = members.stream().map(ConversationMember::getUserId).toList();
+        var userMap = userRepository.findAllById(userIds).stream()
+                .collect(Collectors.toMap(u -> u.getId(), u -> u));
+
+        return new GroupConversationMembersResponse(
+                conversationId,
+                members.stream()
+                        .map(m -> {
+                            var u = userMap.get(m.getUserId());
+                            return new GroupConversationMembersResponse.MemberItem(
+                                    m.getUserId(),
+                                    u != null ? u.getHandle() : null,
+                                    u != null ? u.getName() : null,
+                                    null
+                            );
+                        })
+                        .toList()
+        );
+    }
+
+
 }

@@ -1,8 +1,9 @@
 
 package com.example.backend.service.message;
 
+import com.example.backend.controller.message.dto.MessageCapsuleListResponse;
 import com.example.backend.domain.message.MessageCapsule;
-import jakarta.persistence.EntityManager;
+import com.example.backend.repository.message.MessageCapsuleRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -14,20 +15,34 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class MessageCapsuleService {
 
-    private final EntityManager em;
+    private final MessageCapsuleRepository repository;
 
     @Transactional
-    public UUID create(UUID messageId, UUID conversationId, UUID creatorId, String title, LocalDateTime unlockAt){
-        MessageCapsule c = MessageCapsule.create(messageId,conversationId,creatorId,title,unlockAt);
-        em.persist(c);
-        return c.getId();
+    public UUID create(UUID messageId, UUID conversationId, UUID creatorId, String title, LocalDateTime unlockAt) {
+        MessageCapsule saved = repository.save(MessageCapsule.create(messageId, conversationId, creatorId, title, unlockAt));
+        return saved.getId();
     }
 
     @Transactional
-    public void open(UUID capsuleId){
-        MessageCapsule c = em.find(MessageCapsule.class,capsuleId);
-        if(c!=null){
-            c.open();
-        }
+    public void open(UUID capsuleId) {
+        repository.findById(capsuleId).ifPresent(MessageCapsule::open);
+    }
+
+    @Transactional(readOnly = true)
+    public MessageCapsuleListResponse listByConversation(UUID conversationId) {
+        return new MessageCapsuleListResponse(
+                conversationId,
+                repository.findByConversationIdOrderByUnlockAtDesc(conversationId).stream()
+                        .map(c -> new MessageCapsuleListResponse.Item(
+                                c.getId(),
+                                c.getMessageId(),
+                                c.getCreatorId(),
+                                c.getTitle(),
+                                c.getUnlockAt(),
+                                c.getOpenedAt(),
+                                c.getOpenedAt() != null
+                        ))
+                        .toList()
+        );
     }
 }

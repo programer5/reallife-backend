@@ -86,7 +86,49 @@ class FileControllerDocsTest {
                                 fieldWithPath("thumbnailUrl").optional().type(STRING).description("썸네일 URL (이미지일 때만, 예: /api/files/{id}/thumbnail)"),
                                 fieldWithPath("originalFilename").type(STRING).description("원본 파일명"),
                                 fieldWithPath("contentType").type(STRING).description("MIME 타입"),
-                                fieldWithPath("size").type(NUMBER).description("파일 크기(bytes)")
+                                fieldWithPath("size").type(NUMBER).description("파일 크기(bytes)"),
+                                fieldWithPath("fileType").type(STRING).description("파일 타입(IMAGE, VIDEO, FILE)")
+                        )
+                ));
+    }
+
+    @Test
+    void 비디오_업로드_성공_200(RestDocumentationContextProvider restDocumentation) throws Exception {
+        MockMvc mockMvc = mockMvc(restDocumentation);
+
+        var me = docs.saveUser("videofile", "비디오유저");
+        String token = docs.issueTokenFor(me);
+
+        MockMultipartFile file = new MockMultipartFile(
+                "file",
+                "clip.mp4",
+                "video/mp4",
+                "fake mp4 bytes".getBytes()
+        );
+
+        mockMvc.perform(multipart("/api/files")
+                        .file(file)
+                        .header(DocsTestSupport.headerName(), DocsTestSupport.auth(token))
+                        .accept(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.fileType").value("VIDEO"))
+                .andDo(document("files-upload-video",
+                        preprocessRequest(prettyPrint()),
+                        preprocessResponse(prettyPrint()),
+                        requestHeaders(
+                                headerWithName(DocsTestSupport.headerName()).description("Bearer {accessToken}")
+                        ),
+                        requestParts(
+                                partWithName("file").description("업로드할 비디오 파일(멀티파트)")
+                        ),
+                        responseFields(
+                                fieldWithPath("fileId").type(STRING).description("업로드된 파일 ID(UUID)"),
+                                fieldWithPath("url").type(STRING).description("원본 파일 다운로드 URL"),
+                                fieldWithPath("thumbnailUrl").optional().type(STRING).description("비디오 썸네일 URL(가능한 경우)"),
+                                fieldWithPath("originalFilename").type(STRING).description("원본 파일명"),
+                                fieldWithPath("contentType").type(STRING).description("MIME 타입"),
+                                fieldWithPath("size").type(NUMBER).description("파일 크기(bytes)"),
+                                fieldWithPath("fileType").type(STRING).description("파일 타입(IMAGE, VIDEO, FILE)")
                         )
                 ));
     }
