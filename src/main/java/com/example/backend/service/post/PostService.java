@@ -1,8 +1,10 @@
+
 package com.example.backend.service.post;
 
 import com.example.backend.controller.post.dto.PostCreateRequest;
 import com.example.backend.controller.post.dto.PostCreateResponse;
 import com.example.backend.domain.post.Post;
+import com.example.backend.domain.post.PostImage;
 import com.example.backend.exception.BusinessException;
 import com.example.backend.exception.ErrorCode;
 import com.example.backend.repository.file.UploadedFileRepository;
@@ -14,6 +16,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.List;
 import java.util.UUID;
 
 @Service
@@ -35,22 +38,22 @@ public class PostService {
         String safeContent = ContentSanitizer.minimal(request.content());
         Post post = Post.create(meId, safeContent, request.visibility());
 
-        // ===== 1. 새 방식 (fileId 기반) =====
-        if (request.imageFileIds() != null && !request.imageFileIds().isEmpty()) {
+        List<UUID> fileIds = (request.mediaFileIds() != null && !request.mediaFileIds().isEmpty())
+                ? request.mediaFileIds()
+                : request.imageFileIds();
 
-            var files = uploadedFileRepository.findAllById(request.imageFileIds());
+        if (fileIds != null && !fileIds.isEmpty()) {
+            var files = uploadedFileRepository.findAllById(fileIds);
 
-            if (files.size() != request.imageFileIds().size()) {
+            if (files.size() != fileIds.size()) {
                 throw new BusinessException(ErrorCode.FILE_NOT_FOUND);
             }
 
             int order = 0;
             for (var file : files) {
-                post.addImage(file, order++);
+                post.addMedia(file, order++);
             }
-        }
-        // ===== 2. 구버전 호환 (문자열 URL) =====
-        else if (request.imageUrls() != null) {
+        } else if (request.imageUrls() != null) {
             for (int i = 0; i < request.imageUrls().size(); i++) {
                 post.addImage(request.imageUrls().get(i), i);
             }
@@ -67,7 +70,18 @@ public class PostService {
                 author.getHandle(),
                 author.getName(),
                 saved.getContent(),
-                saved.getImages().stream().map(img -> img.getImageUrl()).toList(),
+                saved.getImages().stream()
+                        .filter(img -> String.valueOf(img.getMediaType()).equals("IMAGE"))
+                        .map(PostImage::getImageUrl)
+                        .toList(),
+                saved.getImages().stream()
+                        .map(img -> new PostCreateResponse.MediaItem(
+                                img.getMediaType().name(),
+                                img.getImageUrl(),
+                                img.getThumbnailUrl(),
+                                img.getContentType()
+                        ))
+                        .toList(),
                 saved.getVisibility(),
                 saved.getCreatedAt(),
                 saved.getLikeCount(),
@@ -91,7 +105,18 @@ public class PostService {
                 author.getHandle(),
                 author.getName(),
                 post.getContent(),
-                post.getImages().stream().map(img -> img.getImageUrl()).toList(),
+                post.getImages().stream()
+                        .filter(img -> String.valueOf(img.getMediaType()).equals("IMAGE"))
+                        .map(PostImage::getImageUrl)
+                        .toList(),
+                post.getImages().stream()
+                        .map(img -> new PostCreateResponse.MediaItem(
+                                img.getMediaType().name(),
+                                img.getImageUrl(),
+                                img.getThumbnailUrl(),
+                                img.getContentType()
+                        ))
+                        .toList(),
                 post.getVisibility(),
                 post.getCreatedAt(),
                 post.getLikeCount(),

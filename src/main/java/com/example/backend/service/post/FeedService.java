@@ -1,3 +1,4 @@
+
 package com.example.backend.service.post;
 
 import com.example.backend.controller.post.dto.FeedResponse;
@@ -40,19 +41,15 @@ public class FeedService {
 
         if (pageIds.isEmpty()) return new FeedResponse(List.of(), null, false);
 
-        // ✅ Post + images 한 번에 로딩
         List<Post> posts = postRepository.findAllWithImagesByIdIn(pageIds);
 
-        // DB에서 IN 조회는 정렬 보장 X → feed ids 순서대로 다시 정렬
         Map<UUID, Post> byId = posts.stream().collect(Collectors.toMap(Post::getId, Function.identity(), (a,b)->a));
         List<Post> ordered = pageIds.stream().map(byId::get).filter(Objects::nonNull).toList();
 
-        // ✅ author 정보 배치 조회
         Set<UUID> authorIds = ordered.stream().map(Post::getAuthorId).collect(Collectors.toSet());
         Map<UUID, User> users = userRepository.findAllById(authorIds).stream()
                 .collect(Collectors.toMap(User::getId, Function.identity(), (a,b)->a));
 
-        // ✅ likedByMe 배치 조회
         Set<UUID> liked = postLikeRepository.findAllByUserIdAndPostIdIn(meId, pageIds)
                 .stream()
                 .map(pl -> pl.getPostId())
@@ -70,7 +67,18 @@ public class FeedService {
                             handle,
                             name,
                             p.getContent(),
-                            p.getImages().stream().map(PostImage::getImageUrl).toList(),
+                            p.getImages().stream()
+                                    .filter(img -> String.valueOf(img.getMediaType()).equals("IMAGE"))
+                                    .map(PostImage::getImageUrl)
+                                    .toList(),
+                            p.getImages().stream()
+                                    .map(img -> new FeedResponse.MediaItem(
+                                            img.getMediaType().name(),
+                                            img.getImageUrl(),
+                                            img.getThumbnailUrl(),
+                                            img.getContentType()
+                                    ))
+                                    .toList(),
                             p.getVisibility().name(),
                             p.getCreatedAt(),
                             p.getLikeCount(),

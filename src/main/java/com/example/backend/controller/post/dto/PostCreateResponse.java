@@ -1,3 +1,4 @@
+
 package com.example.backend.controller.post.dto;
 
 import com.example.backend.domain.post.PostVisibility;
@@ -13,10 +14,17 @@ public record PostCreateResponse(
         String authorName,
         String content,
         List<String> imageUrls,
+        List<MediaItem> mediaItems,
         PostVisibility visibility,
         LocalDateTime createdAt,
         long likeCount,
         long commentCount,
         boolean likedByMe
 ) {
+    public record MediaItem(
+            String mediaType,
+            String url,
+            String thumbnailUrl,
+            String contentType
+    ) {}
 }

@@ -1,3 +1,4 @@
+
 package com.example.backend.controller.post.dto;
 
 import com.example.backend.domain.post.PostVisibility;
@@ -13,13 +14,14 @@ public record PostCreateRequest(
         @Size(max = 2000, message = "content는 최대 2000자까지 가능합니다.")
         String content,
 
-        // 기존 호환 (프론트 아직 안 바꿔도 동작)
         @Size(max = 10)
         List<String> imageUrls,
 
-        // 새 정석 방식
         @Size(max = 10)
         List<UUID> imageFileIds,
+
+        @Size(max = 10)
+        List<UUID> mediaFileIds,
 
         @NotNull PostVisibility visibility
 ) {}

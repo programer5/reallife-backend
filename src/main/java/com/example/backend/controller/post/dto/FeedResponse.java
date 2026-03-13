@@ -1,3 +1,4 @@
+
 package com.example.backend.controller.post.dto;
 
 import java.time.LocalDateTime;
@@ -16,10 +17,18 @@ public record FeedResponse(
             String authorName,
             String content,
             List<String> imageUrls,
+            List<MediaItem> mediaItems,
             String visibility,
             LocalDateTime createdAt,
             long likeCount,
             long commentCount,
             boolean likedByMe
+    ) {}
+
+    public record MediaItem(
+            String mediaType,
+            String url,
+            String thumbnailUrl,
+            String contentType
     ) {}
 }
