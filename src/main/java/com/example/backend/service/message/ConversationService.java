@@ -93,6 +93,68 @@ public class ConversationService {
 
         return conversation.getId();
     }
+
+
+    @Transactional
+    public UUID updateGroupInfo(UUID meId, UUID conversationId, String title, UUID coverImageFileId) {
+        var conversation = conversationRepository.findById(conversationId)
+                .orElseThrow(() -> new BusinessException(ErrorCode.INVALID_REQUEST));
+
+        if (conversation.getType() != com.example.backend.domain.message.ConversationType.GROUP) {
+            throw new BusinessException(ErrorCode.INVALID_REQUEST);
+        }
+        if (conversation.getOwnerId() == null || !conversation.getOwnerId().equals(meId)) {
+            throw new BusinessException(ErrorCode.MESSAGE_FORBIDDEN);
+        }
+
+        conversation.updateGroupInfo(title, coverImageFileId);
+        return conversation.getId();
+    }
+
+    @Transactional
+    public UUID inviteMembers(UUID meId, UUID conversationId, List<UUID> participantIds) {
+        var conversation = conversationRepository.findById(conversationId)
+                .orElseThrow(() -> new BusinessException(ErrorCode.INVALID_REQUEST));
+
+        if (conversation.getType() != com.example.backend.domain.message.ConversationType.GROUP) {
+            throw new BusinessException(ErrorCode.INVALID_REQUEST);
+        }
+        if (conversation.getOwnerId() == null || !conversation.getOwnerId().equals(meId)) {
+            throw new BusinessException(ErrorCode.MESSAGE_FORBIDDEN);
+        }
+
+        if (participantIds != null) {
+            for (UUID userId : participantIds) {
+                userRepository.findById(userId)
+                        .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
+                if (!memberRepository.existsByConversationIdAndUserId(conversationId, userId)) {
+                    memberRepository.save(ConversationMember.join(conversationId, userId));
+                }
+            }
+        }
+        return conversationId;
+    }
+
+    @Transactional
+    public UUID removeMember(UUID meId, UUID conversationId, UUID userId) {
+        var conversation = conversationRepository.findById(conversationId)
+                .orElseThrow(() -> new BusinessException(ErrorCode.INVALID_REQUEST));
+
+        if (conversation.getType() != com.example.backend.domain.message.ConversationType.GROUP) {
+            throw new BusinessException(ErrorCode.INVALID_REQUEST);
+        }
+        if (conversation.getOwnerId() == null || !conversation.getOwnerId().equals(meId)) {
+            throw new BusinessException(ErrorCode.MESSAGE_FORBIDDEN);
+        }
+        if (userId.equals(meId)) {
+            throw new BusinessException(ErrorCode.INVALID_REQUEST);
+        }
+
+        memberRepository.findByConversationIdAndUserId(conversationId, userId)
+                .ifPresent(memberRepository::delete);
+        return conversationId;
+    }
+
     @Transactional(readOnly = true)
     public GroupConversationMembersResponse getGroupMembers(UUID meId, UUID conversationId) {
         var membership = memberRepository.findByConversationIdAndUserId(conversationId, meId)
@@ -125,6 +187,4 @@ public class ConversationService {
                         .toList()
         );
     }
-
-
 }

@@ -953,3 +953,90 @@ include::{snippets}/admin-alert-history-get/http-response.adoc[]
   "password": "password1234"
 }
 ----
+
+
+== 내 활동 보관함 (My Activity)
+
+=== 내 액션 목록 조회
+`GET /api/me/activity/actions`
+
+응답 예:
+[source,json]
+----
+{
+  "items": [
+    {
+      "pinId": "uuid",
+      "type": "PROMISE",
+      "title": "모란 먹켓치킨",
+      "placeText": "모란 먹켓치킨",
+      "startAt": "2026-03-13T23:00:00",
+      "status": "ACTIVE"
+    }
+  ]
+}
+----
+
+=== 내 캡슐 목록 조회
+`GET /api/me/activity/capsules`
+
+응답 예:
+[source,json]
+----
+{
+  "items": [
+    {
+      "capsuleId": "uuid",
+      "title": "1년뒤 열어봐라",
+      "unlockAt": "2026-03-14T03:24:00",
+      "opened": false
+    }
+  ]
+}
+----
+
+=== 내 공유 목록 조회
+`GET /api/me/activity/shares`
+
+응답 예:
+[source,json]
+----
+{
+  "items": [
+    {
+      "postId": "uuid",
+      "content": "오늘 액션 공유",
+      "visibility": "ALL",
+      "createdAt": "2026-03-13T21:24:00"
+    }
+  ]
+}
+----
+
+== 그룹 관리
+
+=== 그룹 정보 수정
+`PATCH /api/conversations/{conversationId}/group`
+
+요청 예:
+[source,json]
+----
+{
+  "title": "주말 모임",
+  "coverImageFileId": "uuid-or-null"
+}
+----
+
+=== 그룹 멤버 초대
+`POST /api/conversations/{conversationId}/members`
+
+요청 예:
+[source,json]
+----
+{
+  "participantIds": ["uuid-1", "uuid-2"]
+}
+----
+
+=== 그룹 멤버 제거
+`DELETE /api/conversations/{conversationId}/members/{memberUserId}`

@@ -53,16 +53,18 @@ public class ConversationController {
         return new DirectConversationCreateResponse(conversationId);
     }
 
-    @GetMapping("/{conversationId}/members")
-    public GroupConversationMembersResponse members(
-            @AuthenticationPrincipal String userId,
-            @PathVariable UUID conversationId
-    ) {
-        UUID meId = UUID.fromString(userId);
-        return conversationService.getGroupMembers(meId, conversationId);
-    }
+    
 
-    @GetMapping("/{conversationId}/read-state")
+@GetMapping("/{conversationId}/members")
+public GroupConversationMembersResponse members(
+        @AuthenticationPrincipal String userId,
+        @PathVariable UUID conversationId
+) {
+    UUID meId = UUID.fromString(userId);
+    return conversationService.getGroupMembers(meId, conversationId);
+}
+
+@GetMapping("/{conversationId}/read-state")
     public ConversationReadStateResponse readState(
             @AuthenticationPrincipal String userId,
             @PathVariable UUID conversationId
@@ -108,5 +110,39 @@ public class ConversationController {
                 req.coverImageFileId()
         );
         return new GroupConversationCreateResponse(conversationId);
+    }
+
+
+    @PatchMapping("/{conversationId}/group")
+    public GroupConversationCreateResponse updateGroup(
+            @AuthenticationPrincipal String userId,
+            @PathVariable UUID conversationId,
+            @Valid @RequestBody GroupConversationManageRequest req
+    ) {
+        UUID meId = UUID.fromString(userId);
+        UUID updated = conversationService.updateGroupInfo(meId, conversationId, req.title(), req.coverImageFileId());
+        return new GroupConversationCreateResponse(updated);
+    }
+
+    @PostMapping("/{conversationId}/members")
+    public GroupConversationCreateResponse inviteMembers(
+            @AuthenticationPrincipal String userId,
+            @PathVariable UUID conversationId,
+            @RequestBody GroupConversationMemberManageRequest req
+    ) {
+        UUID meId = UUID.fromString(userId);
+        UUID updated = conversationService.inviteMembers(meId, conversationId, req.participantIds());
+        return new GroupConversationCreateResponse(updated);
+    }
+
+    @DeleteMapping("/{conversationId}/members/{memberUserId}")
+    public GroupConversationCreateResponse removeMember(
+            @AuthenticationPrincipal String userId,
+            @PathVariable UUID conversationId,
+            @PathVariable UUID memberUserId
+    ) {
+        UUID meId = UUID.fromString(userId);
+        UUID updated = conversationService.removeMember(meId, conversationId, memberUserId);
+        return new GroupConversationCreateResponse(updated);
     }
 }
