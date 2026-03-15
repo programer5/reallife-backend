@@ -1,6 +1,22 @@
 spring:
   application:
     name: reallife-backend
+  servlet:
+    multipart:
+      max-file-size: 200MB
+      max-request-size: 220MB
+  jpa:
+    open-in-view: false
+    show-sql: false
+    properties:
+      hibernate:
+        type:
+          preferred_uuid_jdbc_type: BINARY
+        format_sql: true
+  data:
+    redis:
+      host: localhost
+      port: 6379
 
 management:
   endpoints:
@@ -19,24 +35,6 @@ info:
 
   Jackson:
     time-zone: Asia/Seoul
-  servlet:
-    multipart:
-      max-file-size: 200MB
-      max-request-size: 220MB
-
-  jpa:
-    open-in-view: false
-    show-sql: false
-    properties:
-      hibernate:
-        type:
-          preferred_uuid_jdbc_type: BINARY
-        format_sql: true
-
-  data:
-    redis:
-      host: localhost
-      port: 6379
 
 jwt:
   secret: ${JWT_SECRET:CHANGE_ME_TO_A_LONG_RANDOM_SECRET_KEY_64_CHARS_MIN_0123456789abcdef}

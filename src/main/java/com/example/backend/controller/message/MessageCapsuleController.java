@@ -1,9 +1,9 @@
-
 package com.example.backend.controller.message;
 
 import com.example.backend.controller.message.dto.MessageCapsuleListResponse;
 import com.example.backend.service.message.MessageCapsuleService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.*;
@@ -28,6 +28,12 @@ public class MessageCapsuleController {
     @PostMapping("/api/capsules/{capsuleId}/open")
     public void open(@PathVariable UUID capsuleId) {
         service.open(capsuleId);
+    }
+
+    @DeleteMapping("/api/capsules/{capsuleId}")
+    public void delete(@PathVariable UUID capsuleId, Authentication authentication) {
+        UUID meId = UUID.fromString(authentication.getName());
+        service.delete(capsuleId, meId);
     }
 
     @GetMapping("/api/conversations/{conversationId}/capsules")
