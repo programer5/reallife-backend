@@ -3,6 +3,7 @@ package com.example.backend.service.post;
 
 import com.example.backend.controller.post.dto.PostCreateRequest;
 import com.example.backend.controller.post.dto.PostCreateResponse;
+import com.example.backend.controller.post.dto.PostUpdateRequest;
 import com.example.backend.domain.post.Post;
 import com.example.backend.domain.post.PostImage;
 import com.example.backend.exception.BusinessException;
@@ -87,6 +88,48 @@ public class PostService {
                 saved.getLikeCount(),
                 saved.getCommentCount(),
                 false
+        );
+    }
+
+    @Transactional
+    public PostCreateResponse updatePost(UUID meId, UUID postId, PostUpdateRequest request) {
+
+        userRepository.findById(meId)
+                .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
+
+        var post = postRepository.findByIdAndAuthorIdAndDeletedFalse(postId, meId)
+                .orElseThrow(() -> new BusinessException(ErrorCode.POST_NOT_OWNED));
+
+        post.update(ContentSanitizer.minimal(request.content()), request.visibility());
+
+        var author = userRepository.findById(post.getAuthorId())
+                .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
+
+        boolean likedByMe = postLikeRepository.findByPostIdAndUserId(postId, meId).isPresent();
+
+        return new PostCreateResponse(
+                post.getId(),
+                post.getAuthorId(),
+                author.getHandle(),
+                author.getName(),
+                post.getContent(),
+                post.getImages().stream()
+                        .filter(img -> String.valueOf(img.getMediaType()).equals("IMAGE"))
+                        .map(PostImage::getImageUrl)
+                        .toList(),
+                post.getImages().stream()
+                        .map(img -> new PostCreateResponse.MediaItem(
+                                img.getMediaType().name(),
+                                img.getImageUrl(),
+                                img.getThumbnailUrl(),
+                                img.getContentType()
+                        ))
+                        .toList(),
+                post.getVisibility(),
+                post.getCreatedAt(),
+                post.getLikeCount(),
+                post.getCommentCount(),
+                likedByMe
         );
     }
 

@@ -323,6 +323,33 @@ public class ConversationPinService {
         ));
     }
 
+
+    @Transactional
+    public void deletePin(UUID meId, UUID pinId) {
+        ConversationPin pin = pinRepository.findById(pinId)
+                .orElseThrow(() -> new BusinessException(ErrorCode.PIN_NOT_FOUND));
+
+        if (!memberRepository.existsByConversationIdAndUserId(pin.getConversationId(), meId)) {
+            throw new BusinessException(ErrorCode.FORBIDDEN);
+        }
+
+        pin.delete();
+
+        eventPublisher.publishEvent(new PinUpdatedEvent(
+                pin.getId(),
+                pin.getConversationId(),
+                meId,
+                "DELETED",
+                pin.getStatus().name(),
+                pin.getTitle(),
+                pin.getPlaceText(),
+                pin.getStartAt(),
+                pin.getRemindAt(),
+                null,
+                pin.getUpdateAt()
+        ));
+    }
+
     @Transactional(readOnly = true)
     public ConversationPinResponse getPin(UUID meId, UUID pinId) {
         ConversationPin p = pinRepository.findById(pinId)

@@ -16,7 +16,6 @@ public class ConversationPinEditController {
 
     private final ConversationPinService pinService;
 
-    // ✅ NEW: pinId로 핀 단건 조회 (알림 딥링크용)
     @GetMapping
     public ConversationPinResponse get(
             @AuthenticationPrincipal String userId,
@@ -37,7 +36,15 @@ public class ConversationPinEditController {
                 req.title(),
                 req.placeText(),
                 req.startAt(),
-                req.remindMinutes() // ✅ NEW
+                req.remindMinutes()
         );
+    }
+
+    @DeleteMapping
+    public void delete(
+            @AuthenticationPrincipal String userId,
+            @PathVariable UUID pinId
+    ) {
+        pinService.deletePin(UUID.fromString(userId), pinId);
     }
 }

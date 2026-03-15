@@ -544,6 +544,10 @@ include::{snippets}/posts-create/http-response.adoc[]
 include::{snippets}/posts-get/http-request.adoc[]
 include::{snippets}/posts-get/http-response.adoc[]
 
+=== 게시글 수정
+include::{snippets}/posts-update/http-request.adoc[]
+include::{snippets}/posts-update/http-response.adoc[]
+
 === 게시글 삭제
 include::{snippets}/posts-delete/http-request.adoc[]
 include::{snippets}/posts-delete/http-response.adoc[]
@@ -725,9 +729,17 @@ include::{snippets}/pins-cancel/http-response.adoc[]
 include::{snippets}/pins-dismiss/http-request.adoc[]
 include::{snippets}/pins-dismiss/http-response.adoc[]
 
-=== 핀 장소 수정
+=== 핀 단건 조회
+include::{snippets}/pins-get/http-request.adoc[]
+include::{snippets}/pins-get/http-response.adoc[]
+
+=== 핀 수정
 include::{snippets}/pins-update/http-request.adoc[]
 include::{snippets}/pins-update/http-response.adoc[]
+
+=== 핀 삭제
+include::{snippets}/pins-delete/http-request.adoc[]
+include::{snippets}/pins-delete/http-response.adoc[]
 
 ---
 
@@ -882,28 +894,25 @@ include::{snippets}/admin-alert-history-get/http-request.adoc[]
 include::{snippets}/admin-alert-history-get/http-response.adoc[]
 
 
+=== 대화방 타임 캡슐 생성
+include::{snippets}/capsules-create/http-request.adoc[]
+include::{snippets}/capsules-create/http-response.adoc[]
+
 === 대화방 타임 캡슐 목록 조회
-`GET /api/conversations/{conversationId}/capsules`
+include::{snippets}/capsules-list/http-request.adoc[]
+include::{snippets}/capsules-list/http-response.adoc[]
 
-응답 예:
-[source,json]
-----
-{
-  "conversationId": "uuid",
-  "items": [
-    {
-      "capsuleId": "uuid",
-      "messageId": "uuid",
-      "creatorId": "uuid",
-      "title": "시험 끝나고 열기",
-      "unlockAt": "2026-04-01T12:00:00",
-      "openedAt": null,
-      "opened": false
-    }
-  ]
-}
-----
+=== 타임 캡슐 열기
+include::{snippets}/capsules-open/http-request.adoc[]
+include::{snippets}/capsules-open/http-response.adoc[]
 
+=== 타임 캡슐 수정
+include::{snippets}/capsules-update/http-request.adoc[]
+include::{snippets}/capsules-update/http-response.adoc[]
+
+=== 타임 캡슐 삭제
+include::{snippets}/capsules-delete/http-request.adoc[]
+include::{snippets}/capsules-delete/http-response.adoc[]
 
 === Post Media 응답 가이드
 `imageUrls` 는 하위 호환용 필드이고, 권장 필드는 `mediaItems` 입니다.
@@ -958,60 +967,16 @@ include::{snippets}/admin-alert-history-get/http-response.adoc[]
 == 내 활동 보관함 (My Activity)
 
 === 내 액션 목록 조회
-`GET /api/me/activity/actions`
-
-응답 예:
-[source,json]
-----
-{
-  "items": [
-    {
-      "pinId": "uuid",
-      "type": "PROMISE",
-      "title": "모란 먹켓치킨",
-      "placeText": "모란 먹켓치킨",
-      "startAt": "2026-03-13T23:00:00",
-      "status": "ACTIVE"
-    }
-  ]
-}
-----
+include::{snippets}/me-activity-actions-get/http-request.adoc[]
+include::{snippets}/me-activity-actions-get/http-response.adoc[]
 
 === 내 캡슐 목록 조회
-`GET /api/me/activity/capsules`
-
-응답 예:
-[source,json]
-----
-{
-  "items": [
-    {
-      "capsuleId": "uuid",
-      "title": "1년뒤 열어봐라",
-      "unlockAt": "2026-03-14T03:24:00",
-      "opened": false
-    }
-  ]
-}
-----
+include::{snippets}/me-activity-capsules-get/http-request.adoc[]
+include::{snippets}/me-activity-capsules-get/http-response.adoc[]
 
 === 내 공유 목록 조회
-`GET /api/me/activity/shares`
-
-응답 예:
-[source,json]
-----
-{
-  "items": [
-    {
-      "postId": "uuid",
-      "content": "오늘 액션 공유",
-      "visibility": "ALL",
-      "createdAt": "2026-03-13T21:24:00"
-    }
-  ]
-}
-----
+include::{snippets}/me-activity-shares-get/http-request.adoc[]
+include::{snippets}/me-activity-shares-get/http-response.adoc[]
 
 == 그룹 관리
 

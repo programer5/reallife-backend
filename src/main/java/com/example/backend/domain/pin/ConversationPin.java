@@ -129,6 +129,10 @@ public class ConversationPin extends BaseEntity {
         this.placeText = (placeText == null || placeText.isBlank()) ? null : placeText.trim();
     }
 
+    public void delete() {
+        markDeleted();
+    }
+
     public boolean updateSchedule(String title, String placeText, LocalDateTime startAt, Integer remindMinutes) {
         String newTitle = (title == null || title.isBlank()) ? this.title : title.trim();
         String newPlace = (placeText == null || placeText.isBlank()) ? null : placeText.trim();

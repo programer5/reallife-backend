@@ -2,6 +2,7 @@ package com.example.backend.controller.post;
 
 import com.example.backend.controller.post.dto.PostCreateRequest;
 import com.example.backend.controller.post.dto.PostCreateResponse;
+import com.example.backend.controller.post.dto.PostUpdateRequest;
 import com.example.backend.service.post.PostService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -25,6 +26,14 @@ public class PostController {
                                      Authentication authentication) {
         UUID meId = UUID.fromString(authentication.getName()); // ✅ principal=userId
         return postService.createPost(meId, request);
+    }
+
+    @PatchMapping("/{postId}")
+    public PostCreateResponse update(@PathVariable UUID postId,
+                                     @RequestBody PostUpdateRequest request,
+                                     Authentication authentication) {
+        UUID meId = UUID.fromString(authentication.getName());
+        return postService.updatePost(meId, postId, request);
     }
 
     @GetMapping("/{postId}")

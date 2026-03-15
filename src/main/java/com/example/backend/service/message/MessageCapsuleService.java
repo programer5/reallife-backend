@@ -29,18 +29,6 @@ public class MessageCapsuleService {
         repository.findById(capsuleId).ifPresent(MessageCapsule::open);
     }
 
-    @Transactional
-    public void delete(UUID capsuleId, UUID meId) {
-        MessageCapsule capsule = repository.findById(capsuleId)
-                .orElseThrow(() -> new BusinessException(ErrorCode.MESSAGE_NOT_FOUND));
-
-        if (!capsule.getCreatorId().equals(meId)) {
-            throw new BusinessException(ErrorCode.FORBIDDEN);
-        }
-
-        repository.delete(capsule);
-    }
-
     @Transactional(readOnly = true)
     public MessageCapsuleListResponse listByConversation(UUID conversationId) {
         return new MessageCapsuleListResponse(
@@ -57,5 +45,25 @@ public class MessageCapsuleService {
                         ))
                         .toList()
         );
+    }
+
+    @Transactional
+    public void update(UUID capsuleId, UUID meId, String title, LocalDateTime unlockAt) {
+        MessageCapsule capsule = repository.findById(capsuleId)
+                .orElseThrow(() -> new BusinessException(ErrorCode.INVALID_REQUEST));
+        if (!capsule.getCreatorId().equals(meId)) {
+            throw new BusinessException(ErrorCode.FORBIDDEN);
+        }
+        capsule.update(title, unlockAt);
+    }
+
+    @Transactional
+    public void delete(UUID capsuleId, UUID meId) {
+        MessageCapsule capsule = repository.findById(capsuleId)
+                .orElseThrow(() -> new BusinessException(ErrorCode.INVALID_REQUEST));
+        if (!capsule.getCreatorId().equals(meId)) {
+            throw new BusinessException(ErrorCode.FORBIDDEN);
+        }
+        repository.delete(capsule);
     }
 }

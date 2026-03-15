@@ -72,6 +72,15 @@ public class Post extends BaseEntity {
         this.images.add(PostImage.create(this, file, url, sortOrder));
     }
 
+    public void update(String content, PostVisibility visibility) {
+        if (content != null && !content.isBlank()) {
+            this.content = content;
+        }
+        if (visibility != null) {
+            this.visibility = visibility;
+        }
+    }
+
     public void delete() {
         markDeleted();
     }

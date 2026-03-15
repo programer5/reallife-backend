@@ -1,12 +1,16 @@
 package com.example.backend.controller.message;
 
 import com.example.backend.controller.message.dto.MessageCapsuleListResponse;
+import com.example.backend.controller.message.dto.MessageCapsuleUpdateRequest;
 import com.example.backend.service.message.MessageCapsuleService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
-import java.time.*;
+import java.time.Instant;
+import java.time.LocalDateTime;
+import java.time.OffsetDateTime;
+import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.util.UUID;
 
@@ -30,17 +34,32 @@ public class MessageCapsuleController {
         service.open(capsuleId);
     }
 
-    @DeleteMapping("/api/capsules/{capsuleId}")
-    public void delete(@PathVariable UUID capsuleId, Authentication authentication) {
-        UUID meId = UUID.fromString(authentication.getName());
-        service.delete(capsuleId, meId);
-    }
-
     @GetMapping("/api/conversations/{conversationId}/capsules")
     public MessageCapsuleListResponse list(@PathVariable UUID conversationId) {
         return service.listByConversation(conversationId);
     }
 
+    @PatchMapping("/api/capsules/{capsuleId}")
+    public void update(@PathVariable UUID capsuleId,
+                       @RequestBody MessageCapsuleUpdateRequest request,
+                       Authentication authentication) {
+        UUID meId = UUID.fromString(authentication.getName());
+        service.update(capsuleId, meId, request.title(), parseOptionalUnlockAt(request.unlockAt()));
+    }
+
+    @DeleteMapping("/api/capsules/{capsuleId}")
+    public void delete(@PathVariable UUID capsuleId,
+                       Authentication authentication) {
+        UUID meId = UUID.fromString(authentication.getName());
+        service.delete(capsuleId, meId);
+    }
+
+    private LocalDateTime parseOptionalUnlockAt(String raw) {
+        if (raw == null || raw.isBlank()) {
+            return null;
+        }
+        return parseUnlockAt(raw);
+    }
 
     private LocalDateTime parseUnlockAt(String raw) {
         if (raw == null || raw.isBlank()) {

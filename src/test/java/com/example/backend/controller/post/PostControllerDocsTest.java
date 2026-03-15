@@ -189,6 +189,69 @@ class PostControllerDocsTest {
     }
 
     @Test
+    void 게시글_수정_성공_200(RestDocumentationContextProvider restDocumentation) throws Exception {
+        MockMvc mockMvc = mockMvc(restDocumentation);
+
+        var user = docs.saveUser("post-patch", "작성자");
+        String token = docs.issueTokenFor(user);
+
+        var createReq = new HashMap<String, Object>();
+        createReq.put("content", "수정 전 본문");
+        createReq.put("visibility", "ALL");
+
+        String postId = objectMapper.readTree(
+                mockMvc.perform(post("/api/posts")
+                                .header(DocsTestSupport.headerName(), DocsTestSupport.auth(token))
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content(objectMapper.writeValueAsString(createReq)))
+                        .andExpect(status().isCreated())
+                        .andReturn()
+                        .getResponse()
+                        .getContentAsString()
+        ).get("postId").asText();
+
+        var patchReq = new HashMap<String, Object>();
+        patchReq.put("content", "수정 후 본문");
+        patchReq.put("visibility", "FOLLOWERS");
+
+        mockMvc.perform(patch("/api/posts/{postId}", postId)
+                        .header(DocsTestSupport.headerName(), DocsTestSupport.auth(token))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(patchReq)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.content").value("수정 후 본문"))
+                .andExpect(jsonPath("$.visibility").value("FOLLOWERS"))
+                .andDo(document("posts-update",
+                        preprocessRequest(prettyPrint()),
+                        preprocessResponse(prettyPrint()),
+                        requestHeaders(
+                                headerWithName(DocsTestSupport.headerName()).description("Bearer {accessToken}")
+                        ),
+                        pathParameters(
+                                parameterWithName("postId").description("수정할 게시글 ID(UUID)")
+                        ),
+                        requestFields(
+                                fieldWithPath("content").type(STRING).optional().description("수정할 게시글 본문"),
+                                fieldWithPath("visibility").type(STRING).optional().description("수정할 공개 범위(ALL | FOLLOWERS | PRIVATE)")
+                        ),
+                        responseFields(
+                                fieldWithPath("postId").type(STRING).description("게시글 ID(UUID)"),
+                                fieldWithPath("authorId").type(STRING).description("작성자 ID(UUID)"),
+                                fieldWithPath("authorHandle").type(STRING).description("작성자 handle"),
+                                fieldWithPath("authorName").type(STRING).description("작성자 이름"),
+                                fieldWithPath("content").type(STRING).description("게시글 본문"),
+                                fieldWithPath("imageUrls").type(ARRAY).description("이미지 URL 목록"),
+                                subsectionWithPath("mediaItems").type(ARRAY).description("미디어 목록(이미지/동영상). 각 항목은 mediaType, url, thumbnailUrl, contentType을 포함"),
+                                fieldWithPath("visibility").type(STRING).description("공개 범위"),
+                                fieldWithPath("createdAt").type(STRING).description("생성 시각(ISO-8601)"),
+                                fieldWithPath("likeCount").description("좋아요 수"),
+                                fieldWithPath("commentCount").description("댓글 수"),
+                                fieldWithPath("likedByMe").description("내가 좋아요 눌렀는지 여부")
+                        )
+                ));
+    }
+
+    @Test
     void 게시글_삭제_성공_204(RestDocumentationContextProvider restDocumentation) throws Exception {
         MockMvc mockMvc = mockMvc(restDocumentation);
 

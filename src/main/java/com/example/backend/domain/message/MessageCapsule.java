@@ -55,4 +55,14 @@ public class MessageCapsule {
     public void open() {
         this.openedAt = LocalDateTime.now();
     }
+
+    public void update(String title, LocalDateTime unlockAt) {
+        if (title != null && !title.isBlank()) {
+            this.title = title.trim();
+        }
+        if (unlockAt != null) {
+            this.unlockAt = unlockAt;
+        }
+    }
 }
+
