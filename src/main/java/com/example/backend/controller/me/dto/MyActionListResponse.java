@@ -1,4 +1,3 @@
-
 package com.example.backend.controller.me.dto;
 
 import java.time.LocalDateTime;
@@ -10,6 +9,8 @@ public record MyActionListResponse(
 ) {
     public record Item(
             UUID pinId,
+            UUID conversationId,
+            UUID sourceMessageId,
             String type,
             String title,
             String placeText,

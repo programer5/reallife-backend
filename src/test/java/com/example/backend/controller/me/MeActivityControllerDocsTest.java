@@ -65,8 +65,10 @@ class MeActivityControllerDocsTest {
         var me = docs.saveUser("my-action", "나");
         String token = docs.issueTokenFor(me);
 
+        UUID conversationId = UUID.randomUUID();
+        UUID sourceMessageId = UUID.randomUUID();
         pinRepository.saveAndFlush(ConversationPin.createSchedule(
-                UUID.randomUUID(), me.getId(), null, "모란 먹켓치킨", "모란 먹켓치킨",
+                conversationId, me.getId(), sourceMessageId, "모란 먹켓치킨", "모란 먹켓치킨",
                 LocalDateTime.now().plusDays(1).withHour(23).withMinute(0).withSecond(0).withNano(0)
         ));
 
@@ -80,6 +82,8 @@ class MeActivityControllerDocsTest {
                         responseFields(
                                 fieldWithPath("items").type(ARRAY).description("내 액션 목록"),
                                 fieldWithPath("items[].pinId").type(STRING).description("핀 ID(UUID)"),
+                                fieldWithPath("items[].conversationId").type(STRING).description("원본 대화방 ID(UUID)"),
+                                fieldWithPath("items[].sourceMessageId").type(STRING).optional().description("원본 메시지 ID(UUID)"),
                                 fieldWithPath("items[].type").type(STRING).description("액션 타입"),
                                 fieldWithPath("items[].title").type(STRING).description("액션 제목"),
                                 fieldWithPath("items[].placeText").type(STRING).optional().description("장소 텍스트"),
@@ -95,8 +99,10 @@ class MeActivityControllerDocsTest {
         var me = docs.saveUser("my-capsule", "나");
         String token = docs.issueTokenFor(me);
 
+        UUID conversationId = UUID.randomUUID();
+        UUID messageId = UUID.randomUUID();
         capsuleRepository.saveAndFlush(MessageCapsule.create(
-                UUID.randomUUID(), UUID.randomUUID(), me.getId(), "1년뒤 열어봐라", LocalDateTime.now().plusDays(30)
+                messageId, conversationId, me.getId(), "1년뒤 열어봐라", LocalDateTime.now().plusDays(30)
         ));
 
         mockMvc.perform(get("/api/me/activity/capsules")
@@ -109,6 +115,8 @@ class MeActivityControllerDocsTest {
                         responseFields(
                                 fieldWithPath("items").type(ARRAY).description("내 캡슐 목록"),
                                 fieldWithPath("items[].capsuleId").type(STRING).description("캡슐 ID(UUID)"),
+                                fieldWithPath("items[].conversationId").type(STRING).description("원본 대화방 ID(UUID)"),
+                                fieldWithPath("items[].messageId").type(STRING).description("원본 메시지 ID(UUID)"),
                                 fieldWithPath("items[].title").type(STRING).description("캡슐 제목"),
                                 fieldWithPath("items[].unlockAt").type(STRING).description("열릴 시각"),
                                 fieldWithPath("items[].opened").type(BOOLEAN).description("열림 여부")

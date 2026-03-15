@@ -1,4 +1,3 @@
-
 package com.example.backend.controller.me.dto;
 
 import java.time.LocalDateTime;
@@ -10,6 +9,8 @@ public record MyCapsuleListResponse(
 ) {
     public record Item(
             UUID capsuleId,
+            UUID conversationId,
+            UUID messageId,
             String title,
             LocalDateTime unlockAt,
             boolean opened

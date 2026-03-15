@@ -1,4 +1,3 @@
-
 package com.example.backend.controller.me;
 
 import com.example.backend.controller.me.dto.MyActionListResponse;
@@ -39,6 +38,8 @@ public class MeActivityController {
                 pins.stream()
                         .map(p -> new MyActionListResponse.Item(
                                 p.getId(),
+                                p.getConversationId(),
+                                p.getSourceMessageId(),
                                 p.getType().name(),
                                 p.getTitle(),
                                 p.getPlaceText(),
@@ -64,6 +65,8 @@ public class MeActivityController {
                 items.stream()
                         .map(c -> new MyCapsuleListResponse.Item(
                                 c.getId(),
+                                c.getConversationId(),
+                                c.getMessageId(),
                                 c.getTitle(),
                                 c.getUnlockAt(),
                                 c.getOpenedAt() != null
