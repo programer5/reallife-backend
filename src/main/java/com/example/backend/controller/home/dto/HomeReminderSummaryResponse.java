@@ -5,12 +5,18 @@ import java.util.UUID;
 
 public record HomeReminderSummaryResponse(
         Summary summary,
+        Settings settings,
         Lead lead
 ) {
     public record Summary(
             long unreadCount,
             long unreadReminderCount,
             long todayReminderCount
+    ) {}
+
+    public record Settings(
+            boolean browserNotifyEnabled,
+            String settingsSource
     ) {}
 
     public record Lead(
@@ -24,3 +30,4 @@ public record HomeReminderSummaryResponse(
             LocalDateTime createdAt
     ) {}
 }
+

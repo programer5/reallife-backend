@@ -12,11 +12,8 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.util.Collections;
 import java.util.List;
-import java.util.Map;
 import java.util.UUID;
-import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -27,7 +24,7 @@ public class HomeReminderSummaryService {
     private final ConversationPinRepository pinRepository;
 
     @Transactional(readOnly = true)
-    public HomeReminderSummaryResponse getSummary(UUID userId) {
+    public HomeReminderSummaryResponse getSummary(UUID userId, Boolean browserNotifyEnabled) {
         LocalDateTime start = LocalDate.now().atStartOfDay();
         LocalDateTime end = start.plusDays(1);
 
@@ -100,6 +97,7 @@ public class HomeReminderSummaryService {
 
         return new HomeReminderSummaryResponse(
                 new HomeReminderSummaryResponse.Summary(unreadCount, unreadReminderCount, todayReminderCount),
+                new HomeReminderSummaryResponse.Settings(Boolean.TRUE.equals(browserNotifyEnabled), "CLIENT_SYNC"),
                 leadDto
         );
     }
@@ -122,3 +120,4 @@ public class HomeReminderSummaryService {
         return null;
     }
 }
+

@@ -6,6 +6,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.UUID;
@@ -18,8 +19,12 @@ public class HomeReminderSummaryController {
     private final HomeReminderSummaryService homeReminderSummaryService;
 
     @GetMapping("/reminder-summary")
-    public HomeReminderSummaryResponse reminderSummary(Authentication authentication) {
+    public HomeReminderSummaryResponse reminderSummary(
+            Authentication authentication,
+            @RequestParam(value = "browserNotifyEnabled", required = false) Boolean browserNotifyEnabled
+    ) {
         UUID meId = UUID.fromString(authentication.getName());
-        return homeReminderSummaryService.getSummary(meId);
+        return homeReminderSummaryService.getSummary(meId, browserNotifyEnabled);
     }
 }
+
