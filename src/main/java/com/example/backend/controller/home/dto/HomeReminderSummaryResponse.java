@@ -1,3 +1,4 @@
+
 package com.example.backend.controller.home.dto;
 
 import java.time.LocalDateTime;
@@ -16,6 +17,8 @@ public record HomeReminderSummaryResponse(
 
     public record Settings(
             boolean browserNotifyEnabled,
+            boolean soundEnabled,
+            boolean vibrateEnabled,
             String settingsSource
     ) {}
 
@@ -30,4 +33,3 @@ public record HomeReminderSummaryResponse(
             LocalDateTime createdAt
     ) {}
 }
-

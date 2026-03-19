@@ -1,3 +1,4 @@
+
 package com.example.backend.controller.home;
 
 import com.example.backend.controller.DocsTestSupport;
@@ -31,8 +32,6 @@ import static org.springframework.restdocs.operation.preprocess.Preprocessors.*;
 import static org.springframework.restdocs.payload.JsonFieldType.*;
 import static org.springframework.restdocs.payload.PayloadDocumentation.fieldWithPath;
 import static org.springframework.restdocs.payload.PayloadDocumentation.responseFields;
-import static org.springframework.restdocs.request.RequestDocumentation.parameterWithName;
-import static org.springframework.restdocs.request.RequestDocumentation.queryParameters;
 import static org.springframework.security.test.web.servlet.setup.SecurityMockMvcConfigurers.springSecurity;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -58,6 +57,8 @@ class HomeReminderSummaryControllerDocsTest {
     @Test
     void 홈_리마인더_요약_조회_200(RestDocumentationContextProvider restDocumentation) throws Exception {
         var me = docs.saveUser("home-reminder", "나");
+        me.updateReminderSettings(true, true, false);
+        docs.userRepository().saveAndFlush(me);
         String token = docs.issueTokenFor(me);
         UUID conversationId = UUID.randomUUID();
         UUID sourceMessageId = UUID.randomUUID();
@@ -79,7 +80,6 @@ class HomeReminderSummaryControllerDocsTest {
 
         mockMvc(restDocumentation)
                 .perform(get("/api/home/reminder-summary")
-                        .param("browserNotifyEnabled", "false")
                         .header(HttpHeaders.AUTHORIZATION, DocsTestSupport.auth(token)))
                 .andExpect(status().isOk())
                 .andDo(document("home-reminder-summary-get",
@@ -88,15 +88,14 @@ class HomeReminderSummaryControllerDocsTest {
                         requestHeaders(
                                 headerWithName(HttpHeaders.AUTHORIZATION).description("Bearer {accessToken}")
                         ),
-                        queryParameters(
-                                parameterWithName("browserNotifyEnabled").optional().description("Me 화면의 브라우저 리마인더 ON/OFF 값을 클라이언트가 동기화해서 전달합니다. 현재는 서버가 이 값을 그대로 응답에 반영합니다.")
-                        ),
                         responseFields(
                                 fieldWithPath("summary.unreadCount").type(NUMBER).description("전체 미확인 알림 수"),
                                 fieldWithPath("summary.unreadReminderCount").type(NUMBER).description("읽지 않은 리마인더 수"),
                                 fieldWithPath("summary.todayReminderCount").type(NUMBER).description("오늘 생성된 리마인더 알림 수"),
-                                fieldWithPath("settings.browserNotifyEnabled").type(BOOLEAN).description("Me 화면의 브라우저 리마인더 설정값(현재는 클라이언트 동기화 값)"),
-                                fieldWithPath("settings.settingsSource").type(STRING).description("설정값 반영 방식. 현재는 CLIENT_SYNC"),
+                                fieldWithPath("settings.browserNotifyEnabled").type(BOOLEAN).description("서버에 저장된 브라우저 알림 사용 여부"),
+                                fieldWithPath("settings.soundEnabled").type(BOOLEAN).description("서버에 저장된 리마인더 사운드 사용 여부"),
+                                fieldWithPath("settings.vibrateEnabled").type(BOOLEAN).description("서버에 저장된 리마인더 진동 사용 여부"),
+                                fieldWithPath("settings.settingsSource").type(STRING).description("설정값 반영 방식. SERVER 고정"),
                                 fieldWithPath("lead.id").type(STRING).description("대표 알림 ID(UUID)"),
                                 fieldWithPath("lead.type").type(STRING).description("대표 알림 타입"),
                                 fieldWithPath("lead.refId").type(STRING).description("대표 알림 refId"),
@@ -109,4 +108,3 @@ class HomeReminderSummaryControllerDocsTest {
                 ));
     }
 }
-

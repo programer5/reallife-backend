@@ -36,6 +36,8 @@ public class DocsTestSupport {
     }
 
     @Transactional
+    public UserRepository userRepository() { return userRepository; }
+
     public User saveUser(String prefix, String name) {
         String email = prefix + "+" + UUID.randomUUID() + "@test.com";
         String handle = prefix + "_" + UUID.randomUUID().toString().substring(0, 8);

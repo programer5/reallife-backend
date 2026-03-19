@@ -98,19 +98,6 @@ public class User extends BaseEntity {
         this.profileImageFileId = profileImageFileId;
     }
 
-
-    public void updateReminderSettings(Boolean pinRemindBrowserNotify, Boolean pinRemindSound, Boolean pinRemindVibrate) {
-        if (pinRemindBrowserNotify != null) {
-            this.pinRemindBrowserNotify = pinRemindBrowserNotify;
-        }
-        if (pinRemindSound != null) {
-            this.pinRemindSound = pinRemindSound;
-        }
-        if (pinRemindVibrate != null) {
-            this.pinRemindVibrate = pinRemindVibrate;
-        }
-    }
-
     // ✅ BaseEntity 훅에서 호출됨
     @Override
     protected void prePersist() {
@@ -133,5 +120,11 @@ public class User extends BaseEntity {
 
     public void decreaseFollowerCount() {
         if (this.followerCount > 0) this.followerCount--;
+    }
+
+    public void updateReminderSettings(Boolean browserNotifyEnabled, Boolean sound, Boolean vibrate) {
+        if (browserNotifyEnabled != null) this.pinRemindBrowserNotify = browserNotifyEnabled;
+        if (sound != null) this.pinRemindSound = sound;
+        if (vibrate != null) this.pinRemindVibrate = vibrate;
     }
 }

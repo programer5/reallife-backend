@@ -44,43 +44,43 @@ public class MeController {
         );
     }
 
-    @GetMapping("/reminder-settings")
-    public ReminderSettingsResponse reminderSettings(Authentication authentication) {
-        UUID meId = UUID.fromString(authentication.getName());
 
-        var user = userRepository.findById(meId)
-                .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
 
-        return new ReminderSettingsResponse(
-                user.isPinRemindBrowserNotify(),
-                user.isPinRemindSound(),
-                user.isPinRemindVibrate(),
-                "SERVER"
-        );
-    }
+@GetMapping("/reminder-settings")
+public ReminderSettingsResponse reminderSettings(Authentication authentication) {
+    UUID meId = UUID.fromString(authentication.getName());
 
-    @PatchMapping("/reminder-settings")
-    public ReminderSettingsResponse updateReminderSettings(Authentication authentication,
-                                                           @RequestBody ReminderSettingsUpdateRequest request) {
-        UUID meId = UUID.fromString(authentication.getName());
+    var user = userRepository.findById(meId)
+            .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
 
-        var user = userRepository.findById(meId)
-                .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
+    return new ReminderSettingsResponse(
+            user.isPinRemindBrowserNotify(),
+            user.isPinRemindSound(),
+            user.isPinRemindVibrate()
+    );
+}
 
-        user.updateReminderSettings(
-                request.pinRemindBrowserNotify(),
-                request.pinRemindSound(),
-                request.pinRemindVibrate()
-        );
-        userRepository.save(user);
+@PatchMapping("/reminder-settings")
+public ReminderSettingsResponse updateReminderSettings(Authentication authentication,
+                                                      @RequestBody ReminderSettingsUpdateRequest request) {
+    UUID meId = UUID.fromString(authentication.getName());
 
-        return new ReminderSettingsResponse(
-                user.isPinRemindBrowserNotify(),
-                user.isPinRemindSound(),
-                user.isPinRemindVibrate(),
-                "SERVER"
-        );
-    }
+    var user = userRepository.findById(meId)
+            .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
+
+    user.updateReminderSettings(
+            request.pinRemindBrowserNotify(),
+            request.pinRemindSound(),
+            request.pinRemindVibrate()
+    );
+    userRepository.saveAndFlush(user);
+
+    return new ReminderSettingsResponse(
+            user.isPinRemindBrowserNotify(),
+            user.isPinRemindSound(),
+            user.isPinRemindVibrate()
+    );
+}
 
     @PatchMapping("/profile")
     public ProfileResponse updateProfile(Authentication authentication,

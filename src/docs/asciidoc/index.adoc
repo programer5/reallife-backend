@@ -482,24 +482,6 @@ include::{snippets}/me-profile-update/http-response.adoc[]
 include::{snippets}/me-profile-update-403-forbidden-file/http-request.adoc[]
 include::{snippets}/me-profile-update-403-forbidden-file/http-response.adoc[]
 
-
-== 내 Reminder 설정 조회
-include::{snippets}/me-reminder-settings-get/http-request.adoc[]
-include::{snippets}/me-reminder-settings-get/http-response.adoc[]
-include::{snippets}/me-reminder-settings-get/response-fields.adoc[]
-
-== 내 Reminder 설정 수정
-include::{snippets}/me-reminder-settings-update/http-request.adoc[]
-include::{snippets}/me-reminder-settings-update/http-response.adoc[]
-include::{snippets}/me-reminder-settings-update/request-fields.adoc[]
-include::{snippets}/me-reminder-settings-update/response-fields.adoc[]
-
-[NOTE]
-====
-이제 Reminder 설정은 로컬 저장소뿐 아니라 서버에도 저장됩니다. 프론트는 로그인 후 `/api/me/reminder-settings`를 조회해 동기화하고, Me 화면에서 변경하면 `PATCH /api/me/reminder-settings`로 서버 저장값을 갱신하는 방향으로 확장됩니다.
-====
-
-
 ---
 
 == 4. Files

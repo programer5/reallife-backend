@@ -1,10 +1,14 @@
+
 package com.example.backend.service.home;
 
 import com.example.backend.controller.home.dto.HomeReminderSummaryResponse;
 import com.example.backend.domain.notification.Notification;
 import com.example.backend.domain.notification.NotificationType;
+import com.example.backend.exception.BusinessException;
+import com.example.backend.exception.ErrorCode;
 import com.example.backend.repository.notification.NotificationRepository;
 import com.example.backend.repository.pin.ConversationPinRepository;
+import com.example.backend.repository.user.UserRepository;
 import jakarta.persistence.EntityManager;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -22,9 +26,10 @@ public class HomeReminderSummaryService {
     private final EntityManager em;
     private final NotificationRepository notificationRepository;
     private final ConversationPinRepository pinRepository;
+    private final UserRepository userRepository;
 
     @Transactional(readOnly = true)
-    public HomeReminderSummaryResponse getSummary(UUID userId, Boolean browserNotifyEnabled) {
+    public HomeReminderSummaryResponse getSummary(UUID userId) {
         LocalDateTime start = LocalDate.now().atStartOfDay();
         LocalDateTime end = start.plusDays(1);
 
@@ -95,18 +100,24 @@ public class HomeReminderSummaryService {
             );
         }
 
+        var user = userRepository.findById(userId)
+                .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
+
         return new HomeReminderSummaryResponse(
                 new HomeReminderSummaryResponse.Summary(unreadCount, unreadReminderCount, todayReminderCount),
-                new HomeReminderSummaryResponse.Settings(Boolean.TRUE.equals(browserNotifyEnabled), "CLIENT_SYNC"),
+                new HomeReminderSummaryResponse.Settings(
+                        user.isPinRemindBrowserNotify(),
+                        user.isPinRemindSound(),
+                        user.isPinRemindVibrate(),
+                        "SERVER"
+                ),
                 leadDto
         );
     }
 
     private UUID resolveConversationId(Notification notification) {
         if (notification == null) return null;
-        if (notification.getType() == NotificationType.MESSAGE_RECEIVED) {
-            return notification.getRefId();
-        }
+        if (notification.getType() == NotificationType.MESSAGE_RECEIVED) return notification.getRefId();
         if (notification.getType() == NotificationType.PIN_CREATED
                 || notification.getType() == NotificationType.PIN_REMIND
                 || notification.getType() == NotificationType.PIN_DISMISSED
@@ -120,4 +131,3 @@ public class HomeReminderSummaryService {
         return null;
     }
 }
-

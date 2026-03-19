@@ -1,3 +1,4 @@
-ALTER TABLE users ADD COLUMN pin_remind_browser_notify BOOLEAN NOT NULL DEFAULT FALSE;
-ALTER TABLE users ADD COLUMN pin_remind_sound BOOLEAN NOT NULL DEFAULT FALSE;
-ALTER TABLE users ADD COLUMN pin_remind_vibrate BOOLEAN NOT NULL DEFAULT FALSE;
+ALTER TABLE users
+    ADD COLUMN pin_remind_browser_notify BIT(1) NOT NULL DEFAULT b'0',
+    ADD COLUMN pin_remind_sound BIT(1) NOT NULL DEFAULT b'0',
+    ADD COLUMN pin_remind_vibrate BIT(1) NOT NULL DEFAULT b'0';
