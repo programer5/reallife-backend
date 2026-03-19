@@ -1,6 +1,8 @@
 package com.example.backend.controller.me;
 
 import com.example.backend.controller.me.dto.ProfileUpdateRequest;
+import com.example.backend.controller.me.dto.ReminderSettingsResponse;
+import com.example.backend.controller.me.dto.ReminderSettingsUpdateRequest;
 import com.example.backend.controller.user.dto.MeResponse;
 import com.example.backend.controller.user.dto.ProfileResponse;
 import com.example.backend.domain.user.FollowerTier;
@@ -39,6 +41,44 @@ public class MeController {
                 user.getName(),
                 user.getFollowerCount(),
                 tier.name()
+        );
+    }
+
+    @GetMapping("/reminder-settings")
+    public ReminderSettingsResponse reminderSettings(Authentication authentication) {
+        UUID meId = UUID.fromString(authentication.getName());
+
+        var user = userRepository.findById(meId)
+                .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
+
+        return new ReminderSettingsResponse(
+                user.isPinRemindBrowserNotify(),
+                user.isPinRemindSound(),
+                user.isPinRemindVibrate(),
+                "SERVER"
+        );
+    }
+
+    @PatchMapping("/reminder-settings")
+    public ReminderSettingsResponse updateReminderSettings(Authentication authentication,
+                                                           @RequestBody ReminderSettingsUpdateRequest request) {
+        UUID meId = UUID.fromString(authentication.getName());
+
+        var user = userRepository.findById(meId)
+                .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
+
+        user.updateReminderSettings(
+                request.pinRemindBrowserNotify(),
+                request.pinRemindSound(),
+                request.pinRemindVibrate()
+        );
+        userRepository.save(user);
+
+        return new ReminderSettingsResponse(
+                user.isPinRemindBrowserNotify(),
+                user.isPinRemindSound(),
+                user.isPinRemindVibrate(),
+                "SERVER"
         );
     }
 

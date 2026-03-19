@@ -189,4 +189,64 @@ class MeControllerDocsTest {
                         )
                 ));
     }
+
+    @Test
+    void 내리마인더설정_조회_성공_200(RestDocumentationContextProvider restDocumentation) throws Exception {
+        var me = docs.saveUser("mereminder", "리마인더유저");
+        String token = docs.issueTokenFor(me);
+
+        mockMvc(restDocumentation)
+                .perform(get("/api/me/reminder-settings")
+                        .header(HttpHeaders.AUTHORIZATION, DocsTestSupport.auth(token)))
+                .andExpect(status().isOk())
+                .andDo(document("me-reminder-settings-get",
+                        requestHeaders(
+                                headerWithName(HttpHeaders.AUTHORIZATION).description("Bearer {accessToken}")
+                        ),
+                        responseFields(
+                                fieldWithPath("pinRemindBrowserNotify").type(BOOLEAN).description("브라우저 알림 사용 여부"),
+                                fieldWithPath("pinRemindSound").type(BOOLEAN).description("사운드 사용 여부"),
+                                fieldWithPath("pinRemindVibrate").type(BOOLEAN).description("진동 사용 여부"),
+                                fieldWithPath("settingsSource").type(STRING).description("설정 소스. 서버 저장값이면 SERVER")
+                        )
+                ));
+    }
+
+    @Test
+    void 내리마인더설정_수정_성공_200(RestDocumentationContextProvider restDocumentation) throws Exception {
+        MockMvc mockMvc = mockMvc(restDocumentation);
+        var me = docs.saveUser("mereminderpatch", "리마인더패치");
+        String token = docs.issueTokenFor(me);
+
+        var req = new HashMap<String, Object>();
+        req.put("pinRemindBrowserNotify", true);
+        req.put("pinRemindSound", true);
+        req.put("pinRemindVibrate", false);
+
+        mockMvc.perform(patch("/api/me/reminder-settings")
+                        .header(DocsTestSupport.headerName(), DocsTestSupport.auth(token))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(req)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.pinRemindBrowserNotify").value(true))
+                .andDo(document("me-reminder-settings-update",
+                        preprocessRequest(prettyPrint()),
+                        preprocessResponse(prettyPrint()),
+                        requestHeaders(
+                                headerWithName(DocsTestSupport.headerName()).description("Bearer {accessToken}")
+                        ),
+                        requestFields(
+                                fieldWithPath("pinRemindBrowserNotify").optional().type(BOOLEAN).description("브라우저 알림 사용 여부"),
+                                fieldWithPath("pinRemindSound").optional().type(BOOLEAN).description("사운드 사용 여부"),
+                                fieldWithPath("pinRemindVibrate").optional().type(BOOLEAN).description("진동 사용 여부")
+                        ),
+                        responseFields(
+                                fieldWithPath("pinRemindBrowserNotify").type(BOOLEAN).description("브라우저 알림 사용 여부"),
+                                fieldWithPath("pinRemindSound").type(BOOLEAN).description("사운드 사용 여부"),
+                                fieldWithPath("pinRemindVibrate").type(BOOLEAN).description("진동 사용 여부"),
+                                fieldWithPath("settingsSource").type(STRING).description("설정 소스. 서버 저장값이면 SERVER")
+                        )
+                ));
+    }
+
 }

@@ -70,6 +70,15 @@ public class User extends BaseEntity {
     @Column(name = "profile_image_file_id", columnDefinition = "BINARY(16)")
     private UUID profileImageFileId;
 
+    @Column(name = "pin_remind_browser_notify", nullable = false)
+    private boolean pinRemindBrowserNotify = false;
+
+    @Column(name = "pin_remind_sound", nullable = false)
+    private boolean pinRemindSound = false;
+
+    @Column(name = "pin_remind_vibrate", nullable = false)
+    private boolean pinRemindVibrate = false;
+
     public User(String email, String handle, String password, String name) {
         this.email = email;
         this.handle = handle;
@@ -87,6 +96,19 @@ public class User extends BaseEntity {
         this.bio = bio;
         this.website = website;
         this.profileImageFileId = profileImageFileId;
+    }
+
+
+    public void updateReminderSettings(Boolean pinRemindBrowserNotify, Boolean pinRemindSound, Boolean pinRemindVibrate) {
+        if (pinRemindBrowserNotify != null) {
+            this.pinRemindBrowserNotify = pinRemindBrowserNotify;
+        }
+        if (pinRemindSound != null) {
+            this.pinRemindSound = pinRemindSound;
+        }
+        if (pinRemindVibrate != null) {
+            this.pinRemindVibrate = pinRemindVibrate;
+        }
     }
 
     // ✅ BaseEntity 훅에서 호출됨
