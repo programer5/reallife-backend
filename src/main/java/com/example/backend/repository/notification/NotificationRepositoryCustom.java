@@ -14,11 +14,10 @@ public interface NotificationRepositoryCustom {
 
     int hardDeleteRead(UUID userId);
 
-    // ✅ 커서 기반 조회(최신순): createdAt DESC, id DESC
     List<Notification> findMyNotificationsByCursor(
             UUID userId,
+            Integer cursorPriorityScore,
             LocalDateTime cursorCreatedAt,
-            UUID cursorId,
             int limit
     );
 }

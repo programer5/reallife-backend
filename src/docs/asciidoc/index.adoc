@@ -756,6 +756,12 @@ include::{snippets}/notifications-get-200/http-response.adoc[]
 
 [NOTE]
 ====
+알림 목록은 서버에서 `priorityScore DESC, createdAt DESC` 기준으로 정렬합니다.
+응답에는 Inbox UX를 위한 `category`, `priorityScore`, `targetPath`, `targetLabel`, `actionHint`가 포함됩니다.
+====
+
+[NOTE]
+====
 알림 타입 예시:
 
 - `MESSAGE_RECEIVED` : 새 메시지
@@ -975,9 +981,9 @@ include::{snippets}/home-today-widget-get/response-fields.adoc[]
 
 [NOTE]
 ====
-`settings.browserNotifyEnabled`는 현재 Me 화면의 로컬 Reminder 설정값을 클라이언트가 함께 보내 서버 응답에 반영하는 방식입니다. 아직 서버에 사용자별 Reminder 설정을 영구 저장하지 않기 때문에 `settingsSource`는 `CLIENT_SYNC`로 내려갑니다.
+이제 Reminder Summary는 클라이언트 동기화 값이 아니라 서버에 저장된 사용자 Reminder 설정을 기준으로 내려갑니다.
+`settingsSource`는 `SERVER`이며, `browserNotifyEnabled`, `soundEnabled`, `vibrateEnabled`를 함께 제공합니다.
 ====
-
 
 include::{snippets}/home-reminder-summary-get/http-request.adoc[]
 include::{snippets}/home-reminder-summary-get/http-response.adoc[]

@@ -1,7 +1,5 @@
 package com.example.backend.controller.notification.dto;
 
-import com.example.backend.domain.notification.Notification;
-
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
@@ -16,46 +14,15 @@ public record NotificationCursorResponse(
             UUID id,
             String type,
             UUID refId,
-            UUID ref2Id,          // 보조 연관 리소스 ID (예: MESSAGE_RECEIVED=messageId, POST_COMMENT=postId)
+            UUID ref2Id,
             UUID conversationId,
+            String category,
+            int priorityScore,
+            String targetPath,
+            String targetLabel,
+            String actionHint,
             String body,
             boolean read,
             LocalDateTime createdAt
     ) {}
-
-    public static NotificationCursorResponse of(
-            List<Notification> page,
-            boolean hasNext,
-            boolean hasUnread,
-            java.util.Map<UUID, UUID> pinCidMap
-    ) {
-        List<Item> items = page.stream()
-                .map(n -> {
-                    UUID refId = n.getRefId();
-
-                    UUID conversationId =
-                            (n.getType().name().startsWith("PIN_"))
-                                    ? (refId == null ? null : pinCidMap.get(refId))
-                                    : ("MESSAGE_RECEIVED".equals(n.getType().name()) ? refId : null);
-
-                    return new Item(
-                            n.getId(),
-                            n.getType().name(),
-                            refId,
-                            n.getRef2Id(),
-                            conversationId,
-                            n.getBody(),
-                            n.isRead(),
-                            n.getCreatedAt()
-                    );
-                })
-                .toList();
-
-        String nextCursor = null;
-        if (hasNext && !page.isEmpty()) {
-            Notification last = page.get(page.size() - 1);
-            nextCursor = last.getCreatedAt().toString() + "|" + last.getId();
-        }
-        return new NotificationCursorResponse(items, nextCursor, hasNext, hasUnread);
-    }
 }
