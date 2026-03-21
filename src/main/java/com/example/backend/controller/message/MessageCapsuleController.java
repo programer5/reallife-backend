@@ -1,10 +1,11 @@
 package com.example.backend.controller.message;
 
+import com.example.backend.controller.message.dto.MessageCapsuleCreateResponse;
 import com.example.backend.controller.message.dto.MessageCapsuleListResponse;
 import com.example.backend.controller.message.dto.MessageCapsuleUpdateRequest;
 import com.example.backend.service.message.MessageCapsuleService;
 import lombok.RequiredArgsConstructor;
-import org.springframework.security.core.Authentication;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.Instant;
@@ -21,36 +22,41 @@ public class MessageCapsuleController {
     private final MessageCapsuleService service;
 
     @PostMapping("/api/capsules")
-    public UUID create(@RequestParam UUID messageId,
+    public MessageCapsuleCreateResponse create(@AuthenticationPrincipal String userId,
+                       @RequestParam UUID messageId,
                        @RequestParam UUID conversationId,
                        @RequestParam String title,
-                       @RequestParam String unlockAt,
-                       @RequestParam UUID userId) {
-        return service.create(messageId, conversationId, userId, title, parseUnlockAt(unlockAt));
+                       @RequestParam String unlockAt) {
+        UUID meId = UUID.fromString(userId);
+        return new MessageCapsuleCreateResponse(service.create(messageId, conversationId, meId, title, parseUnlockAt(unlockAt)));
     }
 
     @PostMapping("/api/capsules/{capsuleId}/open")
-    public void open(@PathVariable UUID capsuleId) {
-        service.open(capsuleId);
+    public void open(@AuthenticationPrincipal String userId,
+                     @PathVariable UUID capsuleId) {
+        UUID meId = UUID.fromString(userId);
+        service.open(capsuleId, meId);
     }
 
     @GetMapping("/api/conversations/{conversationId}/capsules")
-    public MessageCapsuleListResponse list(@PathVariable UUID conversationId) {
-        return service.listByConversation(conversationId);
+    public MessageCapsuleListResponse list(@AuthenticationPrincipal String userId,
+                                           @PathVariable UUID conversationId) {
+        UUID meId = UUID.fromString(userId);
+        return service.listByConversation(conversationId, meId);
     }
 
     @PatchMapping("/api/capsules/{capsuleId}")
     public void update(@PathVariable UUID capsuleId,
                        @RequestBody MessageCapsuleUpdateRequest request,
-                       Authentication authentication) {
-        UUID meId = UUID.fromString(authentication.getName());
+                       @AuthenticationPrincipal String userId) {
+        UUID meId = UUID.fromString(userId);
         service.update(capsuleId, meId, request.title(), parseOptionalUnlockAt(request.unlockAt()));
     }
 
     @DeleteMapping("/api/capsules/{capsuleId}")
     public void delete(@PathVariable UUID capsuleId,
-                       Authentication authentication) {
-        UUID meId = UUID.fromString(authentication.getName());
+                       @AuthenticationPrincipal String userId) {
+        UUID meId = UUID.fromString(userId);
         service.delete(capsuleId, meId);
     }
 

@@ -2,8 +2,14 @@ package com.example.backend.controller.message;
 
 import com.example.backend.controller.DocsTestSupport;
 import com.example.backend.controller.message.dto.MessageCapsuleUpdateRequest;
+import com.example.backend.domain.message.Conversation;
+import com.example.backend.domain.message.ConversationMember;
+import com.example.backend.domain.message.Message;
 import com.example.backend.domain.message.MessageCapsule;
+import com.example.backend.repository.message.ConversationMemberRepository;
+import com.example.backend.repository.message.ConversationRepository;
 import com.example.backend.repository.message.MessageCapsuleRepository;
+import com.example.backend.repository.message.MessageRepository;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -52,6 +58,9 @@ class MessageCapsuleControllerDocsTest {
     @Autowired DocsTestSupport docs;
     @Autowired ObjectMapper objectMapper;
     @Autowired MessageCapsuleRepository capsuleRepository;
+    @Autowired ConversationRepository conversationRepository;
+    @Autowired ConversationMemberRepository memberRepository;
+    @Autowired MessageRepository messageRepository;
 
     private MockMvc mockMvc(RestDocumentationContextProvider restDocumentation) {
         return MockMvcBuilders.webAppContextSetup(context)
@@ -64,17 +73,19 @@ class MessageCapsuleControllerDocsTest {
     void 캡슐_생성_200(RestDocumentationContextProvider restDocumentation) throws Exception {
         MockMvc mockMvc = mockMvc(restDocumentation);
         var me = docs.saveUser("capsule-create", "나");
+        var peer = docs.saveUser("capsule-create-peer", "상대");
         String token = docs.issueTokenFor(me);
 
-        UUID messageId = UUID.randomUUID();
-        UUID conversationId = UUID.randomUUID();
+        Conversation conversation = conversationRepository.saveAndFlush(Conversation.direct());
+        memberRepository.saveAndFlush(ConversationMember.join(conversation.getId(), me.getId()));
+        memberRepository.saveAndFlush(ConversationMember.join(conversation.getId(), peer.getId()));
+        Message message = messageRepository.saveAndFlush(Message.text(conversation.getId(), me.getId(), "캡슐 기준 메시지"));
 
-        mockMvc.perform(post("/api/capsules?messageId={messageId}&conversationId={conversationId}&title={title}&unlockAt={unlockAt}&userId={userId}",
-                                messageId,
-                                conversationId,
-                                "시험 끝나고 열기",
-                                "2026-04-01T12:00:00",
-                                me.getId())
+        mockMvc.perform(post("/api/capsules")
+                        .queryParam("messageId", message.getId().toString())
+                        .queryParam("conversationId", conversation.getId().toString())
+                        .queryParam("title", "시험 끝나고 열기")
+                        .queryParam("unlockAt", "2026-04-01T12:00:00")
                         .header(DocsTestSupport.headerName(), DocsTestSupport.auth(token)))
                 .andExpect(status().isOk())
                 .andDo(document("capsules-create",
@@ -85,8 +96,10 @@ class MessageCapsuleControllerDocsTest {
                                 parameterWithName("messageId").description("기준 메시지 ID(UUID)"),
                                 parameterWithName("conversationId").description("대화방 ID(UUID)"),
                                 parameterWithName("title").description("캡슐 제목"),
-                                parameterWithName("unlockAt").description("열릴 시각(ISO-8601)"),
-                                parameterWithName("userId").description("생성자 ID(UUID)")
+                                parameterWithName("unlockAt").description("열릴 시각(ISO-8601)")
+                        ),
+                        responseFields(
+                                fieldWithPath("capsuleId").type(STRING).description("생성된 캡슐 ID(UUID)")
                         )
                 ));
     }
@@ -95,13 +108,16 @@ class MessageCapsuleControllerDocsTest {
     void 캡슐_목록_조회_200(RestDocumentationContextProvider restDocumentation) throws Exception {
         MockMvc mockMvc = mockMvc(restDocumentation);
         var me = docs.saveUser("capsule-list", "나");
+        var peer = docs.saveUser("capsule-list-peer", "상대");
         String token = docs.issueTokenFor(me);
-        UUID conversationId = UUID.randomUUID();
-        var capsule = MessageCapsule.create(UUID.randomUUID(), conversationId, me.getId(), "시험 끝나고 열기", LocalDateTime.now().plusDays(10));
+        Conversation conversation = conversationRepository.saveAndFlush(Conversation.direct());
+        memberRepository.saveAndFlush(ConversationMember.join(conversation.getId(), me.getId()));
+        memberRepository.saveAndFlush(ConversationMember.join(conversation.getId(), peer.getId()));
+        var capsule = MessageCapsule.create(UUID.randomUUID(), conversation.getId(), me.getId(), "시험 끝나고 열기", LocalDateTime.now().plusDays(10));
         capsule.open();
         capsuleRepository.saveAndFlush(capsule);
 
-        mockMvc.perform(get("/api/conversations/{conversationId}/capsules", conversationId)
+        mockMvc.perform(get("/api/conversations/{conversationId}/capsules", conversation.getId())
                         .header(DocsTestSupport.headerName(), DocsTestSupport.auth(token)))
                 .andExpect(status().isOk())
                 .andDo(document("capsules-list",
@@ -127,8 +143,12 @@ class MessageCapsuleControllerDocsTest {
     void 캡슐_열기_200(RestDocumentationContextProvider restDocumentation) throws Exception {
         MockMvc mockMvc = mockMvc(restDocumentation);
         var me = docs.saveUser("capsule-open", "나");
+        var peer = docs.saveUser("capsule-open-peer", "상대");
         String token = docs.issueTokenFor(me);
-        var capsule = capsuleRepository.saveAndFlush(MessageCapsule.create(UUID.randomUUID(), UUID.randomUUID(), me.getId(), "열어봐", LocalDateTime.now().minusDays(1)));
+        Conversation conversation = conversationRepository.saveAndFlush(Conversation.direct());
+        memberRepository.saveAndFlush(ConversationMember.join(conversation.getId(), me.getId()));
+        memberRepository.saveAndFlush(ConversationMember.join(conversation.getId(), peer.getId()));
+        var capsule = capsuleRepository.saveAndFlush(MessageCapsule.create(UUID.randomUUID(), conversation.getId(), me.getId(), "열어봐", LocalDateTime.now().minusDays(1)));
 
         mockMvc.perform(post("/api/capsules/{capsuleId}/open", capsule.getId())
                         .header(DocsTestSupport.headerName(), DocsTestSupport.auth(token)))

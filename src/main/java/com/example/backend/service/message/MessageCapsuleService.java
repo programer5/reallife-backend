@@ -4,7 +4,9 @@ import com.example.backend.controller.message.dto.MessageCapsuleListResponse;
 import com.example.backend.domain.message.MessageCapsule;
 import com.example.backend.exception.BusinessException;
 import com.example.backend.exception.ErrorCode;
+import com.example.backend.repository.message.ConversationMemberRepository;
 import com.example.backend.repository.message.MessageCapsuleRepository;
+import com.example.backend.repository.message.MessageRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -17,20 +19,41 @@ import java.util.UUID;
 public class MessageCapsuleService {
 
     private final MessageCapsuleRepository repository;
+    private final ConversationMemberRepository conversationMemberRepository;
+    private final MessageRepository messageRepository;
 
     @Transactional
     public UUID create(UUID messageId, UUID conversationId, UUID creatorId, String title, LocalDateTime unlockAt) {
-        MessageCapsule saved = repository.save(MessageCapsule.create(messageId, conversationId, creatorId, title, unlockAt));
+        validateConversationAccess(conversationId, creatorId);
+        if (unlockAt == null || !unlockAt.isAfter(LocalDateTime.now())) {
+            throw new BusinessException(ErrorCode.INVALID_REQUEST, "열릴 시간은 현재보다 이후여야 합니다.");
+        }
+
+        var message = messageRepository.findByIdAndDeletedFalse(messageId)
+                .orElseThrow(() -> new BusinessException(ErrorCode.MESSAGE_NOT_FOUND));
+        if (!conversationId.equals(message.getConversationId())) {
+            throw new BusinessException(ErrorCode.INVALID_REQUEST, "메시지와 대화방 정보가 일치하지 않습니다.");
+        }
+
+        String safeTitle = sanitizeTitle(title, message.getContent());
+        MessageCapsule saved = repository.save(MessageCapsule.create(messageId, conversationId, creatorId, safeTitle, unlockAt));
         return saved.getId();
     }
 
     @Transactional
-    public void open(UUID capsuleId) {
-        repository.findById(capsuleId).ifPresent(MessageCapsule::open);
+    public void open(UUID capsuleId, UUID meId) {
+        MessageCapsule capsule = repository.findById(capsuleId)
+                .orElseThrow(() -> new BusinessException(ErrorCode.INVALID_REQUEST));
+        validateConversationAccess(capsule.getConversationId(), meId);
+        if (capsule.getUnlockAt() != null && capsule.getUnlockAt().isAfter(LocalDateTime.now())) {
+            throw new BusinessException(ErrorCode.INVALID_REQUEST, "아직 열 수 없는 타임 캡슐입니다.");
+        }
+        capsule.open();
     }
 
     @Transactional(readOnly = true)
-    public MessageCapsuleListResponse listByConversation(UUID conversationId) {
+    public MessageCapsuleListResponse listByConversation(UUID conversationId, UUID meId) {
+        validateConversationAccess(conversationId, meId);
         return new MessageCapsuleListResponse(
                 conversationId,
                 repository.findByConversationIdOrderByUnlockAtDesc(conversationId).stream()
@@ -54,7 +77,10 @@ public class MessageCapsuleService {
         if (!capsule.getCreatorId().equals(meId)) {
             throw new BusinessException(ErrorCode.FORBIDDEN);
         }
-        capsule.update(title, unlockAt);
+        if (unlockAt != null && !unlockAt.isAfter(LocalDateTime.now())) {
+            throw new BusinessException(ErrorCode.INVALID_REQUEST, "열릴 시간은 현재보다 이후여야 합니다.");
+        }
+        capsule.update(sanitizeTitle(title, capsule.getTitle()), unlockAt);
     }
 
     @Transactional
@@ -65,5 +91,27 @@ public class MessageCapsuleService {
             throw new BusinessException(ErrorCode.FORBIDDEN);
         }
         repository.delete(capsule);
+    }
+
+    private void validateConversationAccess(UUID conversationId, UUID meId) {
+        boolean member = conversationMemberRepository.existsByConversationIdAndUserId(conversationId, meId);
+        if (!member) {
+            throw new BusinessException(ErrorCode.MESSAGE_FORBIDDEN);
+        }
+    }
+
+    private String sanitizeTitle(String title, String fallback) {
+        String candidate = title;
+        if (candidate == null || candidate.isBlank()) {
+            candidate = fallback;
+        }
+        if (candidate == null) {
+            throw new BusinessException(ErrorCode.INVALID_REQUEST, "캡슐 제목이 비어 있습니다.");
+        }
+        String normalized = candidate.replaceAll("\\s+", " ").trim();
+        if (normalized.isBlank()) {
+            throw new BusinessException(ErrorCode.INVALID_REQUEST, "캡슐 제목이 비어 있습니다.");
+        }
+        return normalized.length() > 120 ? normalized.substring(0, 120) : normalized;
     }
 }
