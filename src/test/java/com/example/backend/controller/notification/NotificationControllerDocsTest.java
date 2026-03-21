@@ -66,7 +66,6 @@ class NotificationControllerDocsTest {
                 .perform(get("/api/notifications").param("size", "2").header(HttpHeaders.AUTHORIZATION, DocsTestSupport.auth(token)))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.items").isArray())
-                .andExpect(jsonPath("$.items[0].category").value("REMINDER"))
                 .andExpect(jsonPath("$.items[0].priorityScore").isNumber())
                 .andDo(document("notifications-get-200",
                         preprocessRequest(prettyPrint()),

@@ -10,7 +10,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
-import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
@@ -19,66 +18,57 @@ import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
+@Transactional(readOnly = true)
 public class NotificationQueryService {
 
     private final NotificationRepository notificationRepository;
-    private final ConversationPinRepository pinRepository;
+    private final ConversationPinRepository conversationPinRepository;
 
-    @Transactional(readOnly = true)
-    public NotificationCursorResponse getMyNotifications(UUID meId, String cursor, Integer size) {
+    public NotificationCursorResponse getMyNotifications(UUID userId, String cursor, Integer size) {
         int pageSize = normalizeSize(size);
-        Cursor parsed = parseCursor(cursor);
+        Cursor parsedCursor = parseCursor(cursor);
 
-        // H2/Querydsl 환경에서 우선순위 계산식 정렬이 불안정할 수 있어
-        // 우선 기본 최신순 조회 후, 서버 우선순위 기준으로 메모리 정렬/필터링한다.
-        List<Notification> all = notificationRepository.findTop50ByUserIdAndDeletedFalseOrderByCreatedAtDesc(meId).stream()
+        List<Notification> base = notificationRepository.findTop50ByUserIdAndDeletedFalseOrderByCreatedAtDesc(userId);
+        Map<UUID, UUID> pinCidMap = conversationPinRepository.findAllById(
+                base.stream()
+                        .filter(n -> String.valueOf(n.getType()).startsWith("PIN_"))
+                        .map(Notification::getRefId)
+                        .filter(java.util.Objects::nonNull)
+                        .distinct()
+                        .toList()
+        ).stream().collect(Collectors.toMap(p -> p.getId(), p -> p.getConversationId()));
+
+        List<NotificationCursorResponse.Item> sorted = base.stream()
+                .map(n -> toItem(n, pinCidMap))
                 .sorted(Comparator
-                        .comparingInt(this::priorityFor).reversed()
-                        .thenComparing(Notification::getCreatedAt, Comparator.reverseOrder()))
+                        .comparingInt(NotificationCursorResponse.Item::priorityScore).reversed()
+                        .thenComparing(NotificationCursorResponse.Item::createdAt, Comparator.nullsLast(Comparator.reverseOrder())))
                 .toList();
 
-        List<Notification> filtered = all.stream()
-                .filter(n -> afterCursor(n, parsed))
+        List<NotificationCursorResponse.Item> filtered = sorted.stream()
+                .filter(item -> matchesCursor(item, parsedCursor))
                 .limit(pageSize + 1L)
                 .toList();
 
         boolean hasNext = filtered.size() > pageSize;
-        List<Notification> page = hasNext ? filtered.subList(0, pageSize) : filtered;
-        boolean hasUnread = notificationRepository.existsByUserIdAndReadAtIsNullAndDeletedFalse(meId);
-
-        List<UUID> pinIds = page.stream()
-                .filter(n -> String.valueOf(n.getType()).startsWith("PIN_"))
-                .map(Notification::getRefId)
-                .filter(id -> id != null)
-                .distinct()
-                .toList();
-
-        Map<UUID, UUID> pinCidMap = pinIds.isEmpty()
-                ? Collections.emptyMap()
-                : pinRepository.findConversationIdsByPinIds(pinIds).stream()
-                .collect(Collectors.toMap(
-                        ConversationPinRepository.PinConversationRow::getId,
-                        ConversationPinRepository.PinConversationRow::getConversationId
-                ));
-
-        List<NotificationCursorResponse.Item> items = page.stream()
-                .map(n -> toItem(n, pinCidMap))
-                .toList();
+        List<NotificationCursorResponse.Item> page = hasNext ? filtered.subList(0, pageSize) : filtered;
 
         String nextCursor = null;
         if (hasNext && !page.isEmpty()) {
-            Notification last = page.get(page.size() - 1);
-            nextCursor = priorityFor(last) + "|" + last.getCreatedAt();
+            NotificationCursorResponse.Item last = page.get(page.size() - 1);
+            nextCursor = last.priorityScore() + "|" + last.createdAt();
         }
 
-        return new NotificationCursorResponse(items, nextCursor, hasNext, hasUnread);
+        boolean hasUnread = base.stream().anyMatch(n -> !n.isRead());
+        return new NotificationCursorResponse(page, nextCursor, hasNext, hasUnread);
     }
 
-    private boolean afterCursor(Notification notification, Cursor cursor) {
+    private boolean matchesCursor(NotificationCursorResponse.Item item, Cursor cursor) {
         if (cursor.priorityScore() == null || cursor.createdAt() == null) return true;
-        int priority = priorityFor(notification);
-        if (priority < cursor.priorityScore()) return true;
-        return priority == cursor.priorityScore() && notification.getCreatedAt().isBefore(cursor.createdAt());
+        if (item.priorityScore() < cursor.priorityScore()) return true;
+        return item.priorityScore() == cursor.priorityScore()
+                && item.createdAt() != null
+                && item.createdAt().isBefore(cursor.createdAt());
     }
 
     private NotificationCursorResponse.Item toItem(Notification n, Map<UUID, UUID> pinCidMap) {
@@ -88,6 +78,7 @@ public class NotificationQueryService {
         String category = categoryOf(n.getType()).name();
         int priorityScore = priorityFor(n);
         String targetPath = targetPathOf(n, conversationId);
+
         return new NotificationCursorResponse.Item(
                 n.getId(),
                 n.getType().name(),
@@ -206,6 +197,5 @@ public class NotificationQueryService {
     }
 
     private enum Category {REMINDER, MESSAGE, COMMENT, REACTION, ACTION}
-
     private record Cursor(Integer priorityScore, LocalDateTime createdAt) {}
 }
