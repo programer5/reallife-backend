@@ -14,6 +14,7 @@ import com.example.backend.repository.like.PostLikeRepository;
 import com.example.backend.repository.post.PostRepository;
 import com.example.backend.repository.user.UserRepository;
 import com.example.backend.security.ContentSanitizer;
+import com.example.backend.search.index.SearchIndexingService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -30,6 +31,7 @@ public class PostService {
     private final UserRepository userRepository;
     private final UploadedFileRepository uploadedFileRepository;
     private final PostLikeRepository postLikeRepository;
+    private final SearchIndexingService searchIndexingService;
 
     @Transactional
     public PostCreateResponse createPost(UUID meId, PostCreateRequest request) {
@@ -62,6 +64,7 @@ public class PostService {
         }
 
         Post saved = postRepository.save(post);
+        searchIndexingService.indexPost(saved);
 
         var author = userRepository.findById(saved.getAuthorId())
                 .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
@@ -108,6 +111,7 @@ public class PostService {
                 .orElseThrow(() -> new BusinessException(ErrorCode.POST_NOT_OWNED));
 
         post.update(ContentSanitizer.minimal(request.content()), request.visibility());
+        searchIndexingService.indexPost(post);
 
         var author = userRepository.findById(post.getAuthorId())
                 .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
@@ -197,5 +201,6 @@ public class PostService {
                 .orElseThrow(() -> new BusinessException(ErrorCode.POST_NOT_OWNED));
 
         post.delete();
+        searchIndexingService.remove("POSTS", post.getId());
     }
 }

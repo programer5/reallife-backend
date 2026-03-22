@@ -513,6 +513,24 @@ include::{snippets}/files-thumbnail-304/http-response.adoc[]
 
 ---
 
+== 4-1. Search
+
+
+=== 통합 검색
+[NOTE]
+====
+현재 검색 API는 Elasticsearch가 활성화되어 있으면 ES 조회를 우선 사용하고, 장애·미설정 상태에서는 DB fallback으로 자동 전환됩니다.
+응답 계약과 인덱싱 훅은 Elasticsearch/OpenSearch로 확장하기 쉽게 맞춰져 있습니다.
+`items[].anchorType / anchorId`를 사용하면 프론트에서 메시지·액션·캡슐 위치로 다시 진입해 하이라이트할 수 있습니다.
+====
+
+include::{snippets}/search-unified-200/http-request.adoc[]
+include::{snippets}/search-unified-200/query-parameters.adoc[]
+include::{snippets}/search-unified-200/http-response.adoc[]
+include::{snippets}/search-unified-200/response-fields.adoc[]
+
+---
+
 == 5. Follows
 
 === 팔로우

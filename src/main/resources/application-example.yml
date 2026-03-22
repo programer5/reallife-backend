@@ -48,6 +48,12 @@ app:
   public-base-url: http://localhost
   cors:
     allowed-origins: http://localhost:5173,http://localhost:3000
+  search:
+    elastic:
+      enabled: ${SEARCH_ELASTIC_ENABLED:false}
+      base-url: ${SEARCH_ELASTIC_BASE_URL:http://localhost:9200}
+      index-name: ${SEARCH_ELASTIC_INDEX_NAME:reallife_search}
+      api-key: ${SEARCH_ELASTIC_API_KEY:}
 
 ops:
   alert:

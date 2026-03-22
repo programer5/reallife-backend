@@ -7,6 +7,7 @@ import com.example.backend.exception.ErrorCode;
 import com.example.backend.repository.message.ConversationMemberRepository;
 import com.example.backend.repository.message.MessageCapsuleRepository;
 import com.example.backend.repository.message.MessageRepository;
+import com.example.backend.search.index.SearchIndexingService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -21,6 +22,7 @@ public class MessageCapsuleService {
     private final MessageCapsuleRepository repository;
     private final ConversationMemberRepository conversationMemberRepository;
     private final MessageRepository messageRepository;
+    private final SearchIndexingService searchIndexingService;
 
     @Transactional
     public UUID create(UUID messageId, UUID conversationId, UUID creatorId, String title, LocalDateTime unlockAt) {
@@ -37,6 +39,7 @@ public class MessageCapsuleService {
 
         String safeTitle = sanitizeTitle(title, message.getContent());
         MessageCapsule saved = repository.save(MessageCapsule.create(messageId, conversationId, creatorId, safeTitle, unlockAt));
+        searchIndexingService.indexCapsule(saved);
         return saved.getId();
     }
 
@@ -81,6 +84,7 @@ public class MessageCapsuleService {
             throw new BusinessException(ErrorCode.INVALID_REQUEST, "열릴 시간은 현재보다 이후여야 합니다.");
         }
         capsule.update(sanitizeTitle(title, capsule.getTitle()), unlockAt);
+        searchIndexingService.indexCapsule(capsule);
     }
 
     @Transactional
@@ -91,6 +95,7 @@ public class MessageCapsuleService {
             throw new BusinessException(ErrorCode.FORBIDDEN);
         }
         repository.delete(capsule);
+        searchIndexingService.remove("CAPSULES", capsule.getId());
     }
 
     private void validateConversationAccess(UUID conversationId, UUID meId) {

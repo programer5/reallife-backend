@@ -20,6 +20,7 @@ import com.example.backend.repository.message.MessageAttachmentRepository;
 import com.example.backend.repository.message.MessageRepository;
 import com.example.backend.repository.user.UserRepository;
 import com.example.backend.service.pin.ConversationPinService;
+import com.example.backend.search.index.SearchIndexingService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.ApplicationEventPublisher;
@@ -50,6 +51,7 @@ public class MessageCommandService {
 
     // ✅ NEW: 파일 다운로드 URL 생성용
     private final PublicUrlBuilder urlBuilder;
+    private final SearchIndexingService searchIndexingService;
 
     public MessageSendResponse send(UUID meId, UUID conversationId, MessageSendRequest req, String unlockToken) {
 
@@ -133,6 +135,7 @@ public class MessageCommandService {
         ));
 
         log.info("📨 MessageSentEvent published | messageId={}", saved.getId());
+        searchIndexingService.indexMessage(saved);
 
         return new MessageSendResponse(
                 saved.getId(),
@@ -198,6 +201,7 @@ public class MessageCommandService {
                 message.getContent(),
                 message.getEditedAt()
         ));
+        searchIndexingService.indexMessage(message);
 
         return new MessageUpdateResponse(
                 message.getId(),

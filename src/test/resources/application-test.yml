@@ -38,3 +38,12 @@ spring:
 jwt:
   secret: "test-secret-key-please-change-32chars!!"
   access-token-exp-minutes: 60
+app:
+  search:
+    elastic:
+      enabled: ${SEARCH_ELASTIC_ENABLED:false}
+      base-url: ${SEARCH_ELASTIC_BASE_URL:http://localhost:9200}
+      index-name: ${SEARCH_ELASTIC_INDEX_NAME:reallife_search}
+      api-key: ${SEARCH_ELASTIC_API_KEY:}
+      username: ${SEARCH_ELASTIC_USERNAME:}
+      password: ${SEARCH_ELASTIC_PASSWORD:}

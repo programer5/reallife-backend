@@ -12,6 +12,7 @@ import com.example.backend.exception.ErrorCode;
 import com.example.backend.repository.message.ConversationMemberRepository;
 import com.example.backend.repository.pin.ConversationPinDismissalRepository;
 import com.example.backend.repository.pin.ConversationPinRepository;
+import com.example.backend.search.index.SearchIndexingService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.ApplicationEventPublisher;
@@ -35,6 +36,7 @@ public class ConversationPinService {
     private final ApplicationEventPublisher eventPublisher;
     private final ConversationPinDismissalRepository dismissalRepository;
     private final ConversationMemberRepository memberRepository;
+    private final SearchIndexingService searchIndexingService;
 
     public List<PinCandidateResponse> detectCandidates(UUID messageId, String messageContent) {
         if (messageContent == null || messageContent.isBlank()) return List.of();
@@ -141,6 +143,7 @@ public class ConversationPinService {
                 saved.getStatus().name(),
                 saved.getCreatedAt()
         ));
+        searchIndexingService.indexPin(saved);
 
         return toResponse(saved);
     }
@@ -212,6 +215,7 @@ public class ConversationPinService {
                 null,
                 pin.getUpdateAt()
         ));
+        searchIndexingService.indexPin(pin);
     }
 
     @Transactional
@@ -238,6 +242,7 @@ public class ConversationPinService {
                 null,
                 pin.getUpdateAt()
         ));
+        searchIndexingService.indexPin(pin);
     }
 
     @Transactional
