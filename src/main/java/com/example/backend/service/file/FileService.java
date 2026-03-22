@@ -1,6 +1,7 @@
 package com.example.backend.service.file;
 
 import com.example.backend.common.PublicUrlBuilder;
+import com.example.backend.common.MediaPayloads;
 import com.example.backend.controller.file.dto.FileUploadResponse;
 import com.example.backend.domain.file.UploadedFile;
 import com.example.backend.exception.BusinessException;
@@ -51,9 +52,11 @@ public class FileService {
         );
 
         String ct = (saved.getContentType() == null) ? "" : saved.getContentType().toLowerCase(Locale.ROOT);
+        String mediaType = MediaPayloads.normalizeMediaType(saved.getContentType(), saved.getFileType().name());
 
-        // ✅ 절대 URL로 만들어서 내려주기
         String downloadUrl = urlBuilder.absolute("/api/files/" + saved.getId() + "/download");
+        String previewUrl = MediaPayloads.previewUrl(mediaType, downloadUrl);
+        String streamingUrl = MediaPayloads.streamingUrl(mediaType, downloadUrl);
 
         String thumbnailUrl = null;
         if (ct.startsWith("image/") || ct.startsWith("video/")) {
@@ -63,8 +66,12 @@ public class FileService {
 
         return new FileUploadResponse(
                 saved.getId(),
+                mediaType,
                 downloadUrl,
+                downloadUrl,
+                previewUrl,
                 thumbnailUrl,
+                streamingUrl,
                 saved.getOriginalFilename(),
                 saved.getContentType(),
                 saved.getSize(),

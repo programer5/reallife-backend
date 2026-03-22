@@ -1,5 +1,6 @@
 package com.example.backend.service.message;
 
+import com.example.backend.common.MediaPayloads;
 import com.example.backend.common.PublicUrlBuilder;
 import com.example.backend.controller.message.dto.MessageSendRequest;
 import com.example.backend.controller.message.dto.MessageSendResponse;
@@ -100,12 +101,22 @@ public class MessageCommandService {
 
             attachmentRepository.save(MessageAttachment.create(saved.getId(), fileId, i));
 
-            // ✅ UploadedFile에는 getUrl()이 없다 -> 다운로드 URL을 만들어서 내려준다
+            String mediaType = MediaPayloads.normalizeMediaType(file.getContentType(), file.getFileType().name());
             String downloadUrl = urlBuilder.absolute("/api/files/" + file.getId() + "/download");
+            String previewUrl = MediaPayloads.previewUrl(mediaType, downloadUrl);
+            String thumbnailUrl = ("IMAGE".equals(mediaType) || "VIDEO".equals(mediaType))
+                    ? urlBuilder.absolute("/api/files/" + file.getId() + "/thumbnail")
+                    : null;
+            String streamingUrl = MediaPayloads.streamingUrl(mediaType, downloadUrl);
 
             files.add(new MessageSendResponse.FileItem(
                     file.getId(),
+                    mediaType,
                     downloadUrl,
+                    downloadUrl,
+                    previewUrl,
+                    thumbnailUrl,
+                    streamingUrl,
                     file.getOriginalFilename(),
                     file.getContentType(),
                     file.getSize()

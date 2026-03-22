@@ -1,6 +1,7 @@
 
 package com.example.backend.service.post;
 
+import com.example.backend.common.MediaPayloads;
 import com.example.backend.controller.post.dto.FeedResponse;
 import com.example.backend.domain.post.Post;
 import com.example.backend.domain.post.PostImage;
@@ -73,10 +74,16 @@ public class FeedService {
                                     .toList(),
                             p.getImages().stream()
                                     .map(img -> new FeedResponse.MediaItem(
+                                            img.getFile() != null ? img.getFile().getId() : null,
                                             img.getMediaType().name(),
                                             img.getImageUrl(),
+                                            img.getImageUrl(),
+                                            MediaPayloads.previewUrl(img.getMediaType().name(), img.getImageUrl()),
                                             img.getThumbnailUrl(),
-                                            img.getContentType()
+                                            MediaPayloads.streamingUrl(img.getMediaType().name(), img.getImageUrl()),
+                                            img.getFile() != null ? img.getFile().getOriginalFilename() : null,
+                                            img.getContentType(),
+                                            img.getFile() != null ? img.getFile().getSize() : 0L
                                     ))
                                     .toList(),
                             p.getVisibility().name(),

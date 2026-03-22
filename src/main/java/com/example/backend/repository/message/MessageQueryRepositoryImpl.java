@@ -1,5 +1,6 @@
 package com.example.backend.repository.message;
 
+import com.example.backend.common.MediaPayloads;
 import com.example.backend.controller.message.dto.MessageListResponse;
 import com.example.backend.domain.file.QUploadedFile;
 import com.example.backend.domain.message.QMessage;
@@ -104,11 +105,20 @@ public class MessageQueryRepositoryImpl implements MessageQueryRepository {
             Long size = t.get(f.size);
 
             String downloadUrl = "/api/files/" + fileId + "/download";
+            String mediaType = MediaPayloads.normalizeMediaType(contentType, null);
+            String previewUrl = MediaPayloads.previewUrl(mediaType, downloadUrl);
+            String thumbnailUrl = MediaPayloads.thumbnailUrl(mediaType, fileId, null);
+            String streamingUrl = MediaPayloads.streamingUrl(mediaType, downloadUrl);
 
             attMap.computeIfAbsent(messageId, k -> new ArrayList<>())
                     .add(new MessageListResponse.Attachment(
                             fileId,
+                            mediaType,
                             downloadUrl,
+                            downloadUrl,
+                            previewUrl,
+                            thumbnailUrl,
+                            streamingUrl,
                             originalFilename,
                             contentType,
                             size == null ? 0 : size

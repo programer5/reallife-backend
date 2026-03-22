@@ -1,6 +1,7 @@
 
 package com.example.backend.service.post;
 
+import com.example.backend.common.MediaPayloads;
 import com.example.backend.controller.post.dto.PostCreateRequest;
 import com.example.backend.controller.post.dto.PostCreateResponse;
 import com.example.backend.controller.post.dto.PostUpdateRequest;
@@ -77,10 +78,16 @@ public class PostService {
                         .toList(),
                 saved.getImages().stream()
                         .map(img -> new PostCreateResponse.MediaItem(
+                                img.getFile() != null ? img.getFile().getId() : null,
                                 img.getMediaType().name(),
                                 img.getImageUrl(),
+                                img.getImageUrl(),
+                                MediaPayloads.previewUrl(img.getMediaType().name(), img.getImageUrl()),
                                 img.getThumbnailUrl(),
-                                img.getContentType()
+                                MediaPayloads.streamingUrl(img.getMediaType().name(), img.getImageUrl()),
+                                img.getFile() != null ? img.getFile().getOriginalFilename() : null,
+                                img.getContentType(),
+                                img.getFile() != null ? img.getFile().getSize() : 0L
                         ))
                         .toList(),
                 saved.getVisibility(),
@@ -119,10 +126,16 @@ public class PostService {
                         .toList(),
                 post.getImages().stream()
                         .map(img -> new PostCreateResponse.MediaItem(
+                                img.getFile() != null ? img.getFile().getId() : null,
                                 img.getMediaType().name(),
                                 img.getImageUrl(),
+                                img.getImageUrl(),
+                                MediaPayloads.previewUrl(img.getMediaType().name(), img.getImageUrl()),
                                 img.getThumbnailUrl(),
-                                img.getContentType()
+                                MediaPayloads.streamingUrl(img.getMediaType().name(), img.getImageUrl()),
+                                img.getFile() != null ? img.getFile().getOriginalFilename() : null,
+                                img.getContentType(),
+                                img.getFile() != null ? img.getFile().getSize() : 0L
                         ))
                         .toList(),
                 post.getVisibility(),
@@ -154,10 +167,16 @@ public class PostService {
                         .toList(),
                 post.getImages().stream()
                         .map(img -> new PostCreateResponse.MediaItem(
+                                img.getFile() != null ? img.getFile().getId() : null,
                                 img.getMediaType().name(),
                                 img.getImageUrl(),
+                                img.getImageUrl(),
+                                MediaPayloads.previewUrl(img.getMediaType().name(), img.getImageUrl()),
                                 img.getThumbnailUrl(),
-                                img.getContentType()
+                                MediaPayloads.streamingUrl(img.getMediaType().name(), img.getImageUrl()),
+                                img.getFile() != null ? img.getFile().getOriginalFilename() : null,
+                                img.getContentType(),
+                                img.getFile() != null ? img.getFile().getSize() : 0L
                         ))
                         .toList(),
                 post.getVisibility(),
