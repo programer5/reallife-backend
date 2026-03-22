@@ -8,3 +8,11 @@ spring:
   jpa:
     hibernate:
       ddl-auto: validate
+
+app:
+  search:
+    elastic:
+      enabled: ${SEARCH_ELASTIC_ENABLED:true}
+      base-url: ${SEARCH_ELASTIC_BASE_URL:http://elasticsearch:9200}
+      index-name: ${SEARCH_ELASTIC_INDEX_NAME:reallife_search}
+      api-key: ${SEARCH_ELASTIC_API_KEY:}
