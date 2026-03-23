@@ -18,4 +18,6 @@ public class SearchElasticProperties {
     private String password = "";
     private int connectTimeoutMillis = 1500;
     private int readTimeoutMillis = 2500;
+
+    private String reindexAdminToken = "";
 }

@@ -11,7 +11,6 @@ import com.example.backend.repository.message.ConversationRepository;
 import com.example.backend.repository.message.MessageCapsuleRepository;
 import com.example.backend.repository.message.MessageRepository;
 import com.example.backend.repository.pin.ConversationPinRepository;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -32,9 +31,7 @@ import static org.springframework.restdocs.headers.HeaderDocumentation.headerWit
 import static org.springframework.restdocs.headers.HeaderDocumentation.requestHeaders;
 import static org.springframework.restdocs.mockmvc.MockMvcRestDocumentation.document;
 import static org.springframework.restdocs.mockmvc.MockMvcRestDocumentation.documentationConfiguration;
-import static org.springframework.restdocs.operation.preprocess.Preprocessors.prettyPrint;
-import static org.springframework.restdocs.operation.preprocess.Preprocessors.preprocessRequest;
-import static org.springframework.restdocs.operation.preprocess.Preprocessors.preprocessResponse;
+import static org.springframework.restdocs.operation.preprocess.Preprocessors.*;
 import static org.springframework.restdocs.payload.JsonFieldType.*;
 import static org.springframework.restdocs.payload.PayloadDocumentation.fieldWithPath;
 import static org.springframework.restdocs.payload.PayloadDocumentation.responseFields;
@@ -42,10 +39,11 @@ import static org.springframework.restdocs.request.RequestDocumentation.paramete
 import static org.springframework.restdocs.request.RequestDocumentation.queryParameters;
 import static org.springframework.security.test.web.servlet.setup.SecurityMockMvcConfigurers.springSecurity;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-@SpringBootTest
+@SpringBootTest(properties = "app.search.elastic.reindex-admin-token=test-reindex-token")
 @ActiveProfiles("test")
 @ExtendWith({RestDocumentationExtension.class, SpringExtension.class})
 @Transactional
@@ -134,6 +132,85 @@ class SearchControllerDocsTest {
                                 fieldWithPath("meta.backend").type(STRING).description("현재 사용 중인 검색 백엔드 모드"),
                                 fieldWithPath("meta.requestedLimit").type(NUMBER).description("요청 limit"),
                                 fieldWithPath("meta.availableTypes").type(ARRAY).description("지원 검색 타입 목록")
+                        )
+                ));
+    }
+
+    @Test
+    void 검색_재색인_200(RestDocumentationContextProvider restDocumentation) throws Exception {
+        var me = docs.saveUser("reindex-api", "재색인유저");
+        String token = docs.issueTokenFor(me);
+
+        var conversation = conversationRepository.saveAndFlush(Conversation.direct());
+        conversationMemberRepository.saveAndFlush(ConversationMember.join(conversation.getId(), me.getId()));
+
+        var message = messageRepository.saveAndFlush(
+                Message.text(conversation.getId(), me.getId(), "reindex 대상 메시지")
+        );
+
+        conversationPinRepository.saveAndFlush(
+                ConversationPin.createSchedule(
+                        conversation.getId(),
+                        me.getId(),
+                        message.getId(),
+                        "reindex 대상 액션",
+                        "성수",
+                        LocalDateTime.now().plusDays(1),
+                        30
+                )
+        );
+
+        messageCapsuleRepository.saveAndFlush(
+                MessageCapsule.create(
+                        message.getId(),
+                        conversation.getId(),
+                        me.getId(),
+                        "reindex 대상 캡슐",
+                        LocalDateTime.now().plusDays(3)
+                )
+        );
+
+        docs.savePost(me.getId(), "reindex 대상 피드");
+
+        mockMvc(restDocumentation)
+                .perform(post("/api/search/admin/reindex")
+                        .queryParam("batchSize", "100")
+                        .header(HttpHeaders.AUTHORIZATION, DocsTestSupport.auth(token))
+                        .header("X-Search-Reindex-Token", "test-reindex-token"))
+                .andExpect(status().isOk())
+                .andDo(document("search-reindex-200",
+                        preprocessRequest(prettyPrint()),
+                        preprocessResponse(prettyPrint()),
+                        requestHeaders(
+                                headerWithName(HttpHeaders.AUTHORIZATION).description("Bearer {accessToken}"),
+                                headerWithName("X-Search-Reindex-Token").description("재색인 보호 토큰")
+                        ),
+                        queryParameters(
+                                parameterWithName("batchSize").optional().description("배치 크기(기본 300, 최소 10, 최대 1000)")
+                        ),
+                        responseFields(
+                                fieldWithPath("elasticReady").type(BOOLEAN).description("현재 ES 인덱서 준비 여부"),
+                                fieldWithPath("backend").type(STRING).description("재색인 타깃 백엔드"),
+                                fieldWithPath("indexName").type(STRING).description("대상 인덱스 이름"),
+                                fieldWithPath("batchSize").type(NUMBER).description("실행 배치 크기"),
+                                fieldWithPath("requestedBy").type(STRING).description("실행 사용자 ID"),
+                                fieldWithPath("requestedAt").type(STRING).description("실행 시각"),
+                                fieldWithPath("durationMillis").type(NUMBER).description("실행 시간(ms)"),
+                                fieldWithPath("messages").type(OBJECT).description("메시지 재색인 결과"),
+                                fieldWithPath("messages.indexed").type(NUMBER).description("인덱싱된 메시지 수"),
+                                fieldWithPath("messages.skipped").type(NUMBER).description("건너뛴 메시지 수"),
+                                fieldWithPath("actions").type(OBJECT).description("액션 재색인 결과"),
+                                fieldWithPath("actions.indexed").type(NUMBER).description("인덱싱된 액션 수"),
+                                fieldWithPath("actions.skipped").type(NUMBER).description("건너뛴 액션 수"),
+                                fieldWithPath("capsules").type(OBJECT).description("캡슐 재색인 결과"),
+                                fieldWithPath("capsules.indexed").type(NUMBER).description("인덱싱된 캡슐 수"),
+                                fieldWithPath("capsules.skipped").type(NUMBER).description("건너뛴 캡슐 수"),
+                                fieldWithPath("posts").type(OBJECT).description("피드 재색인 결과"),
+                                fieldWithPath("posts.indexed").type(NUMBER).description("인덱싱된 피드 수"),
+                                fieldWithPath("posts.skipped").type(NUMBER).description("건너뛴 피드 수"),
+                                fieldWithPath("totals").type(OBJECT).description("총 재색인 결과"),
+                                fieldWithPath("totals.indexed").type(NUMBER).description("총 인덱싱 수"),
+                                fieldWithPath("totals.skipped").type(NUMBER).description("총 건너뜀 수")
                         )
                 ));
     }
