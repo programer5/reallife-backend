@@ -8,6 +8,7 @@ import com.example.backend.repository.pin.ConversationPinRepository;
 import com.example.backend.repository.post.PostRepository;
 import com.example.backend.search.index.SearchIndexingService;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -21,6 +22,7 @@ import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Predicate;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
@@ -39,6 +41,9 @@ public class SearchReindexService {
         LocalDateTime requestedAt = LocalDateTime.now();
         long startedAt = System.currentTimeMillis();
 
+        log.info("search reindex started. requestedBy={} batchSize={} elasticReady={} indexName={}",
+                requestedBy, batchSize, searchIndexingService.elasticReady(), searchElasticProperties.getIndexName());
+
         CountResult messageCounts = reindexMessages(batchSize);
         CountResult actionCounts = reindexPins(batchSize);
         CountResult capsuleCounts = reindexCapsules(batchSize);
@@ -47,6 +52,16 @@ public class SearchReindexService {
         long durationMillis = System.currentTimeMillis() - startedAt;
         long totalIndexed = messageCounts.indexed + actionCounts.indexed + capsuleCounts.indexed + postCounts.indexed;
         long totalSkipped = messageCounts.skipped + actionCounts.skipped + capsuleCounts.skipped + postCounts.skipped;
+
+        log.info("search reindex finished. requestedBy={} durationMillis={} messages={}/{} actions={}/{} capsules={}/{} posts={}/{} totals={}/{} backend={}",
+                requestedBy,
+                durationMillis,
+                messageCounts.indexed, messageCounts.skipped,
+                actionCounts.indexed, actionCounts.skipped,
+                capsuleCounts.indexed, capsuleCounts.skipped,
+                postCounts.indexed, postCounts.skipped,
+                totalIndexed, totalSkipped,
+                searchIndexingService.elasticReady() ? "elasticsearch" : "db-fallback");
 
         return new SearchReindexResponse(
                 searchIndexingService.elasticReady(),
@@ -66,6 +81,7 @@ public class SearchReindexService {
 
     private CountResult reindexMessages(int batchSize) {
         return reindexPaged(
+                "messages",
                 pageable -> messageRepository.findAll(pageable),
                 batchSize,
                 message -> !message.isDeleted(),
@@ -75,6 +91,7 @@ public class SearchReindexService {
 
     private CountResult reindexPins(int batchSize) {
         return reindexPaged(
+                "actions",
                 pageable -> conversationPinRepository.findAll(pageable),
                 batchSize,
                 pin -> !pin.isDeleted(),
@@ -84,6 +101,7 @@ public class SearchReindexService {
 
     private CountResult reindexCapsules(int batchSize) {
         return reindexPaged(
+                "capsules",
                 pageable -> messageCapsuleRepository.findAll(pageable),
                 batchSize,
                 capsule -> true,
@@ -93,6 +111,7 @@ public class SearchReindexService {
 
     private CountResult reindexPosts(int batchSize) {
         return reindexPaged(
+                "posts",
                 pageable -> postRepository.findAll(pageable),
                 batchSize,
                 post -> !post.isDeleted(),
@@ -101,6 +120,7 @@ public class SearchReindexService {
     }
 
     private <T> CountResult reindexPaged(
+            String label,
             Function<Pageable, Page<T>> loader,
             int batchSize,
             Predicate<T> includer,
@@ -121,6 +141,9 @@ public class SearchReindexService {
                     skipped++;
                 }
             }
+
+            log.info("search reindex progress. label={} page={} pageSize={} indexedSoFar={} skippedSoFar={} hasNext={}",
+                    label, pageNumber, page.getNumberOfElements(), indexed, skipped, page.hasNext());
 
             if (!page.hasNext()) {
                 break;

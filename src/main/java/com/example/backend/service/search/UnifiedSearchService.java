@@ -6,6 +6,7 @@ import com.example.backend.search.index.SearchIndexingService;
 import com.example.backend.repository.search.dto.SearchRow;
 import com.example.backend.search.query.ElasticSearchQueryGateway;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -15,6 +16,7 @@ import java.util.List;
 import java.util.Locale;
 import java.util.UUID;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
@@ -31,10 +33,17 @@ public class UnifiedSearchService {
 
         if (elasticSearchQueryGateway.supports()) {
             try {
-                return elasticSearchQueryGateway.search(q, type.name(), conversationId, limit);
-            } catch (Exception ignored) {
-                // DB fallback keeps search available even when ES is degraded.
+                SearchResponse response = elasticSearchQueryGateway.search(q, type.name(), conversationId, limit);
+                log.info("search backend=elasticsearch query='{}' type={} conversationId={} limit={} items={}",
+                        q, type.name(), conversationId, limit, response.items().size());
+                return response;
+            } catch (Exception e) {
+                log.warn("search backend=elasticsearch failed. fallback=db. query='{}' type={} conversationId={} limit={} reason={}",
+                        q, type.name(), conversationId, limit, e.getMessage());
             }
+        } else {
+            log.info("search backend=elasticsearch unavailable. fallback=db. query='{}' type={} conversationId={} limit={}",
+                    q, type.name(), conversationId, limit);
         }
 
         List<SearchRow> messageRows = List.of();
@@ -73,6 +82,10 @@ public class UnifiedSearchService {
                 new SearchResponse.Section("CAPSULES", "캡슐", capsuleRows.size()),
                 new SearchResponse.Section("POSTS", "피드", postRows.size())
         );
+
+        log.info("search backend=db-fallback query='{}' type={} conversationId={} limit={} messageCount={} actionCount={} capsuleCount={} postCount={} items={}",
+                q, type.name(), conversationId, limit,
+                messageRows.size(), actionRows.size(), capsuleRows.size(), postRows.size(), items.size());
 
         return new SearchResponse(
                 q,
