@@ -76,14 +76,14 @@ public class ElasticSearchQueryGateway {
             ObjectNode bestFields = queries.addObject().putObject("multi_match");
             bestFields.put("query", normalizedQuery);
             ArrayNode fields = bestFields.putArray("fields");
-            fields.add("title^6");
-            fields.add("body^2.4");
-            fields.add("badge^1.8");
-            fields.add("secondary^1.4");
-            fields.add("tags^1.6");
+            fields.add("title^7");
+            fields.add("body^2.2");
+            fields.add("badge^2.0");
+            fields.add("secondary^1.6");
+            fields.add("tags^1.8");
             bestFields.put("type", "best_fields");
             bestFields.put("operator", "and");
-            bestFields.put("minimum_should_match", "75%");
+            bestFields.put("minimum_should_match", minimumShouldMatch(normalizedQuery));
 
             ObjectNode titleTerm = queries.addObject().putObject("term").putObject("title.keyword");
             titleTerm.put("value", normalizedQuery);
@@ -107,10 +107,14 @@ public class ElasticSearchQueryGateway {
         fieldsNode.putObject("body");
 
         ArrayNode should = bool.putArray("should");
-        should.addObject().putObject("term").putObject("type").put("value", normalizedType).put("boost", "ALL".equals(normalizedType) ? 1.0 : 1.4);
+        should.addObject().putObject("term").putObject("type").put("value", normalizedType).put("boost", "ALL".equals(normalizedType) ? 1.0 : 1.6);
+        should.addObject().putObject("term").putObject("type").put("value", "ACTIONS").put("boost", 1.22);
+        should.addObject().putObject("term").putObject("type").put("value", "CAPSULES").put("boost", 1.15);
+        should.addObject().putObject("term").putObject("type").put("value", "MESSAGES").put("boost", 1.10);
+        should.addObject().putObject("term").putObject("type").put("value", "POSTS").put("boost", 1.04);
         ObjectNode recentBoost = should.addObject().putObject("range").putObject("createdAt");
-        recentBoost.put("gte", "now-45d/d");
-        recentBoost.put("boost", 1.08);
+        recentBoost.put("gte", "now-21d/d");
+        recentBoost.put("boost", 1.14);
 
         ArrayNode sort = root.putArray("sort");
         sort.addObject().putObject("_score").put("order", "desc");
@@ -226,4 +230,12 @@ public class ElasticSearchQueryGateway {
         return v.substring(0, Math.max(0, max - 1)) + "…";
     }
     private String safe(String value) { return value == null ? "" : value; }
+
+    private String minimumShouldMatch(String normalizedQuery) {
+        if (normalizedQuery == null || normalizedQuery.isBlank()) return "100%";
+        int length = normalizedQuery.codePointCount(0, normalizedQuery.length());
+        if (length <= 2) return "100%";
+        if (length <= 4) return "85%";
+        return "75%";
+    }
 }
