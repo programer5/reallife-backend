@@ -64,7 +64,7 @@ class PlaybackSessionControllerDocsTest {
     }
 
     @Test
-    void 공동플레이_생성_조회_상태변경_종료(RestDocumentationContextProvider restDocumentation) throws Exception {
+    void 공동플레이_생성_조회_상태변경_참여확인_종료(RestDocumentationContextProvider restDocumentation) throws Exception {
         MockMvc mockMvc = mockMvc(restDocumentation);
 
         var me = docs.saveUser("playme", "호스트");
@@ -88,6 +88,9 @@ class PlaybackSessionControllerDocsTest {
                 .andExpect(jsonPath("$.conversationId").value(conversationId.toString()))
                 .andExpect(jsonPath("$.mediaKind").value("MUSIC"))
                 .andExpect(jsonPath("$.status").value("ACTIVE"))
+                .andExpect(jsonPath("$.myRole").value("HOST"))
+                .andExpect(jsonPath("$.host").value(true))
+                .andExpect(jsonPath("$.canControl").value(true))
                 .andDo(document("playback-sessions-create",
                         preprocessRequest(prettyPrint()),
                         preprocessResponse(prettyPrint()),
@@ -116,6 +119,7 @@ class PlaybackSessionControllerDocsTest {
                         .header(HttpHeaders.AUTHORIZATION, DocsTestSupport.auth(token)))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.items[0].sessionId").value(sessionId))
+                .andExpect(jsonPath("$.items[0].myRole").value("HOST"))
                 .andDo(document("playback-sessions-list",
                         preprocessRequest(prettyPrint()),
                         preprocessResponse(prettyPrint()),
@@ -143,10 +147,15 @@ class PlaybackSessionControllerDocsTest {
                                 fieldWithPath("items[].lastControlledAt").optional().type(VARIES).description("마지막 제어 시각(null 가능)"),
                                 fieldWithPath("items[].lastControlledBy").optional().type(VARIES).description("마지막 제어 사용자 ID(null 가능)"),
                                 fieldWithPath("items[].createdAt").type(STRING).description("생성 시각"),
+                                fieldWithPath("items[].myRole").type(STRING).description("내 참여 역할(HOST, GUEST)"),
+                                fieldWithPath("items[].host").type(BOOLEAN).description("내가 호스트인지 여부"),
+                                fieldWithPath("items[].canControl").type(BOOLEAN).description("현재 사용자가 제어 가능한지 여부"),
+                                fieldWithPath("items[].activeParticipantCount").type(NUMBER).description("최근 2분 내 활성 참여자 수"),
                                 fieldWithPath("items[].participants").type(ARRAY).description("참여자 목록"),
                                 fieldWithPath("items[].participants[].userId").type(STRING).description("참여자 사용자 ID"),
                                 fieldWithPath("items[].participants[].role").type(STRING).description("참여 역할(HOST, GUEST)"),
-                                fieldWithPath("items[].participants[].lastSeenAt").optional().type(VARIES).description("마지막 확인 시각(null 가능)")
+                                fieldWithPath("items[].participants[].lastSeenAt").optional().type(VARIES).description("마지막 확인 시각(null 가능)"),
+                                fieldWithPath("items[].participants[].active").type(BOOLEAN).description("최근 2분 내 활성 참여자인지 여부")
                         )
                 ));
 
@@ -176,10 +185,29 @@ class PlaybackSessionControllerDocsTest {
                         responseFields(sessionResponseFields())
                 ));
 
+        mockMvc.perform(post("/api/conversations/{conversationId}/playback-sessions/{sessionId}/presence", conversationId, sessionId)
+                        .header(HttpHeaders.AUTHORIZATION, DocsTestSupport.auth(token)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.participants[0].lastSeenAt").isNotEmpty())
+                .andDo(document("playback-sessions-presence",
+                        preprocessRequest(prettyPrint()),
+                        preprocessResponse(prettyPrint()),
+                        requestHeaders(
+                                headerWithName(HttpHeaders.AUTHORIZATION).description("Bearer {accessToken}")
+                        ),
+                        pathParameters(
+                                parameterWithName("conversationId").description("대화방 ID(UUID)"),
+                                parameterWithName("sessionId").description("세션 ID(UUID)")
+                        ),
+                        responseFields(sessionResponseFields())
+                ));
+
+        PlaybackSessionStateUpdateRequest endRequest = new PlaybackSessionStateUpdateRequest(PlaybackState.PAUSED, 91);
+
         mockMvc.perform(post("/api/conversations/{conversationId}/playback-sessions/{sessionId}/end", conversationId, sessionId)
                         .header(HttpHeaders.AUTHORIZATION, DocsTestSupport.auth(token))
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content("{\"playbackState\":\"PAUSED\",\"positionSeconds\":91}"))
+                        .content(objectMapper.writeValueAsString(endRequest)))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.status").value("ENDED"))
                 .andDo(document("playback-sessions-end",
@@ -218,10 +246,15 @@ class PlaybackSessionControllerDocsTest {
                 fieldWithPath("lastControlledAt").optional().type(VARIES).description("마지막 제어 시각(null 가능)"),
                 fieldWithPath("lastControlledBy").optional().type(VARIES).description("마지막 제어 사용자 ID(null 가능)"),
                 fieldWithPath("createdAt").type(STRING).description("생성 시각"),
+                fieldWithPath("myRole").type(STRING).description("내 참여 역할(HOST, GUEST)"),
+                fieldWithPath("host").type(BOOLEAN).description("내가 호스트인지 여부"),
+                fieldWithPath("canControl").type(BOOLEAN).description("현재 사용자가 제어 가능한지 여부"),
+                fieldWithPath("activeParticipantCount").type(NUMBER).description("최근 2분 내 활성 참여자 수"),
                 fieldWithPath("participants").type(ARRAY).description("참여자 목록"),
                 fieldWithPath("participants[].userId").type(STRING).description("참여자 사용자 ID"),
                 fieldWithPath("participants[].role").type(STRING).description("참여 역할(HOST, GUEST)"),
-                fieldWithPath("participants[].lastSeenAt").optional().type(VARIES).description("마지막 확인 시각(null 가능)")
+                fieldWithPath("participants[].lastSeenAt").optional().type(VARIES).description("마지막 확인 시각(null 가능)"),
+                fieldWithPath("participants[].active").type(BOOLEAN).description("최근 2분 내 활성 참여자인지 여부")
         };
     }
 }

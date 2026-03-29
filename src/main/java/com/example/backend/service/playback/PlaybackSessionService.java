@@ -9,6 +9,7 @@ import com.example.backend.domain.message.Message;
 import com.example.backend.domain.playback.*;
 import com.example.backend.domain.playback.event.PlaybackSessionCreatedEvent;
 import com.example.backend.domain.playback.event.PlaybackSessionEndedEvent;
+import com.example.backend.domain.playback.event.PlaybackSessionPresenceEvent;
 import com.example.backend.domain.playback.event.PlaybackSessionUpdatedEvent;
 import com.example.backend.exception.BusinessException;
 import com.example.backend.exception.ErrorCode;
@@ -35,6 +36,8 @@ import java.util.UUID;
 @Transactional
 public class PlaybackSessionService {
 
+    private static final long ACTIVE_PARTICIPANT_WINDOW_SECONDS = 120L;
+
     private final ConversationRepository conversationRepository;
     private final ConversationMemberRepository conversationMemberRepository;
     private final PlaybackSessionRepository playbackSessionRepository;
@@ -48,7 +51,7 @@ public class PlaybackSessionService {
         ensureConversationMember(conversationId, meId);
         List<PlaybackSessionResponse> items = playbackSessionRepository.findTop20ByConversationIdOrderByCreatedAtDesc(conversationId)
                 .stream()
-                .map(this::toResponse)
+                .map(session -> toResponse(session, meId))
                 .toList();
         return new PlaybackSessionListResponse(items);
     }
@@ -66,9 +69,14 @@ public class PlaybackSessionService {
         ));
 
         List<UUID> memberIds = conversationMemberRepository.findUserIdsByConversationId(conversationId);
+        LocalDateTime now = LocalDateTime.now();
         for (UUID memberId : memberIds) {
             PlaybackParticipantRole role = memberId.equals(meId) ? PlaybackParticipantRole.HOST : PlaybackParticipantRole.GUEST;
-            participantRepository.save(PlaybackSessionParticipant.create(session.getId(), conversationId, memberId, role));
+            PlaybackSessionParticipant participant = PlaybackSessionParticipant.create(session.getId(), conversationId, memberId, role);
+            if (memberId.equals(meId)) {
+                participant.touch(now);
+            }
+            participantRepository.save(participant);
         }
 
         Message message = messageRepository.save(Message.session(
@@ -98,7 +106,7 @@ public class PlaybackSessionService {
                 message.getId()
         ));
 
-        return toResponse(session);
+        return toResponse(session, meId);
     }
 
     public PlaybackSessionResponse updateState(UUID conversationId, UUID sessionId, UUID meId, PlaybackSessionStateUpdateRequest request) {
@@ -109,7 +117,7 @@ public class PlaybackSessionService {
 
         LocalDateTime now = LocalDateTime.now();
         session.updatePlayback(meId, request.playbackState(), request.positionSeconds(), now);
-        participantRepository.findBySessionIdAndUserId(sessionId, meId).ifPresent(p -> p.touch(now));
+        touchParticipant(sessionId, meId, now);
 
         eventPublisher.publishEvent(new PlaybackSessionUpdatedEvent(
                 session.getId(),
@@ -121,7 +129,24 @@ public class PlaybackSessionService {
                 now
         ));
 
-        return toResponse(session);
+        return toResponse(session, meId);
+    }
+
+    public PlaybackSessionResponse touchPresence(UUID conversationId, UUID sessionId, UUID meId) {
+        ensureConversationMember(conversationId, meId);
+        PlaybackSession session = getSession(conversationId, sessionId);
+        ensureActive(session);
+        LocalDateTime now = LocalDateTime.now();
+        touchParticipant(sessionId, meId, now);
+
+        eventPublisher.publishEvent(new PlaybackSessionPresenceEvent(
+                session.getId(),
+                session.getConversationId(),
+                meId,
+                now
+        ));
+
+        return toResponse(session, meId);
     }
 
     public PlaybackSessionResponse end(UUID conversationId, UUID sessionId, UUID meId, long positionSeconds) {
@@ -132,7 +157,7 @@ public class PlaybackSessionService {
 
         LocalDateTime now = LocalDateTime.now();
         session.end(meId, positionSeconds, now);
-        participantRepository.findBySessionIdAndUserId(sessionId, meId).ifPresent(p -> p.touch(now));
+        touchParticipant(sessionId, meId, now);
 
         eventPublisher.publishEvent(new PlaybackSessionEndedEvent(
                 session.getId(),
@@ -142,7 +167,7 @@ public class PlaybackSessionService {
                 now
         ));
 
-        return toResponse(session);
+        return toResponse(session, meId);
     }
 
     private Conversation ensureConversationMember(UUID conversationId, UUID meId) {
@@ -171,15 +196,30 @@ public class PlaybackSessionService {
         }
     }
 
-    private PlaybackSessionResponse toResponse(PlaybackSession session) {
-        List<PlaybackSessionResponse.Participant> participants = participantRepository.findBySessionIdOrderByCreatedAtAsc(session.getId())
-                .stream()
+    private void touchParticipant(UUID sessionId, UUID meId, LocalDateTime now) {
+        participantRepository.findBySessionIdAndUserId(sessionId, meId).ifPresent(participant -> participant.touch(now));
+    }
+
+    private PlaybackSessionResponse toResponse(PlaybackSession session, UUID meId) {
+        LocalDateTime activeThreshold = LocalDateTime.now().minusSeconds(ACTIVE_PARTICIPANT_WINDOW_SECONDS);
+        List<PlaybackSessionParticipant> participantEntities = participantRepository.findBySessionIdOrderByCreatedAtAsc(session.getId());
+        PlaybackParticipantRole myRole = participantEntities.stream()
+                .filter(participant -> participant.getUserId().equals(meId))
+                .map(PlaybackSessionParticipant::getRole)
+                .findFirst()
+                .orElse(PlaybackParticipantRole.GUEST);
+
+        List<PlaybackSessionResponse.Participant> participants = participantEntities.stream()
                 .map(participant -> new PlaybackSessionResponse.Participant(
                         participant.getUserId(),
                         participant.getRole(),
-                        participant.getLastSeenAt()
+                        participant.getLastSeenAt(),
+                        participant.getLastSeenAt() != null && !participant.getLastSeenAt().isBefore(activeThreshold)
                 ))
                 .toList();
+
+        int activeParticipantCount = (int) participants.stream().filter(PlaybackSessionResponse.Participant::active).count();
+        boolean isHost = session.getHostUserId().equals(meId);
 
         return new PlaybackSessionResponse(
                 session.getId(),
@@ -198,6 +238,10 @@ public class PlaybackSessionService {
                 session.getLastControlledAt(),
                 session.getLastControlledBy(),
                 session.getCreatedAt(),
+                myRole,
+                isHost,
+                isHost && session.getStatus() == PlaybackSessionStatus.ACTIVE,
+                activeParticipantCount,
                 participants
         );
     }
@@ -216,6 +260,7 @@ public class PlaybackSessionService {
         payload.put("sessionId", session.getId());
         payload.put("mediaKind", session.getMediaKind().name());
         payload.put("title", session.getTitle());
+        payload.put("hostUserId", session.getHostUserId());
         payload.put("sourceUrl", session.getSourceUrl());
         payload.put("thumbnailUrl", session.getThumbnailUrl());
         payload.put("status", session.getStatus().name());

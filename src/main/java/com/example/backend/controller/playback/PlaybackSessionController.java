@@ -46,6 +46,16 @@ public class PlaybackSessionController {
         return playbackSessionService.updateState(conversationId, sessionId, meId, request);
     }
 
+    @PostMapping("/{sessionId}/presence")
+    public PlaybackSessionResponse touchPresence(
+            @PathVariable UUID conversationId,
+            @PathVariable UUID sessionId,
+            Authentication authentication
+    ) {
+        UUID meId = UUID.fromString(authentication.getName());
+        return playbackSessionService.touchPresence(conversationId, sessionId, meId);
+    }
+
     @PostMapping("/{sessionId}/end")
     public PlaybackSessionResponse end(
             @PathVariable UUID conversationId,

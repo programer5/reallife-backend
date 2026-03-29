@@ -9,6 +9,7 @@ import com.example.backend.domain.pin.event.PinCreatedEvent;
 import com.example.backend.domain.pin.event.PinUpdatedEvent;
 import com.example.backend.domain.playback.event.PlaybackSessionCreatedEvent;
 import com.example.backend.domain.playback.event.PlaybackSessionEndedEvent;
+import com.example.backend.domain.playback.event.PlaybackSessionPresenceEvent;
 import com.example.backend.domain.playback.event.PlaybackSessionUpdatedEvent;
 import com.example.backend.repository.message.ConversationMemberRepository;
 import com.example.backend.sse.SsePushPort;
@@ -191,6 +192,23 @@ public class SseEventListener {
         String eventId = event.sessionId() + ":ended:" + event.endedAt();
         for (UUID targetId : targets) {
             pushService.push(targetId, "playback-session-ended", payload, eventId);
+        }
+    }
+
+    @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
+    public void onPlaybackSessionPresence(PlaybackSessionPresenceEvent event) {
+
+        List<UUID> targets = memberRepository.findUserIdsByConversationId(event.conversationId());
+
+        Map<String, Object> payload = new HashMap<>();
+        payload.put("sessionId", event.sessionId().toString());
+        payload.put("conversationId", event.conversationId().toString());
+        payload.put("userId", event.userId().toString());
+        payload.put("lastSeenAt", event.lastSeenAt().toString());
+
+        String eventId = event.sessionId() + ":presence:" + event.userId() + ":" + event.lastSeenAt();
+        for (UUID targetId : targets) {
+            pushService.push(targetId, "playback-session-presence", payload, eventId);
         }
     }
 

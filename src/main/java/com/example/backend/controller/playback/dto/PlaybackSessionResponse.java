@@ -26,12 +26,17 @@ public record PlaybackSessionResponse(
         LocalDateTime lastControlledAt,
         UUID lastControlledBy,
         LocalDateTime createdAt,
+        PlaybackParticipantRole myRole,
+        boolean host,
+        boolean canControl,
+        int activeParticipantCount,
         List<Participant> participants
 ) {
     public record Participant(
             UUID userId,
             PlaybackParticipantRole role,
-            LocalDateTime lastSeenAt
+            LocalDateTime lastSeenAt,
+            boolean active
     ) {
     }
 }
