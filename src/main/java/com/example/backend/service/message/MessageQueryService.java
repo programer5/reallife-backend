@@ -68,8 +68,12 @@ public class MessageQueryService {
                 .map(it -> new MessageListResponse.Item(
                         it.messageId(),
                         it.senderId(),
+                        it.type(),
                         it.content(),
+                        it.metadataJson(),
+                        it.sessionId(),
                         it.createdAt(),
+                        it.editedAt(),
                         it.attachments(),
                         pinService.detectCandidates(it.messageId(), it.content())
                 ))

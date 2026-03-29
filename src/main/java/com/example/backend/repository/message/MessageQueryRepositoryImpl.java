@@ -134,8 +134,12 @@ public class MessageQueryRepositoryImpl implements MessageQueryRepository {
             result.add(new MessageListResponse.Item(
                     mm.getId(),
                     mm.getSenderId(),
+                    mm.getType().name(),
                     mm.getContent(),
+                    mm.getMetadataJson(),
+                    mm.getSessionId(),
                     mm.getCreatedAt(),
+                    mm.getEditedAt(),
                     attMap.getOrDefault(mm.getId(), List.of()),
                     List.of() // pinCandidates는 MessageQueryService에서 채움
             ));

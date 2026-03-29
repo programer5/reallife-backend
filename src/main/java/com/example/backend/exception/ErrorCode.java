@@ -54,7 +54,12 @@ public enum ErrorCode {
 
     // Comment
     COMMENT_NOT_FOUND(HttpStatus.NOT_FOUND, "COMMENT_NOT_FOUND", "댓글을 찾을 수 없습니다."),
-    COMMENT_NOT_OWNED(HttpStatus.FORBIDDEN, "COMMENT_NOT_OWNED", "본인 댓글만 삭제할 수 있습니다.");
+    COMMENT_NOT_OWNED(HttpStatus.FORBIDDEN, "COMMENT_NOT_OWNED", "본인 댓글만 삭제할 수 있습니다."),
+
+    // Playback
+    PLAYBACK_SESSION_NOT_FOUND(HttpStatus.NOT_FOUND, "PLAYBACK_SESSION_NOT_FOUND", "공동 플레이 세션을 찾을 수 없습니다."),
+    PLAYBACK_SESSION_HOST_ONLY(HttpStatus.FORBIDDEN, "PLAYBACK_SESSION_HOST_ONLY", "세션 호스트만 재생 상태를 변경할 수 있습니다."),
+    PLAYBACK_SESSION_ALREADY_ENDED(HttpStatus.CONFLICT, "PLAYBACK_SESSION_ALREADY_ENDED", "이미 종료된 공동 플레이 세션입니다.");
 
     private final HttpStatus status;
     private final String code;

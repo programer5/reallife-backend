@@ -12,8 +12,12 @@ public record MessageListResponse(
     public record Item(
             UUID messageId,
             UUID senderId,
+            String type,
             String content,
+            String metadataJson,
+            UUID sessionId,
             LocalDateTime createdAt,
+            LocalDateTime editedAt,
             List<Attachment> attachments,
             List<PinCandidateResponse> pinCandidates
     ) {}

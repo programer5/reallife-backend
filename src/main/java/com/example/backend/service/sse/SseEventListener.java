@@ -7,6 +7,9 @@ import com.example.backend.domain.message.event.MessageUpdatedEvent;
 import com.example.backend.domain.notification.event.NotificationCreatedEvent;
 import com.example.backend.domain.pin.event.PinCreatedEvent;
 import com.example.backend.domain.pin.event.PinUpdatedEvent;
+import com.example.backend.domain.playback.event.PlaybackSessionCreatedEvent;
+import com.example.backend.domain.playback.event.PlaybackSessionEndedEvent;
+import com.example.backend.domain.playback.event.PlaybackSessionUpdatedEvent;
 import com.example.backend.repository.message.ConversationMemberRepository;
 import com.example.backend.sse.SsePushPort;
 import lombok.RequiredArgsConstructor;
@@ -125,6 +128,69 @@ public class SseEventListener {
 
         for (UUID targetId : targets) {
             pushService.push(targetId, "pin-updated", payload, event.pinId().toString());
+        }
+    }
+
+
+    @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
+    public void onPlaybackSessionCreated(PlaybackSessionCreatedEvent event) {
+
+        List<UUID> targets = memberRepository.findUserIdsByConversationId(event.conversationId());
+
+        Map<String, Object> payload = new HashMap<>();
+        payload.put("sessionId", event.sessionId().toString());
+        payload.put("conversationId", event.conversationId().toString());
+        payload.put("actorId", event.actorId().toString());
+        payload.put("title", event.title());
+        payload.put("mediaKind", event.mediaKind().name());
+        payload.put("sourceUrl", event.sourceUrl());
+        payload.put("thumbnailUrl", event.thumbnailUrl());
+        payload.put("status", event.status().name());
+        payload.put("playbackState", event.playbackState().name());
+        payload.put("positionSeconds", event.positionSeconds());
+        payload.put("createdAt", event.createdAt().toString());
+        payload.put("messageId", event.messageId() == null ? null : event.messageId().toString());
+
+        for (UUID targetId : targets) {
+            pushService.push(targetId, "playback-session-created", payload, event.sessionId().toString());
+        }
+    }
+
+    @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
+    public void onPlaybackSessionUpdated(PlaybackSessionUpdatedEvent event) {
+
+        List<UUID> targets = memberRepository.findUserIdsByConversationId(event.conversationId());
+
+        Map<String, Object> payload = new HashMap<>();
+        payload.put("sessionId", event.sessionId().toString());
+        payload.put("conversationId", event.conversationId().toString());
+        payload.put("actorId", event.actorId().toString());
+        payload.put("status", event.status().name());
+        payload.put("playbackState", event.playbackState().name());
+        payload.put("positionSeconds", event.positionSeconds());
+        payload.put("updatedAt", event.updatedAt().toString());
+
+        String eventId = event.sessionId() + ":" + event.updatedAt();
+        for (UUID targetId : targets) {
+            pushService.push(targetId, "playback-session-updated", payload, eventId);
+        }
+    }
+
+    @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
+    public void onPlaybackSessionEnded(PlaybackSessionEndedEvent event) {
+
+        List<UUID> targets = memberRepository.findUserIdsByConversationId(event.conversationId());
+
+        Map<String, Object> payload = new HashMap<>();
+        payload.put("sessionId", event.sessionId().toString());
+        payload.put("conversationId", event.conversationId().toString());
+        payload.put("actorId", event.actorId().toString());
+        payload.put("positionSeconds", event.positionSeconds());
+        payload.put("endedAt", event.endedAt().toString());
+
+        String eventId = event.sessionId() + ":ended:" + event.endedAt();
+        for (UUID targetId : targets) {
+            pushService.push(targetId, "playback-session-ended", payload, eventId);
         }
     }
 

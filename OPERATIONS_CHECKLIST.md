@@ -229,6 +229,53 @@ Application → Cookies
 -   Restarting 상태 없음
 -   Health check 정상
 
+
+------------------------------------------------------------------------
+
+# 7-A. Search / Elasticsearch 운영 체크
+
+검색 기능은 **ES 우선 + DB fallback** 구조이므로, 배포 전/후에 아래를 함께 확인한다.
+
+확인 항목
+
+- Elasticsearch 컨테이너 정상 기동
+- 검색 응답 `meta.backend` 확인
+- 재색인(reindex) 성공 여부 확인
+- fallback 동작 확인
+- 운영 환경변수 누락 여부 확인
+
+체크
+
+``` bash
+curl http://localhost:9200
+curl "http://localhost/api/search?q=test&type=ALL&limit=5"
+curl -X POST "http://localhost/api/search/admin/reindex?batchSize=300" \
+  -H "Authorization: Bearer <accessToken>" \
+  -H "X-Search-Reindex-Token: <reindexToken>"
+```
+
+확인
+
+- `meta.backend=elasticsearch` 이면 ES 조회 성공
+- `meta.backend=db-fallback` 이면 fallback 동작
+- 재색인 응답에서 `totals.indexed > 0`
+- 로그에 `search backend=elasticsearch`, `search reindex started`, `search reindex finished` 패턴 확인
+
+운영 환경변수 점검
+
+- `SEARCH_ELASTIC_ENABLED`
+- `SEARCH_ELASTIC_BASE_URL`
+- `SEARCH_ELASTIC_INDEX_NAME`
+- `SEARCH_ELASTIC_API_KEY`
+- `SEARCH_ELASTIC_REINDEX_ADMIN_TOKEN`
+
+문제 발생 시
+
+- Elasticsearch 미기동 여부 확인
+- 인덱스 존재 여부 확인
+- 앱 컨테이너에 reindex token/env 전달 누락 여부 확인
+- ES 실패 시 DB fallback 응답이 유지되는지 확인
+
 ------------------------------------------------------------------------
 
 # 8. 배포 후 체크
