@@ -54,7 +54,8 @@ services:
     container_name: reallife-kibana
     restart: unless-stopped
     depends_on:
-      - elasticsearch
+      elasticsearch:
+        condition: service_started
     environment:
       ELASTICSEARCH_HOSTS: http://elasticsearch:9200
     ports:
@@ -67,9 +68,12 @@ services:
     container_name: reallife-app
     restart: unless-stopped
     depends_on:
-      - reallife-mysql
-      - redis
-      - elasticsearch
+      reallife-mysql:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      elasticsearch:
+        condition: service_started
     environment:
       TZ: Asia/Seoul
       JAVA_TOOL_OPTIONS: -Duser.timezone=Asia/Seoul
@@ -136,8 +140,10 @@ services:
     container_name: reallife-nginx
     restart: unless-stopped
     depends_on:
-      - app
-      - frontend-build
+      app:
+        condition: service_healthy
+      frontend-build:
+        condition: service_completed_successfully
     ports:
       - "80:80"
     volumes:

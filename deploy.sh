@@ -35,12 +35,44 @@ upsert_env () {
   fi
 }
 
+wait_for_health () {
+  local container_name="$1"
+  local max_attempts="$2"
+  local sleep_seconds="$3"
+
+  echo "== Waiting for ${container_name} to become healthy =="
+  for ((i=1; i<=max_attempts; i++)); do
+    local status
+    status="$(docker inspect --format='{{if .State.Health}}{{.State.Health.Status}}{{else}}no-healthcheck{{end}}' "$container_name" 2>/dev/null || true)"
+
+    if [ "$status" = "healthy" ]; then
+      echo "OK: ${container_name} is healthy"
+      return 0
+    fi
+
+    if [ "$status" = "unhealthy" ]; then
+      echo "ERROR: ${container_name} is unhealthy"
+      docker compose logs "$container_name" --tail=200 || true
+      return 1
+    fi
+
+    echo "waiting ${container_name}... (${i}/${max_attempts}) status=${status:-missing}"
+    sleep "$sleep_seconds"
+  done
+
+  echo "ERROR: timed out waiting for ${container_name}"
+  docker compose logs "$container_name" --tail=200 || true
+  return 1
+}
+
 upsert_env "APP_VERSION" "$COMMIT_SHA"
 upsert_env "APP_BUILD_TIME" "$BUILD_TIME"
+upsert_env "SPRING_PROFILES_ACTIVE" "docker"
 
 echo "== Version updated in .env =="
 echo "APP_VERSION=$COMMIT_SHA"
 echo "APP_BUILD_TIME=$BUILD_TIME"
+echo "SPRING_PROFILES_ACTIVE=docker"
 
 echo "== Docker down =="
 docker compose down
@@ -48,11 +80,17 @@ docker compose down
 echo "== Docker build (app + frontend-build) =="
 docker compose build --no-cache app frontend-build
 
-echo "== Docker up =="
-docker compose up -d
+echo "== Start infra first =="
+docker compose up -d reallife-mysql redis elasticsearch
 
-echo "== Restart nginx =="
-docker compose restart nginx
+wait_for_health reallife-mysql 60 2
+wait_for_health reallife-redis 40 2
+
+echo "== Start app/front/nginx =="
+docker compose up -d app frontend-build nginx
+
+wait_for_health reallife-app 60 2
+wait_for_health reallife-nginx 40 2
 
 echo "== Containers =="
 docker compose ps
@@ -70,4 +108,5 @@ done
 echo "== Version check =="
 curl -fsS "http://localhost/api/version" || true
 echo
+
 echo "== Deploy done =="
