@@ -58,9 +58,20 @@ class AdminDashboardControllerTest {
                 .andExpect(status().isUnauthorized());
     }
 
+
+    @Test
+    void admin_dashboard_권한없음_403() throws Exception {
+        var user = docs.saveUser("dashboardviewer", "일반유저");
+        String token = docs.issueTokenFor(user);
+
+        mockMvc.perform(get("/admin/dashboard")
+                        .header(DocsTestSupport.headerName(), DocsTestSupport.auth(token)))
+                .andExpect(status().isForbidden());
+    }
+
     @Test
     void admin_dashboard_응답구조_200() throws Exception {
-        var admin = docs.saveUser("dashboardadmin", "운영자");
+        var admin = docs.saveUserExact("dashboardadmin@test.com", "dashboardadmin", "운영자");
         String token = docs.issueTokenFor(admin);
 
         sseHealthTracker.onConnected();

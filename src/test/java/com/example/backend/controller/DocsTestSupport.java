@@ -48,6 +48,11 @@ public class DocsTestSupport {
         return userRepository.saveAndFlush(user);
     }
 
+    public User saveUserExact(String email, String handle, String name) {
+        User user = new User(email, handle, "encoded", name);
+        return userRepository.saveAndFlush(user);
+    }
+
     @Transactional
     public Post savePost(UUID authorId, String content) {
         // ✅ 기본값은 ALL(공개)로

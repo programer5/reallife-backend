@@ -134,6 +134,28 @@ cp .env.example .env
 
 > ⚠️ `.env`는 **절대 커밋하지 않습니다.** (아래 “Git 체크” 참고)
 
+### 3-1A) Ops / Admin 접근 제어
+운영(admin/ops) 엔드포인트는 **로그인만으로 접근되지 않습니다.**
+
+필수 조건:
+- 인증된 사용자 access token
+- `OPS_ADMIN_ALLOWED_EMAILS` 또는 `OPS_ADMIN_ALLOWED_HANDLES`에 포함된 계정
+- 검색 재색인의 경우 `X-Search-Reindex-Token` 헤더 추가
+
+대표 엔드포인트:
+- `/admin/dashboard`
+- `/admin/health/**`
+- `/admin/errors`
+- `/admin/alerts/**`
+- `/api/search/admin/reindex`
+
+예시 환경변수:
+```env
+OPS_ADMIN_ALLOWED_EMAILS=ops1@example.com,ops2@example.com
+OPS_ADMIN_ALLOWED_HANDLES=adminuser,opsmanager
+```
+
+
 ### 3-2) 실행
 ```bash
 docker compose down

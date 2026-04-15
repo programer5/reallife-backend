@@ -64,7 +64,7 @@ class AdminHealthControllerDocsTest {
 
     @Test
     void admin_health_요약_문서화(RestDocumentationContextProvider restDocumentation) throws Exception {
-        var admin = docs.saveUser("healthdoc", "운영자");
+        var admin = docs.saveUserExact("healthdoc@test.com", "healthdoc", "운영자");
         String token = docs.issueTokenFor(admin);
 
         sseHealthTracker.onConnected();
@@ -82,7 +82,7 @@ class AdminHealthControllerDocsTest {
                         preprocessRequest(prettyPrint()),
                         preprocessResponse(prettyPrint()),
                         requestHeaders(
-                                headerWithName(HttpHeaders.AUTHORIZATION).description("Bearer {accessToken}")
+                                headerWithName(HttpHeaders.AUTHORIZATION).description("Bearer {accessToken} (ops allowlist 포함 계정)")
                         ),
                         relaxedResponseFields(
                                 fieldWithPath("status").type(STRING).description("전체 운영 상태 (UP, DEGRADED, DOWN)"),
@@ -109,7 +109,7 @@ class AdminHealthControllerDocsTest {
 
     @Test
     void admin_health_realtime_문서화(RestDocumentationContextProvider restDocumentation) throws Exception {
-        var admin = docs.saveUser("realtimedoc", "운영자");
+        var admin = docs.saveUserExact("realtimedoc@test.com", "realtimedoc", "운영자");
         String token = docs.issueTokenFor(admin);
 
         sseHealthTracker.onConnected();
@@ -125,7 +125,7 @@ class AdminHealthControllerDocsTest {
                         preprocessRequest(prettyPrint()),
                         preprocessResponse(prettyPrint()),
                         requestHeaders(
-                                headerWithName(HttpHeaders.AUTHORIZATION).description("Bearer {accessToken}")
+                                headerWithName(HttpHeaders.AUTHORIZATION).description("Bearer {accessToken} (ops allowlist 포함 계정)")
                         ),
                         relaxedResponseFields(
                                 fieldWithPath("status").type(STRING).description("실시간 운영 상태"),
@@ -143,7 +143,7 @@ class AdminHealthControllerDocsTest {
 
     @Test
     void admin_health_reminder_문서화(RestDocumentationContextProvider restDocumentation) throws Exception {
-        var admin = docs.saveUser("reminderdoc", "운영자");
+        var admin = docs.saveUserExact("reminderdoc@test.com", "reminderdoc", "운영자");
         String token = docs.issueTokenFor(admin);
 
         reminderHealthTracker.markRunStarted();
@@ -157,7 +157,7 @@ class AdminHealthControllerDocsTest {
                         preprocessRequest(prettyPrint()),
                         preprocessResponse(prettyPrint()),
                         requestHeaders(
-                                headerWithName(HttpHeaders.AUTHORIZATION).description("Bearer {accessToken}")
+                                headerWithName(HttpHeaders.AUTHORIZATION).description("Bearer {accessToken} (ops allowlist 포함 계정)")
                         ),
                         relaxedResponseFields(
                                 fieldWithPath("status").type(STRING).description("Reminder 운영 상태"),

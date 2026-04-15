@@ -51,7 +51,7 @@ class AdminAlertControllerDocsTest {
 
     @Test
     void admin_alert_test_문서화(RestDocumentationContextProvider restDocumentation) throws Exception {
-        var admin = docs.saveUser("alertdoc", "운영자");
+        var admin = docs.saveUserExact("alertdoc@test.com", "alertdoc", "운영자");
         String token = docs.issueTokenFor(admin);
 
         mockMvc(restDocumentation)
@@ -62,7 +62,7 @@ class AdminAlertControllerDocsTest {
                         preprocessRequest(prettyPrint()),
                         preprocessResponse(prettyPrint()),
                         requestHeaders(
-                                headerWithName(HttpHeaders.AUTHORIZATION).description("Bearer {accessToken}")
+                                headerWithName(HttpHeaders.AUTHORIZATION).description("Bearer {accessToken} (ops allowlist 포함 계정)")
                         ),
                         relaxedResponseFields(
                                 fieldWithPath("enabled").type(BOOLEAN).description("운영 알림 기능 활성화 여부"),

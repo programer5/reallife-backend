@@ -5,6 +5,7 @@ import com.example.backend.controller.search.dto.SearchReindexResponse;
 import com.example.backend.controller.search.dto.SearchResponse;
 import com.example.backend.exception.BusinessException;
 import com.example.backend.exception.ErrorCode;
+import com.example.backend.ops.OpsAccessService;
 import com.example.backend.service.search.SearchReindexService;
 import com.example.backend.service.search.UnifiedSearchService;
 import lombok.RequiredArgsConstructor;
@@ -21,6 +22,7 @@ public class SearchController {
     private final UnifiedSearchService unifiedSearchService;
     private final SearchReindexService searchReindexService;
     private final SearchElasticProperties searchElasticProperties;
+    private final OpsAccessService opsAccessService;
 
     @GetMapping
     public SearchResponse search(
@@ -43,6 +45,7 @@ public class SearchController {
             @RequestParam(required = false) Integer batchSize,
             Authentication authentication
     ) {
+        opsAccessService.requireOps(authentication);
         validateReindexToken(reindexToken);
         UUID meId = UUID.fromString(authentication.getName());
         return searchReindexService.reindexAll(meId, batchSize);

@@ -6,7 +6,9 @@ import com.example.backend.monitoring.dto.ReminderHealthResponse;
 import com.example.backend.monitoring.service.AdminHealthService;
 import com.example.backend.monitoring.service.RealtimeHealthService;
 import com.example.backend.monitoring.service.ReminderHealthService;
+import com.example.backend.ops.OpsAccessService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -19,19 +21,23 @@ public class AdminHealthController {
     private final AdminHealthService adminHealthService;
     private final RealtimeHealthService realtimeHealthService;
     private final ReminderHealthService reminderHealthService;
+    private final OpsAccessService opsAccessService;
 
     @GetMapping
-    public AdminHealthResponse health() {
+    public AdminHealthResponse health(Authentication authentication) {
+        opsAccessService.requireOps(authentication);
         return adminHealthService.getAdminHealth();
     }
 
     @GetMapping("/realtime")
-    public RealtimeHealthResponse realtime() {
+    public RealtimeHealthResponse realtime(Authentication authentication) {
+        opsAccessService.requireOps(authentication);
         return realtimeHealthService.getRealtimeHealth();
     }
 
     @GetMapping("/reminder")
-    public ReminderHealthResponse reminder() {
+    public ReminderHealthResponse reminder(Authentication authentication) {
+        opsAccessService.requireOps(authentication);
         return reminderHealthService.getReminderHealth();
     }
 }

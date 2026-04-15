@@ -3,6 +3,7 @@ package com.example.backend.controller.admin;
 import com.example.backend.controller.admin.dto.AdminAlertTestResponse;
 import com.example.backend.controller.admin.dto.OpsAlertHistoryResponse;
 import com.example.backend.ops.OpsAlertService;
+import com.example.backend.ops.OpsAccessService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -15,16 +16,20 @@ import org.springframework.web.bind.annotation.RestController;
 @RequestMapping("/admin/alerts")
 public class AdminAlertController {
 
+    private final OpsAccessService opsAccessService;
+
     private final OpsAlertService opsAlertService;
 
     @PostMapping("/test")
     public AdminAlertTestResponse sendSlackTestAlert(Authentication authentication) {
+        opsAccessService.requireOps(authentication);
         String requestedBy = authentication != null ? authentication.getName() : "anonymous";
         return opsAlertService.sendSlackTestAlert(requestedBy);
     }
 
     @GetMapping("/history")
-    public OpsAlertHistoryResponse getAlertHistory() {
+    public OpsAlertHistoryResponse getAlertHistory(Authentication authentication) {
+        opsAccessService.requireOps(authentication);
         return opsAlertService.getRecentAlertHistory();
     }
 }

@@ -49,6 +49,17 @@ class AdminAlertHistoryControllerTest {
                 .andExpect(status().isUnauthorized());
     }
 
+
+    @Test
+    void admin_alert_history_권한없음_403() throws Exception {
+        var user = docs.saveUser("alertHistoryViewer", "일반유저");
+        String token = docs.issueTokenFor(user);
+
+        mockMvc.perform(get("/admin/alerts/history")
+                        .header(DocsTestSupport.headerName(), DocsTestSupport.auth(token)))
+                .andExpect(status().isForbidden());
+    }
+
     @Test
     void admin_alert_history_응답구조_200() throws Exception {
         opsAlertLogRepository.save(
@@ -63,7 +74,7 @@ class AdminAlertHistoryControllerTest {
                 )
         );
 
-        var admin = docs.saveUser("alertHistoryAdmin", "운영자");
+        var admin = docs.saveUserExact("alerthistoryadmin@test.com", "alerthistoryadmin", "운영자");
         String token = docs.issueTokenFor(admin);
 
         mockMvc.perform(get("/admin/alerts/history")

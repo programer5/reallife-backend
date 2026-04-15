@@ -136,9 +136,23 @@ class SearchControllerDocsTest {
                 ));
     }
 
+
+    @Test
+    void 검색_재색인_운영권한없음_403(RestDocumentationContextProvider restDocumentation) throws Exception {
+        var me = docs.saveUser("search-viewer", "일반유저");
+        String token = docs.issueTokenFor(me);
+
+        mockMvc(restDocumentation)
+                .perform(post("/api/search/admin/reindex")
+                        .queryParam("batchSize", "100")
+                        .header(HttpHeaders.AUTHORIZATION, DocsTestSupport.auth(token))
+                        .header("X-Search-Reindex-Token", "test-reindex-token"))
+                .andExpect(status().isForbidden());
+    }
+
     @Test
     void 검색_재색인_200(RestDocumentationContextProvider restDocumentation) throws Exception {
-        var me = docs.saveUser("reindex-api", "재색인유저");
+        var me = docs.saveUserExact("reindex-api@test.com", "reindex-api", "재색인유저");
         String token = docs.issueTokenFor(me);
 
         var conversation = conversationRepository.saveAndFlush(Conversation.direct());
@@ -182,8 +196,8 @@ class SearchControllerDocsTest {
                         preprocessRequest(prettyPrint()),
                         preprocessResponse(prettyPrint()),
                         requestHeaders(
-                                headerWithName(HttpHeaders.AUTHORIZATION).description("Bearer {accessToken}"),
-                                headerWithName("X-Search-Reindex-Token").description("재색인 보호 토큰")
+                                headerWithName(HttpHeaders.AUTHORIZATION).description("Bearer {accessToken} (ops allowlist 포함 계정)"),
+                                headerWithName("X-Search-Reindex-Token").description("재색인 보호 토큰 (ops allowlist 권한 + 로그인 필요)")
                         ),
                         queryParameters(
                                 parameterWithName("batchSize").optional().description("배치 크기(기본 300, 최소 10, 최대 1000)")

@@ -30,14 +30,16 @@
 
 # 3. Health Endpoint 점검
 
+사전 조건: `OPS_ADMIN_ALLOWED_EMAILS` 또는 `OPS_ADMIN_ALLOWED_HANDLES` 에 테스트용 ops 계정이 포함되어 있어야 함
+
 | Endpoint | 기대 결과 | 결과 |
 |---------|----------|------|
 | `/actuator/health` | 200 / UP | PASS / FAIL |
 | `/actuator/health/liveness` | 200 | PASS / FAIL |
 | `/actuator/health/readiness` | 200 | PASS / FAIL |
-| `/admin/health` | 인증 필요 / 정상 응답 | PASS / FAIL |
-| `/admin/health/realtime` | SSE 상태 표시 | PASS / FAIL |
-| `/admin/health/reminder` | scheduler 상태 표시 | PASS / FAIL |
+| `/admin/health` | 미인증 401 / 비허용 ops 403 / 허용 ops 정상 응답 | PASS / FAIL |
+| `/admin/health/realtime` | 허용 ops 계정에서 SSE 상태 표시 | PASS / FAIL |
+| `/admin/health/reminder` | 허용 ops 계정에서 scheduler 상태 표시 | PASS / FAIL |
 
 ---
 
@@ -133,7 +135,7 @@
 
 | 항목 | API | 확인 |
 |-----|-----|-----|
-| Admin Dashboard | /admin/dashboard | 정상 |
-| Admin Errors | /admin/errors | 정상 |
-| Alert Test | /admin/alerts/test | 정상 |
-| Alert History | /admin/alerts/history | 정상 |
+| Admin Dashboard | /admin/dashboard | 허용 ops 계정에서 정상 |
+| Admin Errors | /admin/errors | 허용 ops 계정에서 정상 |
+| Alert Test | /admin/alerts/test | 허용 ops 계정에서 정상 |
+| Alert History | /admin/alerts/history | 허용 ops 계정에서 정상 |

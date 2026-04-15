@@ -68,7 +68,7 @@ class AdminAlertHistoryControllerDocsTest {
                 )
         );
 
-        var admin = docs.saveUser("alertHistoryDoc", "운영자");
+        var admin = docs.saveUserExact("alerthistorydoc@test.com", "alerthistorydoc", "운영자");
         String token = docs.issueTokenFor(admin);
 
         mockMvc(restDocumentation)
@@ -79,7 +79,7 @@ class AdminAlertHistoryControllerDocsTest {
                         preprocessRequest(prettyPrint()),
                         preprocessResponse(prettyPrint()),
                         requestHeaders(
-                                headerWithName(HttpHeaders.AUTHORIZATION).description("Bearer {accessToken}")
+                                headerWithName(HttpHeaders.AUTHORIZATION).description("Bearer {accessToken} (ops allowlist 포함 계정)")
                         ),
                         relaxedResponseFields(
                                 fieldWithPath("items").type(ARRAY).description("최근 운영 알림 이력 목록"),

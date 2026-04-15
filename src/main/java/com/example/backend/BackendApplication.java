@@ -2,6 +2,7 @@ package com.example.backend;
 
 import com.example.backend.config.CookieProperties;
 import com.example.backend.config.CorsProperties;
+import com.example.backend.config.OpsAdminProperties;
 import jakarta.annotation.PostConstruct;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
@@ -13,7 +14,8 @@ import java.util.TimeZone;
 @EnableScheduling
 @EnableConfigurationProperties({
 		CookieProperties.class,
-		CorsProperties.class
+		CorsProperties.class,
+		OpsAdminProperties.class
 })
 @SpringBootApplication
 public class BackendApplication {

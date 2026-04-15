@@ -44,9 +44,20 @@ class AdminAlertControllerTest {
                 .andExpect(status().isUnauthorized());
     }
 
+
+    @Test
+    void admin_alert_test_권한없음_403() throws Exception {
+        var user = docs.saveUser("alertviewer", "일반유저");
+        String token = docs.issueTokenFor(user);
+
+        mockMvc.perform(post("/admin/alerts/test")
+                        .header(DocsTestSupport.headerName(), DocsTestSupport.auth(token)))
+                .andExpect(status().isForbidden());
+    }
+
     @Test
     void admin_alert_test_응답구조_200() throws Exception {
-        var admin = docs.saveUser("alertadmin", "운영자");
+        var admin = docs.saveUserExact("alertadmin@test.com", "alertadmin", "운영자");
         String token = docs.issueTokenFor(admin);
 
         mockMvc.perform(post("/admin/alerts/test")

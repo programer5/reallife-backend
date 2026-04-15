@@ -68,7 +68,7 @@ class AdminDashboardControllerDocsTest {
 
     @Test
     void admin_dashboard_문서화(RestDocumentationContextProvider restDocumentation) throws Exception {
-        var admin = docs.saveUser("dashboarddoc", "운영자");
+        var admin = docs.saveUserExact("dashboarddoc@test.com", "dashboarddoc", "운영자");
         String token = docs.issueTokenFor(admin);
 
         sseHealthTracker.onConnected();
@@ -101,7 +101,7 @@ class AdminDashboardControllerDocsTest {
                         preprocessRequest(prettyPrint()),
                         preprocessResponse(prettyPrint()),
                         requestHeaders(
-                                headerWithName(HttpHeaders.AUTHORIZATION).description("Bearer {accessToken}")
+                                headerWithName(HttpHeaders.AUTHORIZATION).description("Bearer {accessToken} (ops allowlist 포함 계정)")
                         ),
                         relaxedResponseFields(
                                 fieldWithPath("status").type(STRING).description("대시보드 전체 상태 (UP, DEGRADED, DOWN)"),

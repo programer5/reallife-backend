@@ -25,11 +25,14 @@ curl "http://localhost/api/search?q=test&type=ALL&limit=5"
 - `db-fallback`: ES 비활성 또는 장애 fallback
 
 ## 4. 재색인 성공 확인
-관리자 인증과 `X-Search-Reindex-Token` 헤더를 함께 사용합니다.
+허용된 ops 계정의 인증과 `X-Search-Reindex-Token` 헤더를 함께 사용합니다.
+
+사전 조건:
+- 호출 사용자 계정이 `OPS_ADMIN_ALLOWED_EMAILS` 또는 `OPS_ADMIN_ALLOWED_HANDLES` 에 포함되어 있어야 합니다.
 
 ```bash
 curl -X POST "http://localhost/api/search/admin/reindex?batchSize=300" \
-  -H "Authorization: Bearer <accessToken>" \
+  -H "Authorization: Bearer <opsAccessToken>" \
   -H "X-Search-Reindex-Token: <reindexToken>"
 ```
 

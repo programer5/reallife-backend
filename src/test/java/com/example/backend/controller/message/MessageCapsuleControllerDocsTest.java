@@ -85,7 +85,7 @@ class MessageCapsuleControllerDocsTest {
                         .queryParam("messageId", message.getId().toString())
                         .queryParam("conversationId", conversation.getId().toString())
                         .queryParam("title", "시험 끝나고 열기")
-                        .queryParam("unlockAt", "2026-04-01T12:00:00")
+                        .queryParam("unlockAt", LocalDateTime.now().plusDays(7).withNano(0).toString())
                         .header(DocsTestSupport.headerName(), DocsTestSupport.auth(token)))
                 .andExpect(status().isOk())
                 .andDo(document("capsules-create",
@@ -171,7 +171,7 @@ class MessageCapsuleControllerDocsTest {
         mockMvc.perform(patch("/api/capsules/{capsuleId}", capsule.getId())
                         .header(DocsTestSupport.headerName(), DocsTestSupport.auth(token))
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(new MessageCapsuleUpdateRequest("수정된 캡슐", "2026-05-01T12:00:00"))))
+                        .content(objectMapper.writeValueAsString(new MessageCapsuleUpdateRequest("수정된 캡슐", LocalDateTime.now().plusDays(14).withNano(0).toString()))))
                 .andExpect(status().isOk())
                 .andDo(document("capsules-update",
                         preprocessRequest(prettyPrint()),

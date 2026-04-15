@@ -246,11 +246,16 @@ Application → Cookies
 
 체크
 
+사전 조건
+
+- 호출 사용자 계정이 ops admin allowlist에 포함되어 있어야 함
+- `OPS_ADMIN_ALLOWED_EMAILS` 또는 `OPS_ADMIN_ALLOWED_HANDLES` 설정 확인
+
 ``` bash
 curl http://localhost:9200
 curl "http://localhost/api/search?q=test&type=ALL&limit=5"
 curl -X POST "http://localhost/api/search/admin/reindex?batchSize=300" \
-  -H "Authorization: Bearer <accessToken>" \
+  -H "Authorization: Bearer <opsAccessToken>" \
   -H "X-Search-Reindex-Token: <reindexToken>"
 ```
 
@@ -304,6 +309,9 @@ nginx
 
 
 ## 운영 대시보드 점검
+
+호출 전 allowlist 설정 확인:
+- `OPS_ADMIN_ALLOWED_EMAILS` 또는 `OPS_ADMIN_ALLOWED_HANDLES`
 
 1. `/admin/dashboard` 호출 정상 여부 확인
 2. `/admin/errors` 최근 서버 에러 조회 확인

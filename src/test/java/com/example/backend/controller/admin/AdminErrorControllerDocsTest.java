@@ -70,7 +70,7 @@ class AdminErrorControllerDocsTest {
 
     @Test
     void admin_errors_문서화(RestDocumentationContextProvider restDocumentation) throws Exception {
-        var admin = docs.saveUser("errordoc", "운영자");
+        var admin = docs.saveUserExact("errordoc@test.com", "errordoc", "운영자");
         String token = docs.issueTokenFor(admin);
 
         mockMvc(restDocumentation)
@@ -81,7 +81,7 @@ class AdminErrorControllerDocsTest {
                         preprocessRequest(prettyPrint()),
                         preprocessResponse(prettyPrint()),
                         requestHeaders(
-                                headerWithName(HttpHeaders.AUTHORIZATION).description("Bearer {accessToken}")
+                                headerWithName(HttpHeaders.AUTHORIZATION).description("Bearer {accessToken} (ops allowlist 포함 계정)")
                         ),
                         relaxedResponseFields(
                                 fieldWithPath("[]").type(ARRAY).description("최근 서버 에러 로그 목록"),

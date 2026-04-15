@@ -101,8 +101,15 @@ class NotificationControllerDocsTest {
     void 알림목록_조회_다음페이지_200(RestDocumentationContextProvider restDocumentation) throws Exception {
         var me = docs.saveUser("notiNext", "me");
         String token = docs.issueTokenFor(me);
-        for (int i = 0; i < 5; i++) notificationRepository.save(Notification.create(me.getId(), NotificationType.MESSAGE_RECEIVED, UUID.randomUUID(), "알림 " + i));
-        notificationRepository.flush();
+
+        notificationRepository.saveAndFlush(Notification.create(me.getId(), NotificationType.PIN_REMIND, UUID.randomUUID(), UUID.randomUUID(), "리마인더 알림"));
+        notificationRepository.saveAndFlush(Notification.create(me.getId(), NotificationType.MESSAGE_RECEIVED, UUID.randomUUID(), UUID.randomUUID(), "메시지 알림"));
+        for (int i = 0; i < 3; i++) {
+            Notification readMessage = Notification.create(me.getId(), NotificationType.MESSAGE_RECEIVED, UUID.randomUUID(), "읽은 알림 " + i);
+            readMessage.markAsRead();
+            notificationRepository.saveAndFlush(readMessage);
+        }
+
         String firstPage = mockMvc(restDocumentation)
                 .perform(get("/api/notifications").param("size", "2").header(HttpHeaders.AUTHORIZATION, DocsTestSupport.auth(token)))
                 .andExpect(status().isOk())

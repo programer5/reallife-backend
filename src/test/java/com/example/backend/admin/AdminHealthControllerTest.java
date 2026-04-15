@@ -1,4 +1,4 @@
-package com.example.backend.controller.admin;
+package com.example.backend.admin;
 
 import com.example.backend.controller.DocsTestSupport;
 import com.example.backend.monitoring.support.NotificationHealthTracker;
@@ -55,8 +55,18 @@ class AdminHealthControllerTest {
     }
 
     @Test
+    void admin_health_권한없음_403() throws Exception {
+        var user = docs.saveUser("healthviewer", "일반유저");
+        String token = docs.issueTokenFor(user);
+
+        mockMvc.perform(get("/admin/health")
+                        .header(DocsTestSupport.headerName(), DocsTestSupport.auth(token)))
+                .andExpect(status().isForbidden());
+    }
+
+    @Test
     void admin_health_요약_응답_200() throws Exception {
-        var admin = docs.saveUser("healthadmin", "운영자");
+        var admin = docs.saveUserExact("healthadmin@test.com", "healthadmin", "운영자");
         String token = docs.issueTokenFor(admin);
 
         sseHealthTracker.onConnected();
@@ -81,8 +91,18 @@ class AdminHealthControllerTest {
     }
 
     @Test
+    void admin_health_realtime_권한없음_403() throws Exception {
+        var user = docs.saveUser("realtimeviewer", "일반유저");
+        String token = docs.issueTokenFor(user);
+
+        mockMvc.perform(get("/admin/health/realtime")
+                        .header(DocsTestSupport.headerName(), DocsTestSupport.auth(token)))
+                .andExpect(status().isForbidden());
+    }
+
+    @Test
     void admin_health_realtime_응답_200() throws Exception {
-        var admin = docs.saveUser("realtimeadmin", "운영자");
+        var admin = docs.saveUserExact("realtimeadmin@test.com", "realtimeadmin", "운영자");
         String token = docs.issueTokenFor(admin);
 
         sseHealthTracker.onConnected();
@@ -102,8 +122,18 @@ class AdminHealthControllerTest {
     }
 
     @Test
+    void admin_health_reminder_권한없음_403() throws Exception {
+        var user = docs.saveUser("reminderviewer", "일반유저");
+        String token = docs.issueTokenFor(user);
+
+        mockMvc.perform(get("/admin/health/reminder")
+                        .header(DocsTestSupport.headerName(), DocsTestSupport.auth(token)))
+                .andExpect(status().isForbidden());
+    }
+
+    @Test
     void admin_health_reminder_응답_200() throws Exception {
-        var admin = docs.saveUser("reminderadmin", "운영자");
+        var admin = docs.saveUserExact("reminderadmin@test.com", "reminderadmin", "운영자");
         String token = docs.issueTokenFor(admin);
 
         reminderHealthTracker.markRunStarted();
