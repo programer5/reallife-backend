@@ -35,53 +35,59 @@ public class ConversationPinRemindScheduler {
     public void run() {
         reminderHealthTracker.markRunStarted();
 
-        LocalDateTime now = LocalDateTime.now();
-        List<ConversationPin> duePins = pinRepository.findDueReminds(now, PageRequest.of(0, BATCH_SIZE));
+        try {
+            LocalDateTime now = LocalDateTime.now();
+            List<ConversationPin> duePins = pinRepository.findDueReminds(now, PageRequest.of(0, BATCH_SIZE));
 
-        if (duePins.isEmpty()) {
-            reminderHealthTracker.markRunSuccess(0);
-            return;
-        }
-
-        int sent = 0;
-
-        for (ConversationPin pin : duePins) {
-            int claimed = pinRepository.claimRemind(pin.getId(), now);
-            if (claimed == 0) continue;
-
-            List<UUID> targets = memberRepository.findUserIdsByConversationId(pin.getConversationId());
-
-            String when = (pin.getStartAt() == null) ? "곧" : DT.format(pin.getStartAt());
-            String place = (pin.getPlaceText() == null || pin.getPlaceText().isBlank()) ? "장소 미정" : pin.getPlaceText();
-            String title = (pin.getTitle() == null || pin.getTitle().isBlank()) ? "약속" : pin.getTitle();
-
-            String ahead;
-            if (pin.getStartAt() == null || pin.getRemindAt() == null) {
-                ahead = "리마인드";
-            } else {
-                long mins = Duration.between(pin.getRemindAt(), pin.getStartAt()).toMinutes();
-                if (mins == 60) ahead = "1시간 전";
-                else if (mins == 30) ahead = "30분 전";
-                else if (mins == 10) ahead = "10분 전";
-                else if (mins == 5) ahead = "5분 전";
-                else ahead = mins + "분 전";
+            if (duePins.isEmpty()) {
+                reminderHealthTracker.markRunSuccess(0);
+                return;
             }
 
-            String body = "⏰ " + ahead + " · " + title + " · " + place + " · " + when;
+            int sent = 0;
 
-            for (UUID userId : targets) {
-                notificationCommandService.createIfNotExists(
-                        userId,
-                        NotificationType.PIN_REMIND,
-                        pin.getId(),
-                        body
-                );
-                sent++;
+            for (ConversationPin pin : duePins) {
+                int claimed = pinRepository.claimRemind(pin.getId(), now);
+                if (claimed == 0) continue;
+
+                List<UUID> targets = memberRepository.findUserIdsByConversationId(pin.getConversationId());
+
+                String when = (pin.getStartAt() == null) ? "곧" : DT.format(pin.getStartAt());
+                String place = (pin.getPlaceText() == null || pin.getPlaceText().isBlank()) ? "장소 미정" : pin.getPlaceText();
+                String title = (pin.getTitle() == null || pin.getTitle().isBlank()) ? "약속" : pin.getTitle();
+
+                String ahead;
+                if (pin.getStartAt() == null || pin.getRemindAt() == null) {
+                    ahead = "리마인드";
+                } else {
+                    long mins = Duration.between(pin.getRemindAt(), pin.getStartAt()).toMinutes();
+                    if (mins == 60) ahead = "1시간 전";
+                    else if (mins == 30) ahead = "30분 전";
+                    else if (mins == 10) ahead = "10분 전";
+                    else if (mins == 5) ahead = "5분 전";
+                    else ahead = mins + "분 전";
+                }
+
+                String body = "⏰ " + ahead + " · " + title + " · " + place + " · " + when;
+
+                for (UUID userId : targets) {
+                    notificationCommandService.createIfNotExists(
+                            userId,
+                            NotificationType.PIN_REMIND,
+                            pin.getId(),
+                            body
+                    );
+                    sent++;
+                }
             }
+
+            reminderHealthTracker.markRunSuccess(sent);
+
+            log.info("🔔 PIN_REMIND scheduler processed | duePins={} notificationsAttempted={}", duePins.size(), sent);
+        } catch (Exception e) {
+            reminderHealthTracker.markRunFailure(e);
+            log.error("PIN_REMIND scheduler failed", e);
+            throw e;
         }
-
-        reminderHealthTracker.markRunSuccess(sent);
-
-        log.info("🔔 PIN_REMIND scheduler processed | duePins={} notificationsAttempted={}", duePins.size(), sent);
     }
 }

@@ -52,6 +52,7 @@ public class AdminHealthService {
         metrics.put("lastSseEventSentAt", realtime.lastSseEventSentAt());
         metrics.put("lastReminderRunAt", reminder.lastRunAt());
         metrics.put("lastReminderSuccessAt", reminder.lastSuccessAt());
+        metrics.put("lastReminderFailureAt", reminder.lastFailureAt());
         metrics.put("recentReminderCreatedCount", reminder.recentCreatedCount());
 
         HealthStatus overall = aggregate(dbStatus, redisStatus, realtime.status(), reminder.status());

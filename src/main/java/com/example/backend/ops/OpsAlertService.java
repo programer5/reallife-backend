@@ -175,6 +175,7 @@ public class OpsAlertService {
                 schedulerEnabled: %s
                 lastRunAt: %s
                 lastSuccessAt: %s
+                lastFailureAt: %s
                 minutesSinceLastRun: %s
                 recentCreatedCount: %s
                 notes: %s
@@ -186,6 +187,7 @@ public class OpsAlertService {
                 reminder.schedulerEnabled(),
                 reminder.lastRunAt(),
                 reminder.lastSuccessAt(),
+                reminder.lastFailureAt(),
                 reminder.minutesSinceLastRun(),
                 reminder.recentCreatedCount(),
                 reminder.notes()

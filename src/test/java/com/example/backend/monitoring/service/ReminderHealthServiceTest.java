@@ -22,6 +22,8 @@ class ReminderHealthServiceTest {
         assertThat(result.schedulerEnabled()).isTrue();
         assertThat(result.lastRunAt()).isNotNull();
         assertThat(result.lastSuccessAt()).isNotNull();
+        assertThat(result.lastFailureAt()).isNull();
+        assertThat(result.lastFailureMessage()).isNull();
         assertThat(result.recentCreatedCount()).isEqualTo(3);
         assertThat(result.serverTime()).isNotNull();
     }
@@ -38,7 +40,24 @@ class ReminderHealthServiceTest {
         assertThat(result.schedulerEnabled()).isTrue();
         assertThat(result.lastRunAt()).isNull();
         assertThat(result.lastSuccessAt()).isNull();
+        assertThat(result.lastFailureAt()).isNull();
         assertThat(result.notes()).isNotEmpty();
         assertThat(result.serverTime()).isNotNull();
+    }
+
+    @Test
+    void scheduler_실패가_기록되면_DOWN() {
+        ReminderHealthTracker tracker = new ReminderHealthTracker();
+        tracker.markRunStarted();
+        tracker.markRunFailure(new IllegalStateException("test failure"));
+
+        ReminderHealthService service = new ReminderHealthService(tracker);
+
+        var result = service.getReminderHealth();
+
+        assertThat(result.status()).isEqualTo(HealthStatus.DOWN);
+        assertThat(result.lastFailureAt()).isNotNull();
+        assertThat(result.lastFailureMessage()).contains("test failure");
+        assertThat(result.notes()).anyMatch(note -> note.contains("오류"));
     }
 }

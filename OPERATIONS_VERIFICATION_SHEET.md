@@ -62,6 +62,7 @@
 | Reminder 알림 생성 | 리마인드 시간 도달 | PASS / FAIL |
 | lastRunAt 갱신 | `/admin/health/reminder` | PASS / FAIL |
 | lastSuccessAt 갱신 | `/admin/health/reminder` | PASS / FAIL |
+| 실패 시 lastFailureAt/lastFailureMessage 노출 | scheduler 예외 후 `/admin/health/reminder` 확인 | PASS / FAIL |
 
 ---
 

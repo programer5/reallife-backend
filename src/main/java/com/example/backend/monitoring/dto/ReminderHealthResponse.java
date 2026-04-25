@@ -8,6 +8,8 @@ public record ReminderHealthResponse(
         boolean schedulerEnabled,
         LocalDateTime lastRunAt,
         LocalDateTime lastSuccessAt,
+        LocalDateTime lastFailureAt,
+        String lastFailureMessage,
         long recentCreatedCount,
         long minutesSinceLastRun,
         List<String> notes,

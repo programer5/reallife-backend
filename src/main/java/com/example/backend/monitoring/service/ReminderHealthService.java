@@ -20,6 +20,8 @@ public class ReminderHealthService {
     public ReminderHealthResponse getReminderHealth() {
         LocalDateTime lastRunAt = reminderHealthTracker.getLastRunAt();
         LocalDateTime lastSuccessAt = reminderHealthTracker.getLastSuccessAt();
+        LocalDateTime lastFailureAt = reminderHealthTracker.getLastFailureAt();
+        String lastFailureMessage = reminderHealthTracker.getLastFailureMessage();
         long recentCreatedCount = reminderHealthTracker.getRecentCreatedCount();
 
         long minutesSinceLastRun = -1;
@@ -47,11 +49,21 @@ public class ReminderHealthService {
             notes.add("최근 scheduler 성공 이력이 있습니다.");
         }
 
+        if (lastFailureAt != null) {
+            status = HealthStatus.DOWN;
+            notes.add("마지막 scheduler 실행 중 오류가 발생했습니다.");
+            if (lastFailureMessage != null && !lastFailureMessage.isBlank()) {
+                notes.add("lastFailureMessage=" + lastFailureMessage);
+            }
+        }
+
         return new ReminderHealthResponse(
                 status,
                 true,
                 lastRunAt,
                 lastSuccessAt,
+                lastFailureAt,
+                lastFailureMessage,
                 recentCreatedCount,
                 minutesSinceLastRun,
                 notes,
