@@ -22,7 +22,12 @@ public class RealtimeHealthService {
 
     public RealtimeHealthResponse getRealtimeHealth() {
         int active = sseHealthTracker.getActiveConnections();
+        LocalDateTime lastRegisteredAt = sseHealthTracker.getLastRegisteredAt();
+        LocalDateTime lastDisconnectedAt = sseHealthTracker.getLastDisconnectedAt();
         LocalDateTime lastEventAt = sseHealthTracker.getLastEventSentAt();
+        LocalDateTime lastFailureAt = sseHealthTracker.getLastFailureAt();
+        String lastFailureMessage = sseHealthTracker.getLastFailureMessage();
+        long failureCount = sseHealthTracker.getFailureCount();
         LocalDateTime lastNotificationAt = notificationHealthTracker.getLastCreatedAt();
         LocalDateTime lastMessageNotificationAt =
                 notificationHealthTracker.getLastCreatedAt(NotificationType.MESSAGE_RECEIVED);
@@ -38,6 +43,12 @@ public class RealtimeHealthService {
             notes.add("활성 SSE 연결이 존재합니다.");
         }
 
+        if (lastRegisteredAt == null) {
+            notes.add("아직 SSE 연결 등록 이력이 없습니다.");
+        } else {
+            notes.add("최근 SSE 연결 등록 이력이 있습니다.");
+        }
+
         if (lastEventAt == null) {
             notes.add("아직 SSE 전송 이력이 없습니다.");
         } else {
@@ -48,10 +59,23 @@ public class RealtimeHealthService {
             }
         }
 
+        if (lastFailureAt != null) {
+            status = HealthStatus.DOWN;
+            notes.add("마지막 SSE 처리 중 오류가 발생했습니다.");
+            if (lastFailureMessage != null && !lastFailureMessage.isBlank()) {
+                notes.add("lastSseFailureMessage=" + lastFailureMessage);
+            }
+        }
+
         return new RealtimeHealthResponse(
                 status,
                 active,
+                lastRegisteredAt,
+                lastDisconnectedAt,
                 lastEventAt,
+                lastFailureAt,
+                lastFailureMessage,
+                failureCount,
                 lastNotificationAt,
                 lastMessageNotificationAt,
                 lastPinRemindNotificationAt,

@@ -50,6 +50,8 @@ public class AdminHealthService {
         Map<String, Object> metrics = new LinkedHashMap<>();
         metrics.put("activeSseConnections", realtime.activeSseConnections());
         metrics.put("lastSseEventSentAt", realtime.lastSseEventSentAt());
+        metrics.put("lastSseFailureAt", realtime.lastSseFailureAt());
+        metrics.put("sseFailureCount", realtime.sseFailureCount());
         metrics.put("lastReminderRunAt", reminder.lastRunAt());
         metrics.put("lastReminderSuccessAt", reminder.lastSuccessAt());
         metrics.put("lastReminderFailureAt", reminder.lastFailureAt());

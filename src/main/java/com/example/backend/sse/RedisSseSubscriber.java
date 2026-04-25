@@ -1,10 +1,11 @@
 package com.example.backend.sse;
 
+import com.example.backend.monitoring.support.SseHealthTracker;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.context.annotation.Profile; // ✅ 추가
+import org.springframework.context.annotation.Profile;
 import org.springframework.data.redis.connection.Message;
 import org.springframework.data.redis.connection.MessageListener;
 import org.springframework.data.redis.listener.ChannelTopic;
@@ -15,7 +16,7 @@ import java.util.Map;
 import java.util.UUID;
 
 @Slf4j
-@Profile("!test") // ✅ test 프로필에서는 빈 생성 안 함
+@Profile("!test")
 @Component
 @RequiredArgsConstructor
 public class RedisSseSubscriber {
@@ -23,6 +24,7 @@ public class RedisSseSubscriber {
     private final RedisMessageListenerContainer container;
     private final ObjectMapper objectMapper;
     private final SseEmitterRegistry registry;
+    private final SseHealthTracker sseHealthTracker;
 
     @PostConstruct
     public void register() {
@@ -44,6 +46,7 @@ public class RedisSseSubscriber {
 
                     registry.send(userId, pm.eventName(), payload, pm.eventId());
                 } catch (Exception e) {
+                    sseHealthTracker.onFailure(e);
                     log.warn("Redis pubsub handle failed", e);
                 }
             }

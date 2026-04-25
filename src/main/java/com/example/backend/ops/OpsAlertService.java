@@ -134,6 +134,8 @@ public class OpsAlertService {
                 현재상태: %s
                 activeSseConnections: %s
                 lastSseEventSentAt: %s
+                lastSseFailureAt: %s
+                sseFailureCount: %s
                 lastNotificationCreatedAt: %s
                 notes: %s
                 확인: /admin/health/realtime, /ops/dashboard
@@ -143,6 +145,8 @@ public class OpsAlertService {
                 status,
                 realtime.activeSseConnections(),
                 realtime.lastSseEventSentAt(),
+                realtime.lastSseFailureAt(),
+                realtime.sseFailureCount(),
                 realtime.lastNotificationCreatedAt(),
                 realtime.notes()
         );

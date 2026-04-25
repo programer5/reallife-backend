@@ -65,6 +65,7 @@ public class SseEmitterRegistry {
                 sseHealthTracker.onEventSent();
 
             } catch (Exception ex) {
+                sseHealthTracker.onFailure(ex);
                 remove(userId, emitter);
                 try { emitter.complete(); } catch (Exception ignore) {}
             }

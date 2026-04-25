@@ -6,7 +6,12 @@ import java.util.List;
 public record RealtimeHealthResponse(
         HealthStatus status,
         int activeSseConnections,
+        LocalDateTime lastSseRegisteredAt,
+        LocalDateTime lastSseDisconnectedAt,
         LocalDateTime lastSseEventSentAt,
+        LocalDateTime lastSseFailureAt,
+        String lastSseFailureMessage,
+        long sseFailureCount,
         LocalDateTime lastNotificationCreatedAt,
         LocalDateTime lastMessageNotificationCreatedAt,
         LocalDateTime lastPinRemindNotificationCreatedAt,

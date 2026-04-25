@@ -140,3 +140,37 @@
 | Admin Errors | /admin/errors | 허용 ops 계정에서 정상 |
 | Alert Test | /admin/alerts/test | 허용 ops 계정에서 정상 |
 | Alert History | /admin/alerts/history | 허용 ops 계정에서 정상 |
+
+---
+
+# 10. Redis / SSE 실데이터 점검
+
+Docker Desktop에서 Redis 컨테이너가 `reallife-redis`로 떠 있는 기준이다.
+
+```bash
+docker exec -it reallife-redis redis-cli
+ping
+keys sse:events:*
+```
+
+| 항목 | 확인 방법 | 결과 |
+|-----|----------|------|
+| Redis 연결 | `ping` 결과 `PONG` | PASS / FAIL |
+| SSE replay 키 존재 | `keys sse:events:*` | PASS / FAIL |
+| SSE 키 타입 확인 | `type sse:events:{userId}` | PASS / FAIL |
+| SSE 저장 이벤트 확인 | list면 `lrange sse:events:{userId} 0 -1` | PASS / FAIL |
+| SSE 헬스 연결 시각 | `/admin/health/realtime`의 `lastSseRegisteredAt` | PASS / FAIL |
+| SSE 헬스 실패 시각 | 장애 발생 시 `lastSseFailureAt` | PASS / FAIL |
+| SSE 실패 누적 | `/admin/health/realtime`의 `sseFailureCount` | PASS / FAIL |
+
+예시:
+
+```redis
+type sse:events:20306a33-b261-49ed-81f9-bf40b6644238
+lrange sse:events:20306a33-b261-49ed-81f9-bf40b6644238 0 -1
+```
+
+주의:
+- `backup1~4` 같은 키는 지금 SSE 검증과 직접 관련이 없다.
+- `sse:events:*` 키는 Last-Event-ID replay 검증용이다.
+- 프론트에서 알림/메시지/핀 이벤트를 발생시키면 해당 유저 UUID 기준 키가 갱신되어야 한다.

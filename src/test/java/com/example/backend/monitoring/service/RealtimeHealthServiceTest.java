@@ -27,7 +27,11 @@ class RealtimeHealthServiceTest {
 
         assertThat(result.status()).isEqualTo(HealthStatus.UP);
         assertThat(result.activeSseConnections()).isEqualTo(1);
+        assertThat(result.lastSseRegisteredAt()).isNotNull();
         assertThat(result.lastSseEventSentAt()).isNotNull();
+        assertThat(result.lastSseFailureAt()).isNull();
+        assertThat(result.lastSseFailureMessage()).isNull();
+        assertThat(result.sseFailureCount()).isZero();
         assertThat(result.lastNotificationCreatedAt()).isNotNull();
         assertThat(result.lastMessageNotificationCreatedAt()).isNotNull();
         assertThat(result.lastPinRemindNotificationCreatedAt()).isNotNull();
@@ -45,6 +49,7 @@ class RealtimeHealthServiceTest {
 
         assertThat(result.status()).isEqualTo(HealthStatus.UP);
         assertThat(result.activeSseConnections()).isEqualTo(0);
+        assertThat(result.lastSseRegisteredAt()).isNull();
         assertThat(result.lastSseEventSentAt()).isNull();
         assertThat(result.notes()).isNotEmpty();
         assertThat(result.serverTime()).isNotNull();
@@ -63,5 +68,22 @@ class RealtimeHealthServiceTest {
         var result = service.getRealtimeHealth();
 
         assertThat(result.status()).isIn(HealthStatus.UP, HealthStatus.DEGRADED);
+    }
+
+    @Test
+    void SSE_실패_이력이_있으면_DOWN으로_노출한다() {
+        SseHealthTracker sseHealthTracker = new SseHealthTracker();
+        NotificationHealthTracker notificationHealthTracker = new NotificationHealthTracker();
+
+        sseHealthTracker.onFailure(new IllegalStateException("redis publish failed"));
+
+        RealtimeHealthService service = new RealtimeHealthService(sseHealthTracker, notificationHealthTracker);
+
+        var result = service.getRealtimeHealth();
+
+        assertThat(result.status()).isEqualTo(HealthStatus.DOWN);
+        assertThat(result.lastSseFailureAt()).isNotNull();
+        assertThat(result.lastSseFailureMessage()).contains("redis publish failed");
+        assertThat(result.sseFailureCount()).isEqualTo(1);
     }
 }
