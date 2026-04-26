@@ -769,6 +769,20 @@ include::{snippets}/playback-sessions-update-state/http-response.adoc[]
 include::{snippets}/playback-sessions-end/http-request.adoc[]
 include::{snippets}/playback-sessions-end/http-response.adoc[]
 
+=== AI 추천 답장 생성
+include::{snippets}/conversation-ai-reply/http-request.adoc[]
+include::{snippets}/conversation-ai-reply/http-response.adoc[]
+
+=== AI 액션 실행
+include::{snippets}/conversation-ai-action-execute/http-request.adoc[]
+include::{snippets}/conversation-ai-action-execute/http-response.adoc[]
+
+[NOTE]
+====
+AI 추천 답장 API는 `OPENAI_API_KEY`가 있으면 OpenAI 호출 결과를 사용하고, 키가 없거나 호출에 실패하면 rule 기반 fallback을 반환합니다.
+액션 실행 API는 `schedule`, `reminder`, `notify` 타입에서 대화 핀을 생성하고 `targetUrl`로 후속 이동 경로를 제공합니다. `map` 타입은 지도 검색 URL을 반환합니다.
+====
+
 === 대화 핀 목록(ACTIVE)
 include::{snippets}/conversation-pins-get/http-request.adoc[]
 include::{snippets}/conversation-pins-get/http-response.adoc[]

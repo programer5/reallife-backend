@@ -148,6 +148,93 @@ public class ConversationPinService {
         return toResponse(saved);
     }
 
+
+    @Transactional
+    public ConversationPinResponse createAiPin(
+            UUID meId,
+            UUID conversationId,
+            UUID sourceMessageId,
+            String sourceText,
+            String overrideTitle,
+            LocalDateTime overrideStartAt,
+            String overridePlaceText,
+            Integer overrideRemindMinutes
+    ) {
+        if (!memberRepository.existsByConversationIdAndUserId(conversationId, meId)) {
+            throw new BusinessException(ErrorCode.FORBIDDEN);
+        }
+
+        if (sourceMessageId != null) {
+            Optional<ConversationPin> existing =
+                    pinRepository.findByConversationIdAndSourceMessageIdAndDeletedFalse(conversationId, sourceMessageId);
+            if (existing.isPresent()) {
+                return toResponse(existing.get());
+            }
+        }
+
+        Optional<PinDetectionService.DetectionResult> detected = detectionService.detect(sourceText == null ? "" : sourceText);
+
+        String title = (overrideTitle != null && !overrideTitle.isBlank())
+                ? overrideTitle.trim()
+                : detected.map(PinDetectionService.DetectionResult::title).orElse("나중에 이어가기");
+
+        LocalDateTime startAt = overrideStartAt != null
+                ? overrideStartAt
+                : detected.map(PinDetectionService.DetectionResult::startAt).orElse(LocalDateTime.now().plusHours(1));
+
+        String placeText = (overridePlaceText != null && !overridePlaceText.isBlank())
+                ? overridePlaceText.trim()
+                : detected.map(PinDetectionService.DetectionResult::placeText).orElse(null);
+
+        int remindMinutes = 30;
+        if (overrideRemindMinutes != null) {
+            int v = overrideRemindMinutes;
+            if (v == 0 || v == 5 || v == 10 || v == 30 || v == 60) {
+                remindMinutes = v;
+            }
+        }
+
+        ConversationPin pin = ConversationPin.createSchedule(
+                conversationId,
+                meId,
+                sourceMessageId,
+                title,
+                placeText,
+                startAt,
+                remindMinutes
+        );
+
+        ConversationPin saved;
+        try {
+            saved = pinRepository.save(pin);
+        } catch (org.springframework.dao.DataIntegrityViolationException e) {
+            if (sourceMessageId != null) {
+                Optional<ConversationPin> again =
+                        pinRepository.findByConversationIdAndSourceMessageIdAndDeletedFalse(conversationId, sourceMessageId);
+                if (again.isPresent()) {
+                    return toResponse(again.get());
+                }
+            }
+            throw e;
+        }
+
+        eventPublisher.publishEvent(new PinCreatedEvent(
+                saved.getId(),
+                saved.getConversationId(),
+                saved.getCreatedBy(),
+                saved.getType().name(),
+                saved.getTitle(),
+                saved.getPlaceText(),
+                saved.getStartAt(),
+                saved.getRemindAt(),
+                saved.getStatus().name(),
+                saved.getCreatedAt()
+        ));
+        searchIndexingService.indexPin(saved);
+
+        return toResponse(saved);
+    }
+
     private ConversationPinResponse toResponse(ConversationPin p) {
         return new ConversationPinResponse(
                 p.getId(),
