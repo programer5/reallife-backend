@@ -41,6 +41,16 @@ public class Post extends BaseEntity {
     @Column(nullable = false)
     private long commentCount;
 
+
+    @Column(name = "latitude")
+    private Double latitude;
+
+    @Column(name = "longitude")
+    private Double longitude;
+
+    @Column(name = "place_name", length = 120)
+    private String placeName;
+
     @OneToMany(mappedBy = "post", cascade = CascadeType.ALL, orphanRemoval = true)
     @OrderBy("sortOrder ASC")
     private final List<PostImage> images = new ArrayList<>();
@@ -79,6 +89,21 @@ public class Post extends BaseEntity {
         if (visibility != null) {
             this.visibility = visibility;
         }
+    }
+
+    public void updateLocation(Double latitude, Double longitude, String placeName) {
+        if (latitude != null && longitude != null && isValidCoordinate(latitude, longitude)) {
+            this.latitude = latitude;
+            this.longitude = longitude;
+        }
+        if (placeName != null) {
+            String value = placeName.trim();
+            this.placeName = value.isEmpty() ? null : value.substring(0, Math.min(value.length(), 120));
+        }
+    }
+
+    private boolean isValidCoordinate(Double latitude, Double longitude) {
+        return latitude >= -90 && latitude <= 90 && longitude >= -180 && longitude <= 180;
     }
 
     public void delete() {

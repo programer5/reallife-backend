@@ -23,5 +23,12 @@ public record PostCreateRequest(
         @Size(max = 10)
         List<UUID> mediaFileIds,
 
+
+        Double latitude,
+        Double longitude,
+
+        @Size(max = 120)
+        String placeName,
+
         @NotNull PostVisibility visibility
 ) {}

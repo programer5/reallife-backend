@@ -21,7 +21,11 @@ public record FeedResponse(
             LocalDateTime createdAt,
             long likeCount,
             long commentCount,
-            boolean likedByMe
+            boolean likedByMe,
+            Double latitude,
+            Double longitude,
+            String placeName,
+            Double distanceKm
     ) {}
 
     public record MediaItem(

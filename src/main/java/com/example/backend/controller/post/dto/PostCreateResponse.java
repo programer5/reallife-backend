@@ -18,7 +18,11 @@ public record PostCreateResponse(
         LocalDateTime createdAt,
         long likeCount,
         long commentCount,
-        boolean likedByMe
+        boolean likedByMe,
+        Double latitude,
+        Double longitude,
+        String placeName,
+        Double distanceKm
 ) {
     public record MediaItem(
             UUID fileId,

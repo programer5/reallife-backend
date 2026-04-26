@@ -659,6 +659,10 @@ include::{snippets}/feed-get-next-page/http-response.adoc[]
 include::{snippets}/feed-get-public-visible/http-request.adoc[]
 include::{snippets}/feed-get-public-visible/http-response.adoc[]
 
+==== 근처 피드 조회
+include::{snippets}/feed-nearby-get/http-request.adoc[]
+include::{snippets}/feed-nearby-get/http-response.adoc[]
+
 [NOTE]
 ====
 피드 노출 규칙은 아래처럼 동작합니다.
@@ -666,6 +670,7 @@ include::{snippets}/feed-get-public-visible/http-response.adoc[]
 - `ALL` : 비팔로우 사용자에게도 노출
 - `FOLLOWERS` : 작성자를 팔로우한 사용자 + 작성자 본인에게 노출
 - `PRIVATE` : 작성자 본인만 노출
+- 근처 피드는 `lat`, `lng` 기준으로 위치 정보가 있는 게시글을 거리순으로 반환합니다. 기존 위치 없는 게시글은 거리 계산 대상이 아니거나 `distanceKm`가 `null`일 수 있습니다.
 ====
 
 ---

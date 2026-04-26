@@ -23,8 +23,18 @@ public class FeedController {
             @RequestParam(defaultValue = "20") int size,
             Authentication authentication
     ) {
-        // ✅ 현재 Security principal이 UUID 문자열이어야 함
         UUID meId = UUID.fromString(authentication.getName());
         return feedService.getFollowingFeed(meId, cursor, size);
+    }
+
+    @GetMapping("/nearby")
+    public FeedResponse nearby(
+            @RequestParam double lat,
+            @RequestParam double lng,
+            @RequestParam(defaultValue = "30") int size,
+            Authentication authentication
+    ) {
+        UUID meId = UUID.fromString(authentication.getName());
+        return feedService.getNearbyFeed(meId, lat, lng, size);
     }
 }

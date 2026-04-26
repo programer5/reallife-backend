@@ -97,6 +97,10 @@ class FeedControllerDocsTest {
                                 fieldWithPath("items[].likeCount").type(NUMBER).description("좋아요 수"),
                                 fieldWithPath("items[].commentCount").type(NUMBER).description("댓글 수"),
                                 fieldWithPath("items[].likedByMe").type(BOOLEAN).description("내가 좋아요 했는지"),
+                                fieldWithPath("items[].latitude").optional().type(VARIES).description("게시글 위치 위도. 위치가 없으면 null"),
+                                fieldWithPath("items[].longitude").optional().type(VARIES).description("게시글 위치 경도. 위치가 없으면 null"),
+                                fieldWithPath("items[].placeName").optional().type(VARIES).description("장소명. 위치/장소 정보가 없으면 null"),
+                                fieldWithPath("items[].distanceKm").optional().type(VARIES).description("nearby 조회 기준 거리(km). 일반 피드에서는 null"),
                                 fieldWithPath("nextCursor").optional().type(STRING).description("다음 페이지 커서(없으면 null)"),
                                 fieldWithPath("hasNext").type(BOOLEAN).description("다음 페이지 존재 여부")
                         )
@@ -158,6 +162,10 @@ class FeedControllerDocsTest {
                                 fieldWithPath("items[].likeCount").type(NUMBER).description("좋아요 수"),
                                 fieldWithPath("items[].commentCount").type(NUMBER).description("댓글 수"),
                                 fieldWithPath("items[].likedByMe").type(BOOLEAN).description("내가 좋아요 했는지"),
+                                fieldWithPath("items[].latitude").optional().type(VARIES).description("게시글 위치 위도. 위치가 없으면 null"),
+                                fieldWithPath("items[].longitude").optional().type(VARIES).description("게시글 위치 경도. 위치가 없으면 null"),
+                                fieldWithPath("items[].placeName").optional().type(VARIES).description("장소명. 위치/장소 정보가 없으면 null"),
+                                fieldWithPath("items[].distanceKm").optional().type(VARIES).description("nearby 조회 기준 거리(km). 일반 피드에서는 null"),
                                 fieldWithPath("nextCursor").optional().type(STRING).description("다음 페이지 커서(없으면 null)"),
                                 fieldWithPath("hasNext").type(BOOLEAN).description("다음 페이지 존재 여부")
                         )
@@ -208,8 +216,70 @@ class FeedControllerDocsTest {
                                 fieldWithPath("items[].likeCount").type(NUMBER).description("좋아요 수"),
                                 fieldWithPath("items[].commentCount").type(NUMBER).description("댓글 수"),
                                 fieldWithPath("items[].likedByMe").type(BOOLEAN).description("내가 좋아요 했는지"),
+                                fieldWithPath("items[].latitude").optional().type(VARIES).description("게시글 위치 위도. 위치가 없으면 null"),
+                                fieldWithPath("items[].longitude").optional().type(VARIES).description("게시글 위치 경도. 위치가 없으면 null"),
+                                fieldWithPath("items[].placeName").optional().type(VARIES).description("장소명. 위치/장소 정보가 없으면 null"),
+                                fieldWithPath("items[].distanceKm").optional().type(VARIES).description("nearby 조회 기준 거리(km). 일반 피드에서는 null"),
                                 fieldWithPath("nextCursor").optional().type(STRING).description("다음 페이지 커서(없으면 null)"),
                                 fieldWithPath("hasNext").type(BOOLEAN).description("다음 페이지 존재 여부")
+                        )
+                ));
+    }
+
+
+
+    @Test
+    void 피드_근처_조회_거리순_성공_200(RestDocumentationContextProvider restDocumentation) throws Exception {
+        var me = docs.saveUser("nearbyme", "근처조회자");
+        String token = docs.issueTokenFor(me);
+
+        var nearbyAuthor = docs.saveUser("nearbywriter", "근처작성자");
+        var farAuthor = docs.saveUser("farwriter", "먼작성자");
+
+        docs.savePostWithLocation(nearbyAuthor.getId(), "근처 카페에서 작성한 글", 37.5665, 126.9780, "서울 시청 근처 카페");
+        docs.savePostWithLocation(farAuthor.getId(), "조금 먼 장소에서 작성한 글", 37.5700, 126.9920, "종로 근처");
+
+        mockMvc(restDocumentation)
+                .perform(get("/api/feed/nearby")
+                        .param("lat", "37.5665")
+                        .param("lng", "126.9780")
+                        .param("size", "10")
+                        .header(HttpHeaders.AUTHORIZATION, DocsTestSupport.auth(token)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.items").isArray())
+                .andExpect(jsonPath("$.items[0].placeName").value("서울 시청 근처 카페"))
+                .andExpect(jsonPath("$.items[0].distanceKm").value(0.0))
+                .andDo(document("feed-nearby-get",
+                        preprocessRequest(prettyPrint()),
+                        preprocessResponse(prettyPrint()),
+                        requestHeaders(
+                                headerWithName(HttpHeaders.AUTHORIZATION).description("Bearer {accessToken}")
+                        ),
+                        queryParameters(
+                                parameterWithName("lat").description("현재 위치 위도"),
+                                parameterWithName("lng").description("현재 위치 경도"),
+                                parameterWithName("size").optional().description("조회 개수(기본 30, 최대 50)")
+                        ),
+                        responseFields(
+                                fieldWithPath("items").type(ARRAY).description("근처 피드 아이템 목록(거리순)"),
+                                fieldWithPath("items[].postId").type(STRING).description("게시글 ID"),
+                                fieldWithPath("items[].authorId").type(STRING).description("작성자 ID"),
+                                fieldWithPath("items[].authorHandle").type(STRING).description("작성자 핸들"),
+                                fieldWithPath("items[].authorName").type(STRING).description("작성자 이름"),
+                                fieldWithPath("items[].content").type(STRING).description("내용"),
+                                fieldWithPath("items[].imageUrls").type(ARRAY).description("이미지 URL 목록"),
+                                subsectionWithPath("items[].mediaItems").type(ARRAY).description("미디어 목록(이미지/동영상). 각 항목은 mediaType, url, thumbnailUrl, contentType을 포함"),
+                                fieldWithPath("items[].visibility").type(STRING).description("공개범위"),
+                                fieldWithPath("items[].createdAt").type(STRING).description("생성시각"),
+                                fieldWithPath("items[].likeCount").type(NUMBER).description("좋아요 수"),
+                                fieldWithPath("items[].commentCount").type(NUMBER).description("댓글 수"),
+                                fieldWithPath("items[].likedByMe").type(BOOLEAN).description("내가 좋아요 했는지"),
+                                fieldWithPath("items[].latitude").optional().type(NUMBER).description("게시글 위치 위도"),
+                                fieldWithPath("items[].longitude").optional().type(NUMBER).description("게시글 위치 경도"),
+                                fieldWithPath("items[].placeName").optional().type(STRING).description("장소명"),
+                                fieldWithPath("items[].distanceKm").optional().type(NUMBER).description("현재 위치 기준 거리(km)"),
+                                fieldWithPath("nextCursor").optional().type(STRING).description("근처 피드는 현재 cursor를 사용하지 않으므로 null"),
+                                fieldWithPath("hasNext").type(BOOLEAN).description("근처 피드는 현재 단일 페이지 응답이므로 false")
                         )
                 ));
     }

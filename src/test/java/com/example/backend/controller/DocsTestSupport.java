@@ -60,6 +60,13 @@ public class DocsTestSupport {
         return postRepository.saveAndFlush(post);
     }
 
+    @Transactional
+    public Post savePostWithLocation(UUID authorId, String content, Double latitude, Double longitude, String placeName) {
+        Post post = Post.create(authorId, content, PostVisibility.ALL);
+        post.updateLocation(latitude, longitude, placeName);
+        return postRepository.saveAndFlush(post);
+    }
+
     public String issueTokenFor(User user) {
         // ✅ subject = userId, claim = email (너 프로젝트 컨벤션)
         return jwtTokenProvider.createAccessToken(user.getId().toString(), user.getEmail());

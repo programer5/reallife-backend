@@ -18,4 +18,6 @@ public interface PostQueryRepository {
             UUID cursorId,
             int size
     );
+
+    List<UUID> findNearbyFeedIds(UUID meId, int size);
 }

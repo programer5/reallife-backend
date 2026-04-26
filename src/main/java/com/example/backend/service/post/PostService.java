@@ -41,6 +41,7 @@ public class PostService {
 
         String safeContent = ContentSanitizer.minimal(request.content());
         Post post = Post.create(meId, safeContent, request.visibility());
+        post.updateLocation(request.latitude(), request.longitude(), request.placeName());
 
         List<UUID> fileIds = (request.mediaFileIds() != null && !request.mediaFileIds().isEmpty())
                 ? request.mediaFileIds()
@@ -97,7 +98,11 @@ public class PostService {
                 saved.getCreatedAt(),
                 saved.getLikeCount(),
                 saved.getCommentCount(),
-                false
+                false,
+                saved.getLatitude(),
+                saved.getLongitude(),
+                saved.getPlaceName(),
+                null
         );
     }
 
@@ -146,7 +151,11 @@ public class PostService {
                 post.getCreatedAt(),
                 post.getLikeCount(),
                 post.getCommentCount(),
-                likedByMe
+                likedByMe,
+                post.getLatitude(),
+                post.getLongitude(),
+                post.getPlaceName(),
+                null
         );
     }
 
@@ -187,7 +196,11 @@ public class PostService {
                 post.getCreatedAt(),
                 post.getLikeCount(),
                 post.getCommentCount(),
-                likedByMe
+                likedByMe,
+                post.getLatitude(),
+                post.getLongitude(),
+                post.getPlaceName(),
+                null
         );
     }
 

@@ -31,19 +31,11 @@ public class PostQueryRepositoryImpl implements PostQueryRepository {
         return queryFeedIds(meId, cursorCreatedAt, cursorId, size);
     }
 
-    private List<UUID> queryFeedIds(UUID meId, LocalDateTime cursorCreatedAt, UUID cursorId, int size) {
+    @Override
+    public List<UUID> findNearbyFeedIds(UUID meId, int size) {
         QPost p = QPost.post;
         QFollow f = QFollow.follow;
         QUser u = QUser.user;
-
-        BooleanExpression cursorCond = cursorCond(cursorCreatedAt, cursorId, p);
-
-        BooleanExpression visibilityCond =
-                p.authorId.eq(meId)
-                        .or(p.visibility.eq(PostVisibility.ALL))
-                        .or(p.visibility.eq(PostVisibility.FOLLOWERS)
-                                .and(f.followerId.eq(meId))
-                                .and(f.followingId.eq(p.authorId)));
 
         return queryFactory
                 .select(p.id)
@@ -52,12 +44,43 @@ public class PostQueryRepositoryImpl implements PostQueryRepository {
                 .leftJoin(f).on(f.followerId.eq(meId).and(f.followingId.eq(p.authorId)))
                 .where(
                         p.deleted.isFalse(),
-                        visibilityCond,
+                        visibilityCond(meId, p, f),
+                        p.latitude.isNotNull(),
+                        p.longitude.isNotNull()
+                )
+                .orderBy(p.createdAt.desc(), p.id.desc())
+                .limit(size)
+                .fetch();
+    }
+
+    private List<UUID> queryFeedIds(UUID meId, LocalDateTime cursorCreatedAt, UUID cursorId, int size) {
+        QPost p = QPost.post;
+        QFollow f = QFollow.follow;
+        QUser u = QUser.user;
+
+        BooleanExpression cursorCond = cursorCond(cursorCreatedAt, cursorId, p);
+
+        return queryFactory
+                .select(p.id)
+                .from(p)
+                .join(u).on(u.id.eq(p.authorId))
+                .leftJoin(f).on(f.followerId.eq(meId).and(f.followingId.eq(p.authorId)))
+                .where(
+                        p.deleted.isFalse(),
+                        visibilityCond(meId, p, f),
                         cursorCond
                 )
                 .orderBy(p.createdAt.desc(), p.id.desc())
                 .limit(size)
                 .fetch();
+    }
+
+    private BooleanExpression visibilityCond(UUID meId, QPost p, QFollow f) {
+        return p.authorId.eq(meId)
+                .or(p.visibility.eq(PostVisibility.ALL))
+                .or(p.visibility.eq(PostVisibility.FOLLOWERS)
+                        .and(f.followerId.eq(meId))
+                        .and(f.followingId.eq(p.authorId)));
     }
 
     private BooleanExpression cursorCond(LocalDateTime cursorCreatedAt, UUID cursorId, QPost p) {

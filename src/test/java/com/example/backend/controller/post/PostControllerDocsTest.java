@@ -27,7 +27,9 @@ import static org.springframework.restdocs.mockmvc.MockMvcRestDocumentation.docu
 import static org.springframework.restdocs.mockmvc.MockMvcRestDocumentation.documentationConfiguration;
 import static org.springframework.restdocs.operation.preprocess.Preprocessors.*;
 import static org.springframework.restdocs.payload.JsonFieldType.ARRAY;
+import static org.springframework.restdocs.payload.JsonFieldType.NUMBER;
 import static org.springframework.restdocs.payload.JsonFieldType.STRING;
+import static org.springframework.restdocs.payload.JsonFieldType.VARIES;
 import static org.springframework.restdocs.payload.PayloadDocumentation.*;
 import static org.springframework.restdocs.request.RequestDocumentation.parameterWithName;
 import static org.springframework.restdocs.request.RequestDocumentation.pathParameters;
@@ -78,6 +80,9 @@ class PostControllerDocsTest {
         req.put("imageUrls", java.util.List.of("https://example.com/legacy-image.jpg")); // 구버전 호환 문서용
         req.put("imageFileIds", java.util.List.of(uploaded.getId().toString()));        // ✅ 권장 방식
         req.put("visibility", "FOLLOWERS");
+        req.put("latitude", 37.5665);
+        req.put("longitude", 126.9780);
+        req.put("placeName", "서울 시청 근처");
 
         mockMvc.perform(post("/api/posts")
                         .header(DocsTestSupport.headerName(), DocsTestSupport.auth(token))
@@ -101,6 +106,9 @@ class PostControllerDocsTest {
                                 fieldWithPath("imageUrls").optional().type(ARRAY).description("(구버전 호환) 이미지 URL 목록"),
                                 fieldWithPath("imageFileIds").optional().type(ARRAY).description("(권장) 업로드된 이미지 파일 ID(UUID) 목록"),
                                 fieldWithPath("mediaFileIds").optional().type(ARRAY).description("(권장) 업로드된 미디어 파일 ID(UUID) 목록. 이미지/동영상 모두 가능"),
+                                fieldWithPath("latitude").optional().type(NUMBER).description("게시글 위치 위도. longitude와 함께 전달하면 근처 피드에 사용"),
+                                fieldWithPath("longitude").optional().type(NUMBER).description("게시글 위치 경도. latitude와 함께 전달하면 근처 피드에 사용"),
+                                fieldWithPath("placeName").optional().type(STRING).description("장소명 또는 위치 라벨"),
                                 fieldWithPath("visibility").optional().type(STRING)
                                         .attributes(key("constraints").value("ALL | FOLLOWERS | PRIVATE"))
                                         .description("공개 범위")
@@ -117,7 +125,11 @@ class PostControllerDocsTest {
                                 fieldWithPath("createdAt").type(STRING).description("생성 시각(ISO-8601)"),
                                 fieldWithPath("likeCount").description("좋아요 수"),
                                 fieldWithPath("commentCount").description("댓글 수"),
-                                fieldWithPath("likedByMe").description("내가 좋아요 눌렀는지 여부")
+                                fieldWithPath("likedByMe").description("내가 좋아요 눌렀는지 여부"),
+                                fieldWithPath("latitude").optional().type(VARIES).description("게시글 위치 위도. 위치가 없으면 null"),
+                                fieldWithPath("longitude").optional().type(VARIES).description("게시글 위치 경도. 위치가 없으면 null"),
+                                fieldWithPath("placeName").optional().type(VARIES).description("장소명. 위치/장소 정보가 없으면 null"),
+                                fieldWithPath("distanceKm").optional().type(VARIES).description("nearby 조회 기준 거리(km). 일반 게시글 응답에서는 null")
                         )
                 ));
     }
@@ -183,7 +195,11 @@ class PostControllerDocsTest {
                                 fieldWithPath("createdAt").type(STRING).description("생성 시각(ISO-8601)"),
                                 fieldWithPath("likeCount").description("좋아요 수"),
                                 fieldWithPath("commentCount").description("댓글 수"),
-                                fieldWithPath("likedByMe").description("내가 좋아요 눌렀는지 여부")
+                                fieldWithPath("likedByMe").description("내가 좋아요 눌렀는지 여부"),
+                                fieldWithPath("latitude").optional().type(VARIES).description("게시글 위치 위도. 위치가 없으면 null"),
+                                fieldWithPath("longitude").optional().type(VARIES).description("게시글 위치 경도. 위치가 없으면 null"),
+                                fieldWithPath("placeName").optional().type(VARIES).description("장소명. 위치/장소 정보가 없으면 null"),
+                                fieldWithPath("distanceKm").optional().type(VARIES).description("nearby 조회 기준 거리(km). 일반 게시글 응답에서는 null")
                         )
                 ));
     }
@@ -246,7 +262,11 @@ class PostControllerDocsTest {
                                 fieldWithPath("createdAt").type(STRING).description("생성 시각(ISO-8601)"),
                                 fieldWithPath("likeCount").description("좋아요 수"),
                                 fieldWithPath("commentCount").description("댓글 수"),
-                                fieldWithPath("likedByMe").description("내가 좋아요 눌렀는지 여부")
+                                fieldWithPath("likedByMe").description("내가 좋아요 눌렀는지 여부"),
+                                fieldWithPath("latitude").optional().type(VARIES).description("게시글 위치 위도. 위치가 없으면 null"),
+                                fieldWithPath("longitude").optional().type(VARIES).description("게시글 위치 경도. 위치가 없으면 null"),
+                                fieldWithPath("placeName").optional().type(VARIES).description("장소명. 위치/장소 정보가 없으면 null"),
+                                fieldWithPath("distanceKm").optional().type(VARIES).description("nearby 조회 기준 거리(km). 일반 게시글 응답에서는 null")
                         )
                 ));
     }
