@@ -773,14 +773,22 @@ include::{snippets}/playback-sessions-end/http-response.adoc[]
 include::{snippets}/conversation-ai-reply/http-request.adoc[]
 include::{snippets}/conversation-ai-reply/http-response.adoc[]
 
-=== AI 액션 실행
+=== AI 액션 실행 - 일정 핀 생성
 include::{snippets}/conversation-ai-action-execute/http-request.adoc[]
 include::{snippets}/conversation-ai-action-execute/http-response.adoc[]
+
+=== AI 액션 실행 - 이따 알림 자동 보정
+include::{snippets}/conversation-ai-action-execute-reminder/http-request.adoc[]
+include::{snippets}/conversation-ai-action-execute-reminder/http-response.adoc[]
+
+=== AI 액션 실행 - 지도 URL 반환
+include::{snippets}/conversation-ai-action-execute-map/http-request.adoc[]
+include::{snippets}/conversation-ai-action-execute-map/http-response.adoc[]
 
 [NOTE]
 ====
 AI 추천 답장 API는 `OPENAI_API_KEY`가 있으면 OpenAI 호출 결과를 사용하고, 키가 없거나 호출에 실패하면 rule 기반 fallback을 반환합니다.
-액션 실행 API는 `schedule`, `reminder`, `notify` 타입에서 대화 핀을 생성하고 `targetUrl`로 후속 이동 경로를 제공합니다. `map` 타입은 지도 검색 URL을 반환합니다.
+액션 실행 API는 `schedule`, `reminder`, `notify` 타입에서 대화 핀을 생성하고 `targetUrl`로 후속 이동 경로를 제공합니다. `reminder`/`notify`는 `startAt`이 없어도 "이따", "나중", "내일", "오전/오후 n시" 같은 문장을 기준으로 시간을 보정합니다. `map` 타입은 지도 검색 URL을 반환합니다.
 ====
 
 === 대화 핀 목록(ACTIVE)

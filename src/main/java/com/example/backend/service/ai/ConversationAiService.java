@@ -117,7 +117,7 @@ public class ConversationAiService {
             actions.add(new AiActionSuggestion("focus", "💬 답장", Map.of()));
         } else {
             replies.addAll(List.of("좋아", "확인했어", "이따 얘기하자"));
-            actions.add(new AiActionSuggestion("notify", "🔔 알림", Map.of("source", text)));
+            actions.add(new AiActionSuggestion("reminder", "🔔 이따 알림", Map.of("source", text, "title", "대화 다시 보기", "remindMinutes", 30)));
         }
         return new AiReplyResponse(replies.stream().limit(3).toList(), actions.stream().limit(3).toList(), source);
     }

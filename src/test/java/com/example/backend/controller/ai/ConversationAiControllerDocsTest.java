@@ -96,7 +96,7 @@ class ConversationAiControllerDocsTest {
                                 fieldWithPath("text").type(STRING).description("AI가 분석할 최근 메시지 또는 사용자가 선택한 텍스트")
                         ),
                         relaxedResponseFields(
-                                fieldWithPath("replies").type(ARRAY).description("추천 답장 목록(최대 3개). 각 항목은 추천 답장 문자열"),
+                                fieldWithPath("replies").type(ARRAY).description("추천 답장 목록(최대 3개). 각 항목은 문자열"),
                                 fieldWithPath("actions").type(ARRAY).description("추천 액션 목록(최대 3개)"),
                                 fieldWithPath("actions[].type").type(STRING).description("액션 타입(schedule|reminder|map|notify|focus)"),
                                 fieldWithPath("actions[].label").type(STRING).description("프론트 버튼에 표시할 짧은 라벨"),
@@ -110,7 +110,7 @@ class ConversationAiControllerDocsTest {
     void AI_액션실행_일정핀생성_200(RestDocumentationContextProvider restDocumentation) throws Exception {
         MockMvc mockMvc = mockMvc(restDocumentation);
 
-        var me = docs.saveUser("aiAction", "나");
+        var me = docs.saveUser("aiActionSchedule", "나");
         String token = docs.issueTokenFor(me);
         Conversation conversation = seedConversation(me.getId());
         String startAt = LocalDateTime.now()
@@ -166,7 +166,115 @@ class ConversationAiControllerDocsTest {
                                 fieldWithPath("payload").type(OBJECT).description("실행 결과 보조 데이터"),
                                 fieldWithPath("payload.pinId").type(STRING).optional().description("일정/알림 액션으로 생성된 핀 ID(UUID)"),
                                 fieldWithPath("payload.startAt").type(STRING).optional().description("생성된 핀 시작 시각"),
-                                fieldWithPath("payload.remindAt").type(STRING).optional().description("생성된 핀 리마인드 시각")
+                                fieldWithPath("payload.remindAt").type(STRING).optional().description("생성된 핀 리마인드 시각"),
+                                fieldWithPath("payload.title").type(STRING).optional().description("생성된 핀 제목"),
+                                fieldWithPath("payload.remindMinutes").type(NUMBER).optional().description("적용된 리마인드 분")
+                        )
+                ));
+    }
+
+    @Test
+    void AI_액션실행_이따알림_자동시간보정_200(RestDocumentationContextProvider restDocumentation) throws Exception {
+        MockMvc mockMvc = mockMvc(restDocumentation);
+
+        var me = docs.saveUser("aiActionReminder", "나");
+        String token = docs.issueTokenFor(me);
+        Conversation conversation = seedConversation(me.getId());
+
+        String body = """
+                {
+                  "conversationId": "%s",
+                  "messageId": null,
+                  "type": "reminder",
+                  "text": "이따 얘기하자",
+                  "payload": {
+                    "title": "대화 다시 보기",
+                    "remindMinutes": 30
+                  }
+                }
+                """.formatted(conversation.getId());
+
+        mockMvc.perform(post("/api/ai/actions/execute")
+                        .header(DocsTestSupport.headerName(), DocsTestSupport.auth(token))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(body))
+                .andExpect(status().isOk())
+                .andDo(document("conversation-ai-action-execute-reminder",
+                        preprocessRequest(prettyPrint()),
+                        preprocessResponse(prettyPrint()),
+                        requestHeaders(
+                                headerWithName(DocsTestSupport.headerName()).description("Bearer {accessToken}")
+                        ),
+                        relaxedRequestFields(
+                                fieldWithPath("conversationId").type(STRING).description("대화방 ID(UUID)"),
+                                fieldWithPath("messageId").type(NULL).optional().description("기준 메시지 ID(UUID). 없으면 null"),
+                                fieldWithPath("type").type(STRING).description("실행할 액션 타입(reminder|notify)"),
+                                fieldWithPath("text").type(STRING).description("시간 보정에 사용할 원본 문장. 예: 이따/나중/다시 얘기"),
+                                fieldWithPath("payload").type(OBJECT).description("액션별 보조 데이터"),
+                                fieldWithPath("payload.title").type(STRING).optional().description("알림 제목"),
+                                fieldWithPath("payload.remindMinutes").type(NUMBER).optional().description("시작 전 리마인드 분")
+                        ),
+                        relaxedResponseFields(
+                                fieldWithPath("status").type(STRING).description("처리 결과(ok)"),
+                                fieldWithPath("type").type(STRING).description("실행된 액션 타입"),
+                                fieldWithPath("message").type(STRING).description("사용자에게 보여줄 처리 결과 메시지"),
+                                fieldWithPath("targetUrl").type(STRING).description("생성된 핀으로 이동 가능한 프론트 경로"),
+                                fieldWithPath("payload").type(OBJECT).description("실행 결과 보조 데이터"),
+                                fieldWithPath("payload.pinId").type(STRING).description("생성된 핀 ID(UUID)"),
+                                fieldWithPath("payload.startAt").type(STRING).description("자동 보정된 시작 시각"),
+                                fieldWithPath("payload.remindAt").type(STRING).description("자동 보정된 리마인드 시각"),
+                                fieldWithPath("payload.title").type(STRING).description("생성된 핀 제목"),
+                                fieldWithPath("payload.remindMinutes").type(NUMBER).description("적용된 리마인드 분")
+                        )
+                ));
+    }
+
+    @Test
+    void AI_액션실행_지도URL반환_200(RestDocumentationContextProvider restDocumentation) throws Exception {
+        MockMvc mockMvc = mockMvc(restDocumentation);
+
+        var me = docs.saveUser("aiActionMap", "나");
+        String token = docs.issueTokenFor(me);
+        Conversation conversation = seedConversation(me.getId());
+
+        String body = """
+                {
+                  "conversationId": "%s",
+                  "messageId": null,
+                  "type": "map",
+                  "text": "모란 카페 어디야?",
+                  "payload": {
+                    "query": "모란 카페"
+                  }
+                }
+                """.formatted(conversation.getId());
+
+        mockMvc.perform(post("/api/ai/actions/execute")
+                        .header(DocsTestSupport.headerName(), DocsTestSupport.auth(token))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(body))
+                .andExpect(status().isOk())
+                .andDo(document("conversation-ai-action-execute-map",
+                        preprocessRequest(prettyPrint()),
+                        preprocessResponse(prettyPrint()),
+                        requestHeaders(
+                                headerWithName(DocsTestSupport.headerName()).description("Bearer {accessToken}")
+                        ),
+                        relaxedRequestFields(
+                                fieldWithPath("conversationId").type(STRING).description("대화방 ID(UUID)"),
+                                fieldWithPath("messageId").type(NULL).optional().description("기준 메시지 ID(UUID). 없으면 null"),
+                                fieldWithPath("type").type(STRING).description("실행할 액션 타입(map)"),
+                                fieldWithPath("text").type(STRING).description("지도 검색 후보 문장"),
+                                fieldWithPath("payload").type(OBJECT).description("액션별 보조 데이터"),
+                                fieldWithPath("payload.query").type(STRING).optional().description("지도 검색어")
+                        ),
+                        relaxedResponseFields(
+                                fieldWithPath("status").type(STRING).description("처리 결과(ok)"),
+                                fieldWithPath("type").type(STRING).description("실행된 액션 타입"),
+                                fieldWithPath("message").type(STRING).description("사용자에게 보여줄 처리 결과 메시지"),
+                                fieldWithPath("targetUrl").type(STRING).description("Google Maps 검색 URL"),
+                                fieldWithPath("payload").type(OBJECT).description("실행 결과 보조 데이터"),
+                                fieldWithPath("payload.query").type(STRING).description("최종 지도 검색어")
                         )
                 ));
     }
